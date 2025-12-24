@@ -8,6 +8,7 @@
 -- 4. venues - Venue/room information
 -- 5. events - Event information
 -- 6. venue_bookings - Venue booking requests
+-- 7. event_invitations - Event invitation management
 -- ========================================
 
 -- Enable UUID extension (if not already enabled)
@@ -16,6 +17,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- ========================================
 -- Drop existing tables (in reverse order of dependencies)
 -- ========================================
+DROP TABLE IF EXISTS event_invitations CASCADE;
 DROP TABLE IF EXISTS venue_bookings CASCADE;
 DROP TABLE IF EXISTS events CASCADE;
 DROP TABLE IF EXISTS venues CASCADE;
@@ -118,6 +120,10 @@ CREATE INDEX idx_venues_capacity ON venues(capacity);
 -- ========================================
 -- Table: events
 -- Stores campus events information
+-- Visibility rules:
+-- - 'campuswide': All logged-in users can see
+-- - 'facultyonly': Only users with same faculty_id as organizer can see
+-- - 'inviteonly': Only invited users can see (requires event_invitations table)
 -- ========================================
 CREATE TABLE events (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -176,6 +182,30 @@ CREATE INDEX idx_venue_bookings_requested_end ON venue_bookings(requested_end_da
 CREATE INDEX idx_venue_bookings_approved_user_id ON venue_bookings(approved_user_id);
 
 -- ========================================
+-- Table: event_invitations
+-- Stores user invitations for invite-only events
+-- Event organizers can select specific users to invite
+-- ========================================
+CREATE TABLE event_invitations (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  invited_by UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE, -- Who sent the invitation
+  status VARCHAR(50) NOT NULL DEFAULT 'pending', -- 'pending', 'accepted', 'declined'
+  invited_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  responded_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(event_id, user_id) -- Prevent duplicate invitations
+);
+
+-- Indexes for faster queries
+CREATE INDEX idx_event_invitations_event_id ON event_invitations(event_id);
+CREATE INDEX idx_event_invitations_user_id ON event_invitations(user_id);
+CREATE INDEX idx_event_invitations_invited_by ON event_invitations(invited_by);
+CREATE INDEX idx_event_invitations_status ON event_invitations(status);
+
+-- ========================================
 -- Row Level Security (RLS)
 -- ========================================
 -- Enable RLS on tables
@@ -185,6 +215,7 @@ ALTER TABLE faculties ENABLE ROW LEVEL SECURITY;
 ALTER TABLE venues ENABLE ROW LEVEL SECURITY;
 ALTER TABLE events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE venue_bookings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE event_invitations ENABLE ROW LEVEL SECURITY;
 
 -- Backend can manage all users
 CREATE POLICY "Backend can read all users" ON users
@@ -280,6 +311,23 @@ CREATE POLICY "Backend can delete venue_bookings" ON venue_bookings
   FOR DELETE
   USING (true);
 
+-- Backend can manage all event_invitations
+CREATE POLICY "Backend can read all event_invitations" ON event_invitations
+  FOR SELECT
+  USING (true);
+
+CREATE POLICY "Backend can insert event_invitations" ON event_invitations
+  FOR INSERT
+  WITH CHECK (true);
+
+CREATE POLICY "Backend can update event_invitations" ON event_invitations
+  FOR UPDATE
+  USING (true);
+
+CREATE POLICY "Backend can delete event_invitations" ON event_invitations
+  FOR DELETE
+  USING (true);
+
 -- ========================================
 -- Sample Data for Testing
 -- Password for all sample users: "password123"
@@ -293,6 +341,7 @@ INSERT INTO users (email, name, password, role, status) VALUES
   ('blocked.user@student.edu', 'Blocked User', '$2a$10$g2ALFzfYf4jpTmp7bCIzd.5cael8S5xBTGOn8FEyda1Bnt/.ebzV2', 'student', 'blocked'),
   ('inactive.user@student.edu', 'Inactive User', '$2a$10$g2ALFzfYf4jpTmp7bCIzd.5cael8S5xBTGOn8FEyda1Bnt/.ebzV2', 'student', 'inactive'),
   ('alice.wong@fci.edu', 'Dr. Alice Wong', '$2a$10$g2ALFzfYf4jpTmp7bCIzd.5cael8S5xBTGOn8FEyda1Bnt/.ebzV2', 'faculty_manager', 'active'),
+  ('david.tan@fci.edu', 'Dr. David Tan', '$2a$10$g2ALFzfYf4jpTmp7bCIzd.5cael8S5xBTGOn8FEyda1Bnt/.ebzV2', 'faculty_manager', 'active'),
   ('robert.chen@fom.edu', 'Dr. Robert Chen', '$2a$10$g2ALFzfYf4jpTmp7bCIzd.5cael8S5xBTGOn8FEyda1Bnt/.ebzV2', 'faculty_manager', 'active'),
   ('maria.garcia@fob.edu', 'Dr. Maria Garcia', '$2a$10$g2ALFzfYf4jpTmp7bCIzd.5cael8S5xBTGOn8FEyda1Bnt/.ebzV2', 'faculty_manager', 'active'),
   ('james.lee@fac.edu', 'Dr. James Lee', '$2a$10$g2ALFzfYf4jpTmp7bCIzd.5cael8S5xBTGOn8FEyda1Bnt/.ebzV2', 'faculty_manager', 'active'),
@@ -319,7 +368,7 @@ ON DELETE SET NULL;
 CREATE INDEX idx_users_faculty_id ON users(faculty_id);
 
 -- Update users with faculty assignments (only faculty_managers and students from specific faculties)
-UPDATE users SET faculty_id = (SELECT id FROM faculties WHERE code = 'FCI' LIMIT 1) WHERE email IN ('alice.wong@fci.edu', 'emily.tan@student.edu');
+UPDATE users SET faculty_id = (SELECT id FROM faculties WHERE code = 'FCI' LIMIT 1) WHERE email IN ('alice.wong@fci.edu', 'david.tan@fci.edu', 'emily.tan@student.edu');
 UPDATE users SET faculty_id = (SELECT id FROM faculties WHERE code = 'FOM' LIMIT 1) WHERE email IN ('robert.chen@fom.edu', 'michael.kumar@student.edu');
 UPDATE users SET faculty_id = (SELECT id FROM faculties WHERE code = 'FOB' LIMIT 1) WHERE email IN ('maria.garcia@fob.edu', 'lisa.chong@student.edu');
 UPDATE users SET faculty_id = (SELECT id FROM faculties WHERE code = 'FAC' LIMIT 1) WHERE email IN ('james.lee@fac.edu', 'david.lim@student.edu');
@@ -412,15 +461,15 @@ WHERE EXISTS (SELECT 1 FROM users WHERE email = 'admin@university.edu');
 
 INSERT INTO events (organizer_id, event_name, description, visibility, event_type, status, start_datetime, end_datetime)
 SELECT 
-  (SELECT id FROM users WHERE email = 'sarah.organizer@university.edu' LIMIT 1),
-  'Faculty Development Seminar',
-  'Professional development workshop for faculty members only.',
+  (SELECT id FROM users WHERE email = 'alice.wong@fci.edu' LIMIT 1),
+  'FCI Faculty Development Seminar',
+  'Professional development workshop for Faculty of Computing and Informatics members only.',
   'facultyonly',
   'seminar',
   'upcoming',
   CURRENT_TIMESTAMP + INTERVAL '5 days',
   CURRENT_TIMESTAMP + INTERVAL '5 days' + INTERVAL '2 hours'
-WHERE EXISTS (SELECT 1 FROM users WHERE email = 'sarah.organizer@university.edu');
+WHERE EXISTS (SELECT 1 FROM users WHERE email = 'alice.wong@fci.edu');
 
 INSERT INTO events (organizer_id, event_name, description, visibility, event_type, status, start_datetime, end_datetime)
 SELECT 
@@ -516,9 +565,9 @@ WHERE EXISTS (SELECT 1 FROM events WHERE event_name = 'Annual Sports Day');
 
 INSERT INTO venue_bookings (event_id, venue_id, requester_user_id, requested_start_datetime, requested_end_datetime, approved_start_datetime, approved_end_datetime, setup_time, teardown_time, status, approved_user_id, approved_at, approval_notes, remarks, expected_attendees)
 SELECT 
-  (SELECT id FROM events WHERE event_name = 'Faculty Development Seminar' LIMIT 1),
-  (SELECT id FROM venues WHERE code = 'SR-FOM-01' LIMIT 1),
-  (SELECT id FROM users WHERE email = 'sarah.organizer@university.edu' LIMIT 1),
+  (SELECT id FROM events WHERE event_name = 'FCI Faculty Development Seminar' LIMIT 1),
+  (SELECT id FROM venues WHERE code = 'LT-FCI-01' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'alice.wong@fci.edu' LIMIT 1),
   CURRENT_TIMESTAMP + INTERVAL '5 days',
   CURRENT_TIMESTAMP + INTERVAL '5 days' + INTERVAL '2 hours',
   CURRENT_TIMESTAMP + INTERVAL '5 days',
@@ -526,12 +575,12 @@ SELECT
   15,
   10,
   'approved',
-  (SELECT id FROM users WHERE email = 'robert.chen@fom.edu' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'david.tan@fci.edu' LIMIT 1),
   CURRENT_TIMESTAMP - INTERVAL '1 day',
   'Approved. Please coordinate with IT for projector setup.',
-  'Professional development for faculty',
+  'Professional development for FCI faculty',
   25
-WHERE EXISTS (SELECT 1 FROM events WHERE event_name = 'Faculty Development Seminar');
+WHERE EXISTS (SELECT 1 FROM events WHERE event_name = 'FCI Faculty Development Seminar');
 
 INSERT INTO venue_bookings (event_id, venue_id, requester_user_id, requested_start_datetime, requested_end_datetime, approved_start_datetime, approved_end_datetime, setup_time, teardown_time, status, approved_user_id, approved_at, remarks, expected_attendees)
 SELECT 
@@ -579,6 +628,47 @@ SELECT
   20
 WHERE EXISTS (SELECT 1 FROM events WHERE event_name = 'Alumni Meetup');
 
+-- Sample Event Invitations Data
+-- Alumni Meetup is invite-only, so we create specific invitations
+INSERT INTO event_invitations (event_id, user_id, invited_by, status, invited_at, responded_at)
+SELECT 
+  (SELECT id FROM events WHERE event_name = 'Alumni Meetup' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'john.student@student.edu' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'sarah.organizer@university.edu' LIMIT 1),
+  'accepted',
+  CURRENT_TIMESTAMP - INTERVAL '5 days',
+  CURRENT_TIMESTAMP - INTERVAL '4 days'
+WHERE EXISTS (SELECT 1 FROM events WHERE event_name = 'Alumni Meetup');
+
+INSERT INTO event_invitations (event_id, user_id, invited_by, status, invited_at, responded_at)
+SELECT 
+  (SELECT id FROM events WHERE event_name = 'Alumni Meetup' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'emily.tan@student.edu' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'sarah.organizer@university.edu' LIMIT 1),
+  'accepted',
+  CURRENT_TIMESTAMP - INTERVAL '5 days',
+  CURRENT_TIMESTAMP - INTERVAL '3 days'
+WHERE EXISTS (SELECT 1 FROM events WHERE event_name = 'Alumni Meetup');
+
+INSERT INTO event_invitations (event_id, user_id, invited_by, status, invited_at)
+SELECT 
+  (SELECT id FROM events WHERE event_name = 'Alumni Meetup' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'michael.kumar@student.edu' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'sarah.organizer@university.edu' LIMIT 1),
+  'pending',
+  CURRENT_TIMESTAMP - INTERVAL '5 days'
+WHERE EXISTS (SELECT 1 FROM events WHERE event_name = 'Alumni Meetup');
+
+INSERT INTO event_invitations (event_id, user_id, invited_by, status, invited_at, responded_at)
+SELECT 
+  (SELECT id FROM events WHERE event_name = 'Alumni Meetup' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'alice.wong@fci.edu' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'sarah.organizer@university.edu' LIMIT 1),
+  'declined',
+  CURRENT_TIMESTAMP - INTERVAL '5 days',
+  CURRENT_TIMESTAMP - INTERVAL '4 days'
+WHERE EXISTS (SELECT 1 FROM events WHERE event_name = 'Alumni Meetup');
+
 -- ========================================
 -- Useful Functions
 -- ========================================
@@ -622,6 +712,12 @@ BEFORE UPDATE ON venue_bookings
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();
 
+-- Trigger to auto-update updated_at on event_invitations table
+CREATE TRIGGER update_event_invitations_updated_at
+BEFORE UPDATE ON event_invitations
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();
+
 -- Function to clean up expired sessions (can be run periodically)
 CREATE OR REPLACE FUNCTION clean_expired_sessions()
 RETURNS INTEGER AS $$
@@ -643,6 +739,7 @@ COMMENT ON TABLE faculties IS 'Stores faculty/department information';
 COMMENT ON TABLE venues IS 'Stores venue/room information managed by faculties';
 COMMENT ON TABLE events IS 'Stores campus events information';
 COMMENT ON TABLE venue_bookings IS 'Stores venue booking requests for events';
+COMMENT ON TABLE event_invitations IS 'Stores user invitations for invite-only events';
 
 COMMENT ON COLUMN users.role IS 'User role: student, event_organizer, administrator, faculty_manager';
 COMMENT ON COLUMN users.status IS 'User account status: active, inactive, or blocked';
@@ -654,11 +751,13 @@ COMMENT ON COLUMN venues.code IS 'Unique code for venue (e.g., LT-FCI-01, LAB-CS
 COMMENT ON COLUMN venues.location IS 'Floor or room location (e.g., Level 2, Ground Floor)';
 COMMENT ON COLUMN venues.capacity IS 'Maximum number of people the venue can accommodate';
 COMMENT ON COLUMN venues.status IS 'Venue status: active, inactive, maintenance';
-COMMENT ON COLUMN events.visibility IS 'Event visibility: facultyonly, campuswide, inviteonly';
+COMMENT ON COLUMN events.visibility IS 'Event visibility: campuswide (all users), facultyonly (same faculty as organizer), inviteonly (explicitly invited users only)';
 COMMENT ON COLUMN events.status IS 'Event status: upcoming, ongoing, completed, cancelled';
 COMMENT ON COLUMN venue_bookings.status IS 'Booking status: pending, approved, rejected, cancelled';
 COMMENT ON COLUMN venue_bookings.setup_time IS 'Minutes needed before event for setup';
 COMMENT ON COLUMN venue_bookings.teardown_time IS 'Minutes needed after event for cleanup';
 COMMENT ON COLUMN venue_bookings.expected_attendees IS 'Expected number of attendees for capacity verification';
 COMMENT ON COLUMN venue_bookings.remarks IS 'Purpose and notes about the booking';
+COMMENT ON COLUMN event_invitations.status IS 'Invitation status: pending, accepted, declined';
+COMMENT ON COLUMN event_invitations.invited_by IS 'User ID of who sent the invitation (usually event organizer)';
 

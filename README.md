@@ -187,6 +187,57 @@ sefproject/
 - ✅ Protected routes
 - ✅ Database schema with 6 tables and relationships
 
+## 🎫 Event Visibility Rules
+
+The system has three visibility levels that control who can see and access events:
+
+### 🌐 Campus-wide (`campuswide`)
+**Who can see:** All logged-in users regardless of role or faculty
+- Students from any faculty
+- Event organizers
+- Faculty managers
+- Administrators
+
+**Use cases:** General campus events, sports day, orientation, career fairs
+
+---
+
+### 🏫 Faculty Only (`facultyonly`)
+**Who can see:** Only users belonging to the **same faculty** as the event organizer
+- If event organizer is from Faculty of Computing and Informatics (FCI):
+  - ✅ Students with `faculty_id = FCI`
+  - ✅ Faculty manager with `faculty_id = FCI`
+  - ❌ Students/managers from other faculties
+
+**Access rule:** `user.faculty_id === event_organizer.faculty_id`
+
+**Use cases:** Faculty-specific workshops, department meetings, internal seminars
+
+**Note:** Event organizers and administrators can see all faculty-only events for management purposes
+
+---
+
+### 💌 Invite Only (`inviteonly`)
+**Who can see:** Only specifically invited users (requires `event_invitations` table)
+- Event organizer explicitly invites users by their user ID
+- Invitation record must exist: `event_invitations.event_id = event.id AND event_invitations.user_id = current_user.id`
+
+**Access rule:** Must have invitation record in database
+
+**Use cases:** Private meetings, VIP alumni meetups, exclusive networking events, closed workshops
+
+**Special access:** Event organizer and administrators can always see their own invite-only events
+
+---
+
+### 📋 Summary Table
+
+| Visibility | Students | Event Organizers | Faculty Managers | Administrators |
+|------------|----------|------------------|------------------|----------------|
+| Campus-wide | ✅ All | ✅ All | ✅ All | ✅ All |
+| Faculty Only | ✅ Same faculty only | ✅ Same faculty + view all | ✅ Same faculty only | ✅ All |
+| Invite Only | ✅ If invited | ✅ Own events + if invited | ✅ If invited | ✅ All |
+
 ## 👥 Team Collaboration (For Team Lead)
 
 ### Adding New Team Members:

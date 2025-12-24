@@ -11,7 +11,9 @@ class Event {
           organizer:organizer_id (
             id,
             email,
-            role
+            name,
+            role,
+            faculty_id
           )
         `)
         .in('status', ['upcoming', 'ongoing'])
@@ -35,7 +37,9 @@ class Event {
           organizer:organizer_id (
             id,
             email,
-            role
+            name,
+            role,
+            faculty_id
           )
         `)
         .eq('id', id)
@@ -65,7 +69,9 @@ class Event {
           organizer:organizer_id (
             id,
             email,
-            role
+            name,
+            role,
+            faculty_id
           )
         `)
         .eq('status', status)
@@ -89,7 +95,9 @@ class Event {
           organizer:organizer_id (
             id,
             email,
-            role
+            name,
+            role,
+            faculty_id
           )
         `)
         .eq('visibility', visibility)
@@ -100,6 +108,22 @@ class Event {
       return data;
     } catch (error) {
       console.error('Error fetching events by visibility:', error);
+      throw error;
+    }
+  }
+
+  // Get event invitations for a user
+  static async getUserInvitations(userId) {
+    try {
+      const { data, error } = await supabase
+        .from('event_invitations')
+        .select('event_id')
+        .eq('user_id', userId);
+
+      if (error) throw error;
+      return data.map(inv => inv.event_id);
+    } catch (error) {
+      console.error('Error fetching user invitations:', error);
       throw error;
     }
   }
