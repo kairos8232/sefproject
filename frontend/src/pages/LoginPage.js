@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import authService from '../services/authService';
 import './LoginPage.css';
 
@@ -7,8 +7,31 @@ function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [info, setInfo] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    // Check for session expired from URL
+    const params = new URLSearchParams(location.search);
+    if (params.get('expired') === 'true') {
+      setInfo('Your session has expired.');
+      // Clear URL params
+      window.history.replaceState({}, '', '/login');
+      // Auto-dismiss after 3 seconds
+      setTimeout(() => setInfo(''), 3000);
+    }
+    
+    // Check for logout message
+    if (location.state?.message) {
+      setInfo(location.state.message);
+      // Clear state so refresh doesn't show it again
+      window.history.replaceState({}, '');
+      // Auto-dismiss after 3 seconds
+      setTimeout(() => setInfo(''), 3000);
+    }
+  }, [location]);
 
   // Validate email format
   const isValidEmail = (email) => {
@@ -89,6 +112,13 @@ function LoginPage() {
               autoComplete="current-password"
             />
           </div>
+
+          {/* Info message */}
+          {info && (
+            <div className="info-message">
+              {info}
+            </div>
+          )}
 
           {/* Error message */}
           {error && (

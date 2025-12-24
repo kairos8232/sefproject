@@ -24,6 +24,21 @@ api.interceptors.request.use(
   }
 );
 
+// Handle session expiration
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // UC-02 Alternate Flow: Session expired
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      // Redirect to login with message
+      window.location.href = '/login?expired=true';
+    }
+    return Promise.reject(error);
+  }
+);
+
 // Authentication service
 const authService = {
   // login(email, password) - corresponds to UI -> C: login(email, password)
@@ -44,11 +59,15 @@ const authService = {
 
   logout: async () => {
     try {
+      // UC-02: Invalidate session and clear session data
       await api.post('/auth/logout');
+    } catch (error) {
+      // Even if API call fails, clear local data
+      console.error('Logout error:', error);
+    } finally {
+      // Always clear local storage
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-    } catch (error) {
-      console.error('Logout error:', error);
     }
   },
 

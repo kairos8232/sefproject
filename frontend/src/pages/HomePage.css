@@ -18,6 +18,14 @@
   border: 1px solid #ddd;
 }
 
+.info-message {
+  background-color: #eef;
+  color: #006;
+  padding: 10px;
+  margin-bottom: 15px;
+  border: 1px solid #006;
+}
+
 .user-info p {
   margin: 8px 0;
 }
