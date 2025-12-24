@@ -2,6 +2,8 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './pages/LoginPage';
 import HomePage from './pages/HomePage';
+import EventsPage from './pages/EventsPage';
+import EventDetailsPage from './pages/EventDetailsPage';
 
 function App() {
   return (
@@ -9,6 +11,8 @@ function App() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/home" element={<HomePage />} />
+        <Route path="/events" element={<EventsPage />} />
+        <Route path="/events/:id" element={<EventDetailsPage />} />
         <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>
     </Router>

@@ -29,7 +29,8 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     // UC-02 Alternate Flow: Session expired
-    if (error.response?.status === 401) {
+    // Only redirect if it's a 401 on authenticated endpoints (not login itself)
+    if (error.response?.status === 401 && !error.config.url.includes('/auth/login')) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       // Redirect to login with message

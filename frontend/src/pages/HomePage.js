@@ -52,9 +52,15 @@ function HomePage() {
           <p><strong>Role:</strong> {user.role}</p>
           <p><strong>Status:</strong> <span className="status-active">Active</span></p>
         </div>
-        <button onClick={handleLogout} className="logout-button">
-          Logout
-        </button>
+
+        <div className="action-buttons">
+          <button onClick={() => navigate('/events')} className="events-button">
+            Browse Events
+          </button>
+          <button onClick={handleLogout} className="logout-button">
+            Logout
+          </button>
+        </div>
       </div>
     </div>
   );

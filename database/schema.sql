@@ -74,10 +74,10 @@ CREATE POLICY sessions_select_policy ON sessions
 -- Hashed using bcrypt with salt rounds = 10
 -- ========================================
 INSERT INTO users (email, password, role, status) VALUES
-  ('student@example.com', '$2a$10$rQZ1YXx6yK5z8Q3J3vZN1.XqXWLY8HvB9K0Z8J3vZN1.XqXWLY8Hv', 'student', 'active'),
-  ('admin@example.com', '$2a$10$rQZ1YXx6yK5z8Q3J3vZN1.XqXWLY8HvB9K0Z8J3vZN1.XqXWLY8Hv', 'admin', 'active'),
-  ('blocked@example.com', '$2a$10$rQZ1YXx6yK5z8Q3J3vZN1.XqXWLY8HvB9K0Z8J3vZN1.XqXWLY8Hv', 'student', 'blocked'),
-  ('inactive@example.com', '$2a$10$rQZ1YXx6yK5z8Q3J3vZN1.XqXWLY8HvB9K0Z8J3vZN1.XqXWLY8Hv', 'student', 'inactive');
+  ('student@example.com', '$2a$10$g2ALFzfYf4jpTmp7bCIzd.5cael8S5xBTGOn8FEyda1Bnt/.ebzV2', 'student', 'active'),
+  ('admin@example.com', '$2a$10$g2ALFzfYf4jpTmp7bCIzd.5cael8S5xBTGOn8FEyda1Bnt/.ebzV2', 'admin', 'active'),
+  ('blocked@example.com', '$2a$10$g2ALFzfYf4jpTmp7bCIzd.5cael8S5xBTGOn8FEyda1Bnt/.ebzV2', 'student', 'blocked'),
+  ('inactive@example.com', '$2a$10$g2ALFzfYf4jpTmp7bCIzd.5cael8S5xBTGOn8FEyda1Bnt/.ebzV2', 'student', 'inactive');
 
 -- ========================================
 -- Useful Functions
@@ -118,3 +118,163 @@ COMMENT ON TABLE sessions IS 'Stores active user sessions with JWT tokens';
 COMMENT ON COLUMN users.status IS 'User account status: active, inactive, or blocked';
 COMMENT ON COLUMN sessions.token IS 'JWT token for authentication';
 COMMENT ON COLUMN sessions.expires_at IS 'Session expiration timestamp';
+
+-- ========================================
+-- Table: events
+-- UC-03: Browse Events
+-- ========================================
+CREATE TABLE events (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  organizer_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  event_name VARCHAR(255) NOT NULL,
+  description TEXT,
+  visibility VARCHAR(50) NOT NULL DEFAULT 'campuswide', -- 'facultyonly', 'campuswide', 'inviteonly'
+  event_type VARCHAR(100), -- e.g., 'seminar', 'workshop', 'sports', 'cultural'
+  status VARCHAR(50) NOT NULL DEFAULT 'upcoming', -- 'upcoming', 'ongoing', 'completed', 'cancelled'
+  start_datetime TIMESTAMP WITH TIME ZONE NOT NULL,
+  end_datetime TIMESTAMP WITH TIME ZONE NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Indexes for faster queries
+CREATE INDEX idx_events_organizer_id ON events(organizer_id);
+CREATE INDEX idx_events_status ON events(status);
+CREATE INDEX idx_events_visibility ON events(visibility);
+CREATE INDEX idx_events_start_datetime ON events(start_datetime);
+
+-- RLS Policies for events
+ALTER TABLE events ENABLE ROW LEVEL SECURITY;
+
+-- Anyone can view campus-wide events
+CREATE POLICY "Anyone can view campuswide events" ON events
+  FOR SELECT
+  USING (visibility = 'campuswide');
+
+-- Backend can manage all events
+CREATE POLICY "Backend can read all events" ON events
+  FOR SELECT
+  USING (true);
+
+CREATE POLICY "Backend can insert events" ON events
+  FOR INSERT
+  WITH CHECK (true);
+
+CREATE POLICY "Backend can update events" ON events
+  FOR UPDATE
+  USING (true);
+
+CREATE POLICY "Backend can delete events" ON events
+  FOR DELETE
+  USING (true);
+
+-- Trigger to auto-update updated_at
+CREATE TRIGGER update_events_updated_at
+BEFORE UPDATE ON events
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();
+
+-- Comments for documentation
+COMMENT ON TABLE events IS 'Stores campus events information';
+COMMENT ON COLUMN events.visibility IS 'Event visibility: facultyonly, campuswide, inviteonly';
+COMMENT ON COLUMN events.status IS 'Event status: upcoming, ongoing, completed, cancelled';
+
+-- ========================================
+-- Sample Events Data for Testing
+-- ========================================
+INSERT INTO events (organizer_id, event_name, description, visibility, event_type, status, start_datetime, end_datetime)
+SELECT 
+  (SELECT id FROM users WHERE email = 'admin@example.com' LIMIT 1),
+  'Campus Tech Workshop',
+  'Learn about the latest web technologies and frameworks. Open to all students and faculty.',
+  'campuswide',
+  'workshop',
+  'upcoming',
+  CURRENT_TIMESTAMP + INTERVAL '7 days',
+  CURRENT_TIMESTAMP + INTERVAL '7 days' + INTERVAL '3 hours'
+WHERE EXISTS (SELECT 1 FROM users WHERE email = 'admin@example.com');
+
+INSERT INTO events (organizer_id, event_name, description, visibility, event_type, status, start_datetime, end_datetime)
+SELECT 
+  (SELECT id FROM users WHERE email = 'admin@example.com' LIMIT 1),
+  'Annual Sports Day',
+  'Inter-department sports competition. All students welcome!',
+  'campuswide',
+  'sports',
+  'upcoming',
+  CURRENT_TIMESTAMP + INTERVAL '14 days',
+  CURRENT_TIMESTAMP + INTERVAL '14 days' + INTERVAL '8 hours'
+WHERE EXISTS (SELECT 1 FROM users WHERE email = 'admin@example.com');
+
+INSERT INTO events (organizer_id, event_name, description, visibility, event_type, status, start_datetime, end_datetime)
+SELECT 
+  (SELECT id FROM users WHERE email = 'admin@example.com' LIMIT 1),
+  'Faculty Development Seminar',
+  'Professional development workshop for faculty members only.',
+  'facultyonly',
+  'seminar',
+  'upcoming',
+  CURRENT_TIMESTAMP + INTERVAL '5 days',
+  CURRENT_TIMESTAMP + INTERVAL '5 days' + INTERVAL '2 hours'
+WHERE EXISTS (SELECT 1 FROM users WHERE email = 'admin@example.com');
+
+INSERT INTO events (organizer_id, event_name, description, visibility, event_type, status, start_datetime, end_datetime)
+SELECT 
+  (SELECT id FROM users WHERE email = 'student@example.com' LIMIT 1),
+  'Cultural Night 2025',
+  'Celebrate diversity with performances, food, and cultural exhibitions from around the world.',
+  'campuswide',
+  'cultural',
+  'upcoming',
+  CURRENT_TIMESTAMP + INTERVAL '21 days',
+  CURRENT_TIMESTAMP + INTERVAL '21 days' + INTERVAL '5 hours'
+WHERE EXISTS (SELECT 1 FROM users WHERE email = 'student@example.com');
+
+INSERT INTO events (organizer_id, event_name, description, visibility, event_type, status, start_datetime, end_datetime)
+SELECT 
+  (SELECT id FROM users WHERE email = 'student@example.com' LIMIT 1),
+  'Hackathon 2025',
+  'Join us for a 24-hour coding challenge! Build innovative solutions and win prizes.',
+  'campuswide',
+  'workshop',
+  'ongoing',
+  CURRENT_TIMESTAMP - INTERVAL '2 hours',
+  CURRENT_TIMESTAMP + INTERVAL '22 hours'
+WHERE EXISTS (SELECT 1 FROM users WHERE email = 'student@example.com');
+
+INSERT INTO events (organizer_id, event_name, description, visibility, event_type, status, start_datetime, end_datetime)
+SELECT 
+  (SELECT id FROM users WHERE email = 'admin@example.com' LIMIT 1),
+  'Career Fair',
+  'Meet recruiters from top companies. Bring your resume!',
+  'campuswide',
+  'career',
+  'upcoming',
+  CURRENT_TIMESTAMP + INTERVAL '10 days',
+  CURRENT_TIMESTAMP + INTERVAL '10 days' + INTERVAL '6 hours'
+WHERE EXISTS (SELECT 1 FROM users WHERE email = 'admin@example.com');
+
+INSERT INTO events (organizer_id, event_name, description, visibility, event_type, status, start_datetime, end_datetime)
+SELECT 
+  (SELECT id FROM users WHERE email = 'student@example.com' LIMIT 1),
+  'Alumni Meetup',
+  'Private networking event for selected alumni and current students.',
+  'inviteonly',
+  'networking',
+  'upcoming',
+  CURRENT_TIMESTAMP + INTERVAL '30 days',
+  CURRENT_TIMESTAMP + INTERVAL '30 days' + INTERVAL '4 hours'
+WHERE EXISTS (SELECT 1 FROM users WHERE email = 'student@example.com');
+
+INSERT INTO events (organizer_id, event_name, description, visibility, event_type, status, start_datetime, end_datetime)
+SELECT 
+  (SELECT id FROM users WHERE email = 'admin@example.com' LIMIT 1),
+  'Orientation Week',
+  'Welcome new students! Campus tours, registration assistance, and meet your peers.',
+  'campuswide',
+  'orientation',
+  'completed',
+  CURRENT_TIMESTAMP - INTERVAL '30 days',
+  CURRENT_TIMESTAMP - INTERVAL '25 days'
+WHERE EXISTS (SELECT 1 FROM users WHERE email = 'admin@example.com');
+

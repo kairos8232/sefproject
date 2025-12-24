@@ -34,6 +34,25 @@
   color: green;
 }
 
+.action-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.events-button {
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  flex: 1;
+}
+
+.events-button:hover {
+  background-color: #0056b3;
+}
+
 .logout-button {
   padding: 10px 20px;
   background-color: #cc0000;
@@ -41,4 +60,5 @@
   border: none;
   cursor: pointer;
   font-size: 16px;
+  flex: 1;
 }
