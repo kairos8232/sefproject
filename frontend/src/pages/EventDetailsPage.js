@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import eventService from '../services/eventService';
 import participationService from '../services/participationService';
+import authService from '../services/authService';
 import './EventDetailsPage.css';
 
 function EventDetailsPage() {
@@ -13,6 +14,11 @@ function EventDetailsPage() {
   const [actionMessage, setActionMessage] = useState('');
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const currentUser = authService.getCurrentUser();
+  
+  // Check if user came from My Events page (management view)
+  const isManagementView = location.state?.fromMyEvents;
 
   const loadEventDetails = useCallback(async () => {
     try {
@@ -80,7 +86,12 @@ function EventDetailsPage() {
   }, [loadEventDetails]);
 
   const handleBackToEvents = () => {
-    navigate('/events');
+    // Navigate back to the page user came from
+    if (isManagementView) {
+      navigate('/my-events');
+    } else {
+      navigate('/events');
+    }
   };
 
   const formatDateTime = (datetime) => {
@@ -143,7 +154,7 @@ function EventDetailsPage() {
       <div className="event-details-container">
         <div className="error-message">{error}</div>
         <button onClick={handleBackToEvents} className="back-button">
-          Back to Events
+          {isManagementView ? 'Back to My Events' : 'Back to Events'}
         </button>
       </div>
     );
@@ -154,7 +165,7 @@ function EventDetailsPage() {
       <div className="event-details-container">
         <div className="error-message">Event not found</div>
         <button onClick={handleBackToEvents} className="back-button">
-          Back to Events
+          {isManagementView ? 'Back to My Events' : 'Back to Events'}
         </button>
       </div>
     );
@@ -168,7 +179,7 @@ function EventDetailsPage() {
           <p>View event information and manage your registration</p>
         </div>
         <button onClick={handleBackToEvents} className="back-button">
-          Back to Events
+          {isManagementView ? 'Back to My Events' : 'Back to Events'}
         </button>
       </div>
 
@@ -232,8 +243,8 @@ function EventDetailsPage() {
           <p><strong>Created:</strong> {formatDateTime(event.created_at)}</p>
         </div>
 
-        {/* Participation Actions */}
-        {(event.status === 'upcoming' || event.status === 'ongoing') && (
+        {/* Participation Actions - Only show if NOT in management view */}
+        {!isManagementView && (event.status === 'upcoming' || event.status === 'ongoing') && (
           <div className="participation-actions">
             {actionMessage && (
               <div className={`action-message ${actionMessage.includes('Success') || actionMessage.includes('cancel') ? 'success' : 'error'}`}>

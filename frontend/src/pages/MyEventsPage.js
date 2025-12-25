@@ -6,6 +6,7 @@ import './MyEventsPage.css';
 
 function MyEventsPage() {
   const [events, setEvents] = useState([]);
+  const [totalEvents, setTotalEvents] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filter, setFilter] = useState('all');
@@ -26,6 +27,9 @@ function MyEventsPage() {
       // Filter events created by current user
       let myEvents = data.events.filter(e => e.organizer_id === user.id);
       
+      // Store total count before applying filter
+      setTotalEvents(myEvents.length);
+      
       // Apply status filter
       if (filter !== 'all') {
         myEvents = myEvents.filter(e => e.status === filter);
@@ -44,7 +48,7 @@ function MyEventsPage() {
   };
 
   const handleViewEvent = (eventId) => {
-    navigate(`/events/${eventId}`);
+    navigate(`/events/${eventId}`, { state: { fromMyEvents: true } });
   };
 
   const handleDeleteEvent = async (eventId, eventName) => {
@@ -131,10 +135,16 @@ function MyEventsPage() {
         <div className="loading">Loading your events...</div>
       ) : events.length === 0 ? (
         <div className="no-events">
-          <p>You haven't created any events yet.</p>
-          <button onClick={handleCreateEvent} className="create-button-large">
-            Create Your First Event
-          </button>
+          {totalEvents === 0 ? (
+            <>
+              <p>You haven't created any events yet.</p>
+              <button onClick={handleCreateEvent} className="create-button-large">
+                Create Your First Event
+              </button>
+            </>
+          ) : (
+            <p>No {filter} events found.</p>
+          )}
         </div>
       ) : (
         <>

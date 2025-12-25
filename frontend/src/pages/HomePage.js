@@ -170,12 +170,39 @@ function HomePage() {
       }
     ];
 
+    // Event creation features (for student, faculty_manager, event_organizer)
+    const eventCreationFeatures = [
+      {
+        title: 'My Events',
+        description: 'Manage your created events',
+        icon: '🎪',
+        path: '/my-events',
+        color: '#ff6b6b'
+      },
+      {
+        title: 'Create Event',
+        description: 'Organize a new event',
+        icon: '➕',
+        path: '/create-event',
+        color: '#6c5ce7'
+      },
+      {
+        title: 'My Venue Requests',
+        description: 'Submit and track venue bookings',
+        icon: '📝',
+        path: '/my-bookings',
+        color: '#f39c12'
+      }
+    ];
+
     if (role === 'administrator') {
-      return [...commonFeatures, ...organizerFeatures, ...adminFeatures];
+      return [...commonFeatures, ...adminFeatures];
     } else if (role === 'event_organizer') {
-      return [...commonFeatures, ...organizerFeatures];
+      return [...commonFeatures, ...eventCreationFeatures];
     } else if (role === 'faculty_manager') {
-      return [...commonFeatures, ...facultyManagerFeatures];
+      return [...commonFeatures, ...eventCreationFeatures, ...facultyManagerFeatures];
+    } else if (role === 'student') {
+      return [...commonFeatures, ...eventCreationFeatures];
     } else {
       return commonFeatures;
     }
@@ -192,7 +219,7 @@ function HomePage() {
       {/* Header */}
       <div className="home-header">
         <div>
-          <h1>Welcome back, {user.name || user.email}! 👋</h1>
+          <h1>Welcome back, {user.name}! 👋</h1>
           <p className="role-badge">{user.role.replace('_', ' ').toUpperCase()}</p>
         </div>
         <button onClick={handleLogout} className="logout-button">
