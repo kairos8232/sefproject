@@ -63,6 +63,16 @@ const eventService = {
       throw error.response?.data?.error || 'Failed to fetch events';
     }
   },
+
+  // Delete event
+  deleteEvent: async (id) => {
+    try {
+      const response = await api.delete(`/events/${id}`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data?.error || 'Failed to delete event';
+    }
+  },
 };
 
 export default eventService;
