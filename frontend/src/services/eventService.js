@@ -64,6 +64,16 @@ const eventService = {
     }
   },
 
+  // Create event
+  createEvent: async (eventData) => {
+    try {
+      const response = await api.post('/events', eventData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data?.error || 'Failed to create event';
+    }
+  },
+
   // Delete event
   deleteEvent: async (id) => {
     try {
