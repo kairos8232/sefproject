@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import eventService from '../services/eventService';
 import authService from '../services/authService';
 import './CreateEventPage.css';
 
 function CreateEventPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const user = authService.getCurrentUser();
 
   // Check if user can change visibility (only event_organizer and administrator)
@@ -125,7 +126,13 @@ function CreateEventPage() {
 
   const handleCancel = () => {
     if (window.confirm('Are you sure you want to cancel? All changes will be lost.')) {
-      navigate('/my-events');
+      // Navigate back to where user came from
+      const fromPage = location.state?.from;
+      if (fromPage === 'home') {
+        navigate('/home');
+      } else {
+        navigate('/my-events');
+      }
     }
   };
 
@@ -136,8 +143,14 @@ function CreateEventPage() {
           <h1>Create New Event</h1>
           <p>Fill in the details to organize a new campus event</p>
         </div>
-        <button onClick={() => navigate('/my-events')} className="back-button">
-          Back to My Events
+        <button 
+          onClick={() => {
+            const fromPage = location.state?.from;
+            navigate(fromPage === 'home' ? '/home' : '/my-events');
+          }} 
+          className="back-button"
+        >
+          {location.state?.from === 'home' ? 'Back to Home' : 'Back to My Events'}
         </button>
       </div>
 

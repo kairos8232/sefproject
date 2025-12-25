@@ -66,7 +66,7 @@ function MyEventsPage() {
   };
 
   const handleCreateEvent = () => {
-    navigate('/create-event');
+    navigate('/create-event', { state: { from: 'my-events' } });
   };
 
   const formatDateTime = (datetime) => {

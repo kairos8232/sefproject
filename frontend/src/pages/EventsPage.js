@@ -49,7 +49,7 @@ function EventsPage() {
   }, [loadEvents]);
 
   const handleEventClick = (eventId) => {
-    navigate(`/events/${eventId}`);
+    navigate(`/events/${eventId}`, { state: { fromEventsPage: true, filter } });
   };
 
   const handleBackToHome = () => {

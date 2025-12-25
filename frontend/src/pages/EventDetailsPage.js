@@ -19,6 +19,8 @@ function EventDetailsPage() {
   
   // Check if user came from My Events page (management view)
   const isManagementView = location.state?.fromMyEvents;
+  const fromEventsPage = location.state?.fromEventsPage;
+  const eventFilter = location.state?.filter;
 
   const loadEventDetails = useCallback(async () => {
     try {
@@ -89,6 +91,8 @@ function EventDetailsPage() {
     // Navigate back to the page user came from
     if (isManagementView) {
       navigate('/my-events');
+    } else if (fromEventsPage && eventFilter) {
+      navigate('/events', { state: { filter: eventFilter } });
     } else {
       navigate('/events');
     }

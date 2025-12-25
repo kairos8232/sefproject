@@ -287,7 +287,17 @@ function HomePage() {
             <div 
               key={index}
               className="feature-card"
-              onClick={() => feature.path ? navigate(feature.path) : feature.action()}
+              onClick={() => {
+                if (feature.path) {
+                  if (feature.path === '/create-event') {
+                    navigate(feature.path, { state: { from: 'home' } });
+                  } else {
+                    navigate(feature.path);
+                  }
+                } else {
+                  feature.action();
+                }
+              }}
               style={{ borderLeft: `4px solid ${feature.color}` }}
             >
               <div className="feature-icon">{feature.icon}</div>
