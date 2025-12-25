@@ -13,7 +13,12 @@ class Event {
             email,
             name,
             role,
-            faculty_id
+            faculty_id,
+            faculty:faculty_id (
+              id,
+              code,
+              name
+            )
           )
         `)
         .in('status', ['upcoming', 'ongoing'])
@@ -39,7 +44,12 @@ class Event {
             email,
             name,
             role,
-            faculty_id
+            faculty_id,
+            faculty:faculty_id (
+              id,
+              code,
+              name
+            )
           )
         `)
         .eq('id', id)
@@ -71,7 +81,12 @@ class Event {
             email,
             name,
             role,
-            faculty_id
+            faculty_id,
+            faculty:faculty_id (
+              id,
+              code,
+              name
+            )
           )
         `)
         .eq('status', status)
@@ -97,7 +112,12 @@ class Event {
             email,
             name,
             role,
-            faculty_id
+            faculty_id,
+            faculty:faculty_id (
+              id,
+              code,
+              name
+            )
           )
         `)
         .eq('visibility', visibility)

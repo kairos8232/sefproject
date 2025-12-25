@@ -49,6 +49,35 @@ function EventDetailsPage() {
     return `${hours}h ${minutes}m`;
   };
 
+  const formatVisibility = (visibility, organizerFaculty) => {
+    if (visibility === 'facultyonly' && organizerFaculty) {
+      return `${organizerFaculty.code} only`;
+    }
+    if (visibility === 'campuswide') {
+      return 'Campus-wide';
+    }
+    if (visibility === 'inviteonly') {
+      return 'Invite only';
+    }
+    return visibility;
+  };
+
+  const formatRole = (role, faculty) => {
+    if (role === 'faculty_manager' && faculty) {
+      return `${faculty.code} Faculty Manager`;
+    }
+    if (role === 'event_organizer') {
+      return 'Event Organizer';
+    }
+    if (role === 'administrator') {
+      return 'Administrator';
+    }
+    if (role === 'student' && faculty) {
+      return `${faculty.code} Student`;
+    }
+    return role;
+  };
+
   if (loading) {
     return (
       <div className="event-details-container">
@@ -103,7 +132,7 @@ function EventDetailsPage() {
 
           <div className="info-section">
             <h3>Visibility</h3>
-            <p className="capitalize">{event.visibility}</p>
+            <p className="capitalize">{formatVisibility(event.visibility, event.organizer?.faculty)}</p>
           </div>
 
           <div className="info-section">
@@ -114,7 +143,7 @@ function EventDetailsPage() {
           <div className="info-section">
             <h3>Organizer</h3>
             <p>{event.organizer?.email || 'Unknown'}</p>
-            <p className="role-badge">{event.organizer?.role || ''}</p>
+            <p className="role-badge">{formatRole(event.organizer?.role, event.organizer?.faculty)}</p>
           </div>
         </div>
 
