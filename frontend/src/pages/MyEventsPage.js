@@ -75,6 +75,13 @@ function MyEventsPage() {
     });
   };
 
+  const formatVisibility = (visibility) => {
+    if (visibility === 'campuswide') return 'Campus-Wide';
+    if (visibility === 'facultyonly') return 'Faculty Only';
+    if (visibility === 'inviteonly') return 'Invite Only';
+    return visibility;
+  };
+
   const getStatusBadgeClass = (status) => {
     switch (status) {
       case 'upcoming':
@@ -171,7 +178,7 @@ function MyEventsPage() {
                     </td>
                     <td>
                       <span className="visibility-badge">
-                        {event.visibility}
+                        {formatVisibility(event.visibility)}
                       </span>
                     </td>
                     <td>{formatDateTime(event.start_datetime)}</td>

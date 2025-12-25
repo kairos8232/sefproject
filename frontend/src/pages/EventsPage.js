@@ -66,6 +66,13 @@ function EventsPage() {
     });
   };
 
+  const formatVisibility = (visibility) => {
+    if (visibility === 'campuswide') return 'Campus-Wide';
+    if (visibility === 'facultyonly') return 'Faculty Only';
+    if (visibility === 'inviteonly') return 'Invite Only';
+    return visibility;
+  };
+
   return (
     <div className="events-container">
       <div className="events-header">
@@ -114,8 +121,8 @@ function EventsPage() {
               </p>
               <div className="event-details">
                 <p><strong>Start:</strong> {formatDateTime(event.start_datetime)}</p>
-                <p><strong>Visibility:</strong> {event.visibility}</p>
-                <p><strong>Organizer:</strong> {event.organizer?.email || 'Unknown'}</p>
+                <p><strong>Visibility:</strong> {formatVisibility(event.visibility)}</p>
+                <p><strong>Organizer:</strong> {event.organizer?.name || event.organizer?.email || 'Unknown'}</p>
               </div>
             </div>
           ))}

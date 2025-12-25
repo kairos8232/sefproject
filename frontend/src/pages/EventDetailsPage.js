@@ -106,10 +106,10 @@ function EventDetailsPage() {
       return `${organizerFaculty.code} only`;
     }
     if (visibility === 'campuswide') {
-      return 'Campus-wide';
+      return 'Campus-Wide';
     }
     if (visibility === 'inviteonly') {
-      return 'Invite only';
+      return 'Invite Only';
     }
     return visibility;
   };
@@ -163,8 +163,12 @@ function EventDetailsPage() {
   return (
     <div className="event-details-container">
       <div className="event-details-header">
+        <div>
+          <h1>Event Details</h1>
+          <p>View event information and manage your registration</p>
+        </div>
         <button onClick={handleBackToEvents} className="back-button">
-          ← Back to Events
+          Back to Events
         </button>
       </div>
 
@@ -201,7 +205,7 @@ function EventDetailsPage() {
 
           <div className="info-section">
             <h3>Organizer</h3>
-            <p>{event.organizer?.email || 'Unknown'}</p>
+            <p>{event.organizer?.name || event.organizer?.email || 'Unknown'}</p>
             <p className="role-badge">{formatRole(event.organizer?.role, event.organizer?.faculty)}</p>
           </div>
         </div>
