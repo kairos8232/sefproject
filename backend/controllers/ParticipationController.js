@@ -1,0 +1,160 @@
+const Participation = require('../models/Participation');
+const Event = require('../models/Event');
+
+class ParticipationController {
+  // Register for an event
+  register = async (req, res) => {
+    try {
+      const { eventId } = req.params;
+      const userId = req.user.userId;
+
+      // Check if event exists
+      const event = await Event.getById(eventId);
+      if (!event) {
+        return res.status(404).json({ error: 'Event not found' });
+      }
+
+      // Check if event is still upcoming or ongoing
+      if (event.status === 'completed' || event.status === 'cancelled') {
+        return res.status(400).json({ error: 'Cannot register for completed or cancelled events' });
+      }
+
+      // Check if user already registered
+      const existingParticipation = await Participation.getUserEventParticipation(eventId, userId);
+      
+      if (existingParticipation) {
+        if (existingParticipation.status === 'registered') {
+          return res.status(400).json({ error: 'You are already registered for this event' });
+        }
+        // If previously cancelled, allow re-registration
+        if (existingParticipation.status === 'cancelled') {
+          // Delete old record and create new one
+          const participation = await Participation.register(eventId, userId);
+          return res.status(200).json({
+            message: 'Successfully re-registered for event',
+            participation
+          });
+        }
+      }
+
+      // Register user
+      const participation = await Participation.register(eventId, userId);
+
+      res.status(201).json({
+        message: 'Successfully registered for event',
+        participation
+      });
+    } catch (error) {
+      console.error('Error in register:', error);
+      
+      // Handle duplicate registration (unique constraint violation)
+      if (error.code === '23505') {
+        return res.status(400).json({ error: 'You are already registered for this event' });
+      }
+      
+      res.status(500).json({ error: 'Failed to register for event' });
+    }
+  };
+
+  // Cancel participation
+  cancel = async (req, res) => {
+    try {
+      const { eventId } = req.params;
+      const userId = req.user.userId;
+
+      // Check if user is registered
+      const participation = await Participation.getUserEventParticipation(eventId, userId);
+      
+      if (!participation) {
+        return res.status(404).json({ error: 'You are not registered for this event' });
+      }
+
+      if (participation.status === 'cancelled') {
+        return res.status(400).json({ error: 'Your registration is already cancelled' });
+      }
+
+      if (participation.status === 'attended') {
+        return res.status(400).json({ error: 'Cannot cancel after attending the event' });
+      }
+
+      // Cancel participation
+      const updatedParticipation = await Participation.cancel(eventId, userId);
+
+      res.status(200).json({
+        message: 'Successfully cancelled registration',
+        participation: updatedParticipation
+      });
+    } catch (error) {
+      console.error('Error in cancel:', error);
+      res.status(500).json({ error: 'Failed to cancel registration' });
+    }
+  };
+
+  // Get user's participation status for an event
+  getStatus = async (req, res) => {
+    try {
+      const { eventId } = req.params;
+      const userId = req.user.userId;
+
+      const participation = await Participation.getUserEventParticipation(eventId, userId);
+
+      res.status(200).json({
+        participation: participation || null,
+        isRegistered: participation?.status === 'registered'
+      });
+    } catch (error) {
+      console.error('Error in getStatus:', error);
+      res.status(500).json({ error: 'Failed to get participation status' });
+    }
+  };
+
+  // Get user's all participations
+  getMyParticipations = async (req, res) => {
+    try {
+      const userId = req.user.userId;
+
+      const participations = await Participation.getUserParticipations(userId);
+
+      res.status(200).json({
+        participations
+      });
+    } catch (error) {
+      console.error('Error in getMyParticipations:', error);
+      res.status(500).json({ error: 'Failed to get participations' });
+    }
+  };
+
+  // Get event participants (for organizers/admins)
+  getEventParticipants = async (req, res) => {
+    try {
+      const { eventId } = req.params;
+      const userId = req.user.userId;
+      const userRole = req.user.role;
+
+      // Check if event exists
+      const event = await Event.getById(eventId);
+      if (!event) {
+        return res.status(404).json({ error: 'Event not found' });
+      }
+
+      // Only event organizer or administrator can view participants
+      if (userRole !== 'administrator' && event.organizer_id !== userId) {
+        return res.status(403).json({ error: 'You do not have permission to view participants' });
+      }
+
+      const participants = await Participation.getEventParticipants(eventId);
+      const registeredCount = await Participation.getEventParticipationCount(eventId, 'registered');
+
+      res.status(200).json({
+        participants,
+        registeredCount,
+        totalCount: participants.length
+      });
+    } catch (error) {
+      console.error('Error in getEventParticipants:', error);
+      res.status(500).json({ error: 'Failed to get event participants' });
+    }
+  };
+}
+
+module.exports = new ParticipationController();

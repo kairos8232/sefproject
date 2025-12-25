@@ -9,6 +9,7 @@
 -- 5. events - Event information
 -- 6. venue_bookings - Venue booking requests
 -- 7. event_invitations - Event invitation management
+-- 8. event_participation - Event participation/registration tracking
 -- ========================================
 
 -- Enable UUID extension (if not already enabled)
@@ -17,6 +18,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- ========================================
 -- Drop existing tables (in reverse order of dependencies)
 -- ========================================
+DROP TABLE IF EXISTS event_participation CASCADE;
 DROP TABLE IF EXISTS event_invitations CASCADE;
 DROP TABLE IF EXISTS venue_bookings CASCADE;
 DROP TABLE IF EXISTS events CASCADE;
@@ -206,6 +208,30 @@ CREATE INDEX idx_event_invitations_invited_by ON event_invitations(invited_by);
 CREATE INDEX idx_event_invitations_status ON event_invitations(status);
 
 -- ========================================
+-- Table: event_participation
+-- Stores user participation/registration for events
+-- Simple tracking of who registered for which events
+-- ========================================
+CREATE TABLE event_participation (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  status VARCHAR(50) NOT NULL DEFAULT 'registered', -- 'registered', 'cancelled', 'attended'
+  registered_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  cancelled_at TIMESTAMP WITH TIME ZONE,
+  check_in_datetime TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(event_id, user_id) -- Prevent duplicate registrations
+);
+
+-- Indexes for faster queries
+CREATE INDEX idx_event_participation_event_id ON event_participation(event_id);
+CREATE INDEX idx_event_participation_user_id ON event_participation(user_id);
+CREATE INDEX idx_event_participation_status ON event_participation(status);
+CREATE INDEX idx_event_participation_registered_at ON event_participation(registered_at);
+
+-- ========================================
 -- Row Level Security (RLS)
 -- ========================================
 -- Enable RLS on tables
@@ -216,6 +242,7 @@ ALTER TABLE venues ENABLE ROW LEVEL SECURITY;
 ALTER TABLE events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE venue_bookings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE event_invitations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE event_participation ENABLE ROW LEVEL SECURITY;
 
 -- Backend can manage all users
 CREATE POLICY "Backend can read all users" ON users
@@ -308,6 +335,23 @@ CREATE POLICY "Backend can update venue_bookings" ON venue_bookings
   USING (true);
 
 CREATE POLICY "Backend can delete venue_bookings" ON venue_bookings
+  FOR DELETE
+  USING (true);
+
+-- Backend can manage all event_participation
+CREATE POLICY "Backend can read all event_participation" ON event_participation
+  FOR SELECT
+  USING (true);
+
+CREATE POLICY "Backend can insert event_participation" ON event_participation
+  FOR INSERT
+  WITH CHECK (true);
+
+CREATE POLICY "Backend can update event_participation" ON event_participation
+  FOR UPDATE
+  USING (true);
+
+CREATE POLICY "Backend can delete event_participation" ON event_participation
   FOR DELETE
   USING (true);
 
@@ -628,10 +672,74 @@ SELECT
   20
 WHERE EXISTS (SELECT 1 FROM events WHERE event_name = 'Alumni Meetup');
 
+-- ========================================
+-- Sample Event Participation Data
+-- ========================================
+INSERT INTO event_participation (event_id, user_id, status, registered_at)
+SELECT 
+  (SELECT id FROM events WHERE event_name = 'Campus Tech Workshop' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'john.student@student.edu' LIMIT 1),
+  'registered',
+  CURRENT_TIMESTAMP - INTERVAL '3 days'
+WHERE EXISTS (SELECT 1 FROM events WHERE event_name = 'Campus Tech Workshop');
+
+INSERT INTO event_participation (event_id, user_id, status, registered_at)
+SELECT 
+  (SELECT id FROM events WHERE event_name = 'Campus Tech Workshop' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'emily.tan@student.edu' LIMIT 1),
+  'registered',
+  CURRENT_TIMESTAMP - INTERVAL '2 days'
+WHERE EXISTS (SELECT 1 FROM events WHERE event_name = 'Campus Tech Workshop');
+
+INSERT INTO event_participation (event_id, user_id, status, registered_at)
+SELECT 
+  (SELECT id FROM events WHERE event_name = 'Annual Sports Day' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'michael.kumar@student.edu' LIMIT 1),
+  'registered',
+  CURRENT_TIMESTAMP - INTERVAL '5 days'
+WHERE EXISTS (SELECT 1 FROM events WHERE event_name = 'Annual Sports Day');
+
+INSERT INTO event_participation (event_id, user_id, status, registered_at, cancelled_at)
+SELECT 
+  (SELECT id FROM events WHERE event_name = 'Annual Sports Day' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'lisa.chong@student.edu' LIMIT 1),
+  'cancelled',
+  CURRENT_TIMESTAMP - INTERVAL '6 days',
+  CURRENT_TIMESTAMP - INTERVAL '1 day'
+WHERE EXISTS (SELECT 1 FROM events WHERE event_name = 'Annual Sports Day');
+
+INSERT INTO event_participation (event_id, user_id, status, registered_at, check_in_datetime)
+SELECT 
+  (SELECT id FROM events WHERE event_name = 'Hackathon 2025' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'emily.tan@student.edu' LIMIT 1),
+  'attended',
+  CURRENT_TIMESTAMP - INTERVAL '10 days',
+  CURRENT_TIMESTAMP - INTERVAL '2 hours'
+WHERE EXISTS (SELECT 1 FROM events WHERE event_name = 'Hackathon 2025');
+
+INSERT INTO event_participation (event_id, user_id, status, registered_at, check_in_datetime)
+SELECT 
+  (SELECT id FROM events WHERE event_name = 'Hackathon 2025' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'david.lim@student.edu' LIMIT 1),
+  'attended',
+  CURRENT_TIMESTAMP - INTERVAL '8 days',
+  CURRENT_TIMESTAMP - INTERVAL '2 hours'
+WHERE EXISTS (SELECT 1 FROM events WHERE event_name = 'Hackathon 2025');
+
+INSERT INTO event_participation (event_id, user_id, status, registered_at)
+SELECT 
+  (SELECT id FROM events WHERE event_name = 'Career Fair' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'john.student@student.edu' LIMIT 1),
+  'registered',
+  CURRENT_TIMESTAMP - INTERVAL '1 day'
+WHERE EXISTS (SELECT 1 FROM events WHERE event_name = 'Career Fair');
+
+-- ========================================
 -- Sample Event Invitations Data
 -- Alumni Meetup is invite-only, so we create specific invitations
+-- ========================================
 INSERT INTO event_invitations (event_id, user_id, invited_by, status, invited_at, responded_at)
-SELECT 
+SELECT
   (SELECT id FROM events WHERE event_name = 'Alumni Meetup' LIMIT 1),
   (SELECT id FROM users WHERE email = 'john.student@student.edu' LIMIT 1),
   (SELECT id FROM users WHERE email = 'sarah.organizer@university.edu' LIMIT 1),
@@ -718,6 +826,12 @@ BEFORE UPDATE ON event_invitations
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();
 
+-- Trigger to auto-update updated_at on event_participation table
+CREATE TRIGGER update_event_participation_updated_at
+BEFORE UPDATE ON event_participation
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();
+
 -- Function to clean up expired sessions (can be run periodically)
 CREATE OR REPLACE FUNCTION clean_expired_sessions()
 RETURNS INTEGER AS $$
@@ -740,6 +854,7 @@ COMMENT ON TABLE venues IS 'Stores venue/room information managed by faculties';
 COMMENT ON TABLE events IS 'Stores campus events information';
 COMMENT ON TABLE venue_bookings IS 'Stores venue booking requests for events';
 COMMENT ON TABLE event_invitations IS 'Stores user invitations for invite-only events';
+COMMENT ON TABLE event_participation IS 'Stores user participation/registration for events';
 
 COMMENT ON COLUMN users.role IS 'User role: student, event_organizer, administrator, faculty_manager';
 COMMENT ON COLUMN users.status IS 'User account status: active, inactive, or blocked';
@@ -760,4 +875,8 @@ COMMENT ON COLUMN venue_bookings.expected_attendees IS 'Expected number of atten
 COMMENT ON COLUMN venue_bookings.remarks IS 'Purpose and notes about the booking';
 COMMENT ON COLUMN event_invitations.status IS 'Invitation status: pending, accepted, declined';
 COMMENT ON COLUMN event_invitations.invited_by IS 'User ID of who sent the invitation (usually event organizer)';
+COMMENT ON COLUMN event_participation.status IS 'Participation status: registered, cancelled, attended';
+COMMENT ON COLUMN event_participation.registered_at IS 'When user registered for the event';
+COMMENT ON COLUMN event_participation.cancelled_at IS 'When user cancelled their registration';
+COMMENT ON COLUMN event_participation.check_in_datetime IS 'When user checked in at the event (for attendance tracking)';
 

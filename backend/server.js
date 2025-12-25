@@ -2,8 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const authRoutes = require('./routes/authRoutes');
-const eventRoutes = require('./routes/eventRoutes');
-
+const eventRoutes = require('./routes/eventRoutes');const participationRoutes = require('./routes/participationRoutes');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -14,6 +13,7 @@ app.use(express.json());
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
+app.use('/api/participation', participationRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

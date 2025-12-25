@@ -1,12 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import eventService from '../services/eventService';
+import participationService from '../services/participationService';
 import './EventDetailsPage.css';
 
 function EventDetailsPage() {
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [participationStatus, setParticipationStatus] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [actionMessage, setActionMessage] = useState('');
   const { id } = useParams();
   const navigate = useNavigate();
 
@@ -16,12 +20,60 @@ function EventDetailsPage() {
       setError('');
       const data = await eventService.getEventById(id);
       setEvent(data.event);
+      
+      // Load participation status
+      try {
+        const statusData = await participationService.getEventStatus(id);
+        setParticipationStatus(statusData);
+      } catch (err) {
+        console.error('Error loading participation status:', err);
+      }
     } catch (err) {
       setError(err);
     } finally {
       setLoading(false);
     }
   }, [id]);
+
+  useEffect(() => {
+    loadEventDetails();
+  }, [loadEventDetails]);
+
+  const handleRegister = async () => {
+    try {
+      setActionLoading(true);
+      setActionMessage('');
+      await participationService.register(id);
+      setActionMessage('Successfully registered for event!');
+      // Reload participation status
+      const statusData = await participationService.getEventStatus(id);
+      setParticipationStatus(statusData);
+    } catch (err) {
+      setActionMessage(err);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleCancel = async () => {
+    if (!window.confirm('Are you sure you want to cancel your registration?')) {
+      return;
+    }
+    
+    try {
+      setActionLoading(true);
+      setActionMessage('');
+      await participationService.cancel(id);
+      setActionMessage('Registration cancelled successfully');
+      // Reload participation status
+      const statusData = await participationService.getEventStatus(id);
+      setParticipationStatus(statusData);
+    } catch (err) {
+      setActionMessage(err);
+    } finally {
+      setActionLoading(false);
+    }
+  }
 
   useEffect(() => {
     loadEventDetails();
@@ -119,9 +171,16 @@ function EventDetailsPage() {
       <div className="event-details-content">
         <div className="event-header">
           <h1>{event.event_name}</h1>
-          <span className={`status-badge status-${event.status}`}>
-            {event.status}
-          </span>
+          <div className="event-header-badges">
+            <span className={`status-badge status-${event.status}`}>
+              {event.status}
+            </span>
+            {participationStatus?.isRegistered && (
+              <span className="status-badge status-registered">
+                ✓ Registered
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="event-info-grid">
@@ -168,6 +227,43 @@ function EventDetailsPage() {
           <p><strong>Event ID:</strong> {event.id}</p>
           <p><strong>Created:</strong> {formatDateTime(event.created_at)}</p>
         </div>
+
+        {/* Participation Actions */}
+        {(event.status === 'upcoming' || event.status === 'ongoing') && (
+          <div className="participation-actions">
+            {actionMessage && (
+              <div className={`action-message ${actionMessage.includes('Success') || actionMessage.includes('cancel') ? 'success' : 'error'}`}>
+                {actionMessage}
+              </div>
+            )}
+
+            {!participationStatus?.isRegistered ? (
+              <button 
+                onClick={handleRegister} 
+                disabled={actionLoading}
+                className="register-button"
+              >
+                {actionLoading ? 'Processing...' : 'Register for Event'}
+              </button>
+            ) : participationStatus?.status === 'cancelled' ? (
+              <button 
+                onClick={handleRegister} 
+                disabled={actionLoading}
+                className="register-button"
+              >
+                {actionLoading ? 'Processing...' : 'Re-register for Event'}
+              </button>
+            ) : participationStatus?.status === 'registered' ? (
+              <button 
+                onClick={handleCancel} 
+                disabled={actionLoading}
+                className="cancel-button"
+              >
+                {actionLoading ? 'Processing...' : 'Cancel Registration'}
+              </button>
+            ) : null}
+          </div>
+        )}
       </div>
     </div>
   );
