@@ -377,6 +377,8 @@ CREATE POLICY "Backend can delete event_invitations" ON event_invitations
 -- Password for all sample users: "password123"
 -- Hashed using bcrypt with salt rounds = 10
 -- Roles: student, event_organizer, administrator, faculty_manager
+-- NOTE: Students, Faculty Managers, and Event Organizers CAN create and manage events
+--       Only Administrators CANNOT create/manage events (admin functions only)
 -- ========================================
 INSERT INTO users (email, name, password, role, status) VALUES
   ('john.student@student.edu', 'John Student', '$2a$10$g2ALFzfYf4jpTmp7bCIzd.5cael8S5xBTGOn8FEyda1Bnt/.ebzV2', 'student', 'active'),
@@ -479,9 +481,12 @@ SELECT
 WHERE EXISTS (SELECT 1 FROM faculties WHERE code = 'FCI');
 
 -- Sample Events Data
+-- Events can be created by students, faculty_managers, and event_organizers
+-- Event types can include custom values (stored directly when 'Other' is selected)
+-- Visibility: campuswide (all), facultyonly (same faculty), inviteonly (explicit invites)
 INSERT INTO events (organizer_id, event_name, description, visibility, event_type, status, start_datetime, end_datetime)
 SELECT 
-  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'sarah.organizer@university.edu' LIMIT 1),
   'Campus Tech Workshop',
   'Learn about the latest web technologies and frameworks. Open to all students and faculty.',
   'campuswide',
@@ -489,11 +494,11 @@ SELECT
   'upcoming',
   CURRENT_TIMESTAMP + INTERVAL '7 days',
   CURRENT_TIMESTAMP + INTERVAL '7 days' + INTERVAL '3 hours'
-WHERE EXISTS (SELECT 1 FROM users WHERE email = 'admin@university.edu');
+WHERE EXISTS (SELECT 1 FROM users WHERE email = 'sarah.organizer@university.edu');
 
 INSERT INTO events (organizer_id, event_name, description, visibility, event_type, status, start_datetime, end_datetime)
 SELECT 
-  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'sarah.organizer@university.edu' LIMIT 1),
   'Annual Sports Day',
   'Inter-department sports competition. All students welcome!',
   'campuswide',
@@ -501,7 +506,7 @@ SELECT
   'upcoming',
   CURRENT_TIMESTAMP + INTERVAL '14 days',
   CURRENT_TIMESTAMP + INTERVAL '14 days' + INTERVAL '8 hours'
-WHERE EXISTS (SELECT 1 FROM users WHERE email = 'admin@university.edu');
+WHERE EXISTS (SELECT 1 FROM users WHERE email = 'sarah.organizer@university.edu');
 
 INSERT INTO events (organizer_id, event_name, description, visibility, event_type, status, start_datetime, end_datetime)
 SELECT 
@@ -541,7 +546,7 @@ WHERE EXISTS (SELECT 1 FROM users WHERE email = 'emily.tan@student.edu');
 
 INSERT INTO events (organizer_id, event_name, description, visibility, event_type, status, start_datetime, end_datetime)
 SELECT 
-  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'sarah.organizer@university.edu' LIMIT 1),
   'Career Fair',
   'Meet recruiters from top companies. Bring your resume!',
   'campuswide',
@@ -549,7 +554,7 @@ SELECT
   'upcoming',
   CURRENT_TIMESTAMP + INTERVAL '10 days',
   CURRENT_TIMESTAMP + INTERVAL '10 days' + INTERVAL '6 hours'
-WHERE EXISTS (SELECT 1 FROM users WHERE email = 'admin@university.edu');
+WHERE EXISTS (SELECT 1 FROM users WHERE email = 'sarah.organizer@university.edu');
 
 INSERT INTO events (organizer_id, event_name, description, visibility, event_type, status, start_datetime, end_datetime)
 SELECT 
@@ -565,7 +570,7 @@ WHERE EXISTS (SELECT 1 FROM users WHERE email = 'sarah.organizer@university.edu'
 
 INSERT INTO events (organizer_id, event_name, description, visibility, event_type, status, start_datetime, end_datetime)
 SELECT 
-  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'sarah.organizer@university.edu' LIMIT 1),
   'Orientation Week',
   'Welcome new students! Campus tours, registration assistance, and meet your peers.',
   'campuswide',
@@ -573,14 +578,15 @@ SELECT
   'completed',
   CURRENT_TIMESTAMP - INTERVAL '30 days',
   CURRENT_TIMESTAMP - INTERVAL '25 days'
-WHERE EXISTS (SELECT 1 FROM users WHERE email = 'admin@university.edu');
+WHERE EXISTS (SELECT 1 FROM users WHERE email = 'sarah.organizer@university.edu');
 
 -- Sample Venue Bookings Data
+-- Students, faculty managers, and event organizers can all submit venue requests
 INSERT INTO venue_bookings (event_id, venue_id, requester_user_id, requested_start_datetime, requested_end_datetime, approved_start_datetime, approved_end_datetime, setup_time, teardown_time, status, approved_user_id, approved_at, remarks, expected_attendees)
 SELECT 
   (SELECT id FROM events WHERE event_name = 'Campus Tech Workshop' LIMIT 1),
   (SELECT id FROM venues WHERE code = 'LT-FCI-01' LIMIT 1),
-  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'sarah.organizer@university.edu' LIMIT 1),
   CURRENT_TIMESTAMP + INTERVAL '7 days',
   CURRENT_TIMESTAMP + INTERVAL '7 days' + INTERVAL '3 hours',
   CURRENT_TIMESTAMP + INTERVAL '7 days',
@@ -598,7 +604,7 @@ INSERT INTO venue_bookings (event_id, venue_id, requester_user_id, requested_sta
 SELECT 
   (SELECT id FROM events WHERE event_name = 'Annual Sports Day' LIMIT 1),
   (SELECT id FROM venues WHERE code = 'SR-FOM-01' LIMIT 1),
-  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'sarah.organizer@university.edu' LIMIT 1),
   CURRENT_TIMESTAMP + INTERVAL '14 days',
   CURRENT_TIMESTAMP + INTERVAL '14 days' + INTERVAL '8 hours',
   60, -- 1 hour setup
@@ -648,7 +654,7 @@ INSERT INTO venue_bookings (event_id, venue_id, requester_user_id, requested_sta
 SELECT 
   (SELECT id FROM events WHERE event_name = 'Career Fair' LIMIT 1),
   (SELECT id FROM venues WHERE code = 'LAB-CS-02' LIMIT 1),
-  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'sarah.organizer@university.edu' LIMIT 1),
   CURRENT_TIMESTAMP + INTERVAL '10 days',
   CURRENT_TIMESTAMP + INTERVAL '10 days' + INTERVAL '6 hours',
   90,
@@ -856,7 +862,7 @@ COMMENT ON TABLE venue_bookings IS 'Stores venue booking requests for events';
 COMMENT ON TABLE event_invitations IS 'Stores user invitations for invite-only events';
 COMMENT ON TABLE event_participation IS 'Stores user participation/registration for events';
 
-COMMENT ON COLUMN users.role IS 'User role: student, event_organizer, administrator, faculty_manager';
+COMMENT ON COLUMN users.role IS 'User role: student (can create events), event_organizer (can create events with custom visibility), administrator (admin functions only, cannot create events), faculty_manager (can create events and manage venues)';
 COMMENT ON COLUMN users.status IS 'User account status: active, inactive, or blocked';
 COMMENT ON COLUMN sessions.token IS 'JWT token for authentication';
 COMMENT ON COLUMN sessions.expires_at IS 'Session expiration timestamp';
@@ -867,7 +873,8 @@ COMMENT ON COLUMN venues.location IS 'Floor or room location (e.g., Level 2, Gro
 COMMENT ON COLUMN venues.capacity IS 'Maximum number of people the venue can accommodate';
 COMMENT ON COLUMN venues.status IS 'Venue status: active, inactive, maintenance';
 COMMENT ON COLUMN events.visibility IS 'Event visibility: campuswide (all users), facultyonly (same faculty as organizer), inviteonly (explicitly invited users only)';
-COMMENT ON COLUMN events.status IS 'Event status: upcoming, ongoing, completed, cancelled';
+COMMENT ON COLUMN events.event_type IS 'Event type: seminar, workshop, sports, cultural, career, orientation, networking, general, or custom value when Other is selected';
+COMMENT ON COLUMN events.status IS 'Event status: upcoming (before start), ongoing (currently happening, can still register), completed (finished), cancelled';
 COMMENT ON COLUMN venue_bookings.status IS 'Booking status: pending, approved, rejected, cancelled';
 COMMENT ON COLUMN venue_bookings.setup_time IS 'Minutes needed before event for setup';
 COMMENT ON COLUMN venue_bookings.teardown_time IS 'Minutes needed after event for cleanup';
@@ -875,8 +882,8 @@ COMMENT ON COLUMN venue_bookings.expected_attendees IS 'Expected number of atten
 COMMENT ON COLUMN venue_bookings.remarks IS 'Purpose and notes about the booking';
 COMMENT ON COLUMN event_invitations.status IS 'Invitation status: pending, accepted, declined';
 COMMENT ON COLUMN event_invitations.invited_by IS 'User ID of who sent the invitation (usually event organizer)';
-COMMENT ON COLUMN event_participation.status IS 'Participation status: registered, cancelled, attended';
+COMMENT ON COLUMN event_participation.status IS 'Participation status: registered (active registration, can register for ongoing events), cancelled (user cancelled), attended (checked in at event)';
 COMMENT ON COLUMN event_participation.registered_at IS 'When user registered for the event';
-COMMENT ON COLUMN event_participation.cancelled_at IS 'When user cancelled their registration';
+COMMENT ON COLUMN event_participation.cancelled_at IS 'When user cancelled their registration (can re-register after cancellation)';
 COMMENT ON COLUMN event_participation.check_in_datetime IS 'When user checked in at the event (for attendance tracking)';
 

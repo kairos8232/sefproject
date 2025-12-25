@@ -53,7 +53,7 @@ function HomePage() {
         .slice(0, 3); // Get next 3 upcoming events
       
       let myEventsCount = 0;
-      if (currentUser.role === 'event_organizer' || currentUser.role === 'administrator') {
+      if (currentUser.role === 'student' || currentUser.role === 'faculty_manager' || currentUser.role === 'event_organizer') {
         const myEvents = await eventService.getAllEvents();
         myEventsCount = myEvents.events?.filter(e => e.organizer_id === currentUser.id).length || 0;
       }
@@ -243,7 +243,7 @@ function HomePage() {
               <div className="stat-label">Registered Events</div>
             </div>
           </div>
-          {(user.role === 'event_organizer' || user.role === 'administrator') && (
+          {(user.role === 'student' || user.role === 'faculty_manager' || user.role === 'event_organizer') && (
             <div className="stat-card">
               <div className="stat-icon">🎪</div>
               <div className="stat-content">
