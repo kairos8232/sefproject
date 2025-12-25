@@ -162,6 +162,44 @@ class EventController {
 
     return false;
   }
+
+  // Update event
+  updateEvent = async (req, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.userId;
+      const eventData = req.body;
+
+      // Get existing event
+      const event = await Event.getById(id);
+      
+      if (!event) {
+        return res.status(404).json({ error: 'Event not found' });
+      }
+
+      // Check if user is the organizer
+      if (event.organizer_id !== userId) {
+        return res.status(403).json({ error: 'Only the event organizer can edit this event' });
+      }
+
+      // Don't allow updating completed or cancelled events
+      if (event.status === 'completed' || event.status === 'cancelled') {
+        return res.status(400).json({ error: 'Cannot edit completed or cancelled events' });
+      }
+
+      // Update event
+      const updatedEvent = await Event.update(id, eventData);
+
+      res.json({
+        success: true,
+        message: 'Event updated successfully',
+        event: updatedEvent
+      });
+    } catch (error) {
+      console.error('Update event error:', error);
+      res.status(500).json({ error: 'Failed to update event' });
+    }
+  }
 }
 
 module.exports = new EventController();

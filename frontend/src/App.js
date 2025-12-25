@@ -6,6 +6,7 @@ import EventsPage from './pages/EventsPage';
 import EventDetailsPage from './pages/EventDetailsPage';
 import MyEventsPage from './pages/MyEventsPage';
 import CreateEventPage from './pages/CreateEventPage';
+import EditEventPage from './pages/EditEventPage';
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
         <Route path="/home" element={<HomePage />} />
         <Route path="/events" element={<EventsPage />} />
         <Route path="/events/:id" element={<EventDetailsPage />} />
+        <Route path="/events/:id/edit" element={<EditEventPage />} />
         <Route path="/my-events" element={<MyEventsPage />} />
         <Route path="/create-event" element={<CreateEventPage />} />
         <Route path="/" element={<Navigate to="/login" replace />} />

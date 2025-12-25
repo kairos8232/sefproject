@@ -13,4 +13,8 @@ router.get('/', AuthController.verifyToken, EventController.getEvents);
 // GET /api/events/:id
 router.get('/:id', AuthController.verifyToken, EventController.getEventById);
 
+// Update event (protected route)
+// PUT /api/events/:id
+router.put('/:id', AuthController.verifyToken, EventController.updateEvent);
+
 module.exports = router;

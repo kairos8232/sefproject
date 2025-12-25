@@ -147,6 +147,24 @@ class Event {
       throw error;
     }
   }
+
+  // Update event
+  static async update(id, eventData) {
+    try {
+      const { data, error } = await supabase
+        .from('events')
+        .update(eventData)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error updating event:', error);
+      throw error;
+    }
+  }
 }
 
 module.exports = Event;

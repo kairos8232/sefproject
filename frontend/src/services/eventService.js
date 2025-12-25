@@ -83,6 +83,13 @@ const eventService = {
       throw error.response?.data?.error || 'Failed to delete event';
     }
   },
-};
+  updateEvent: async (eventId, eventData) => {
+    try {
+      const response = await api.put(`/events/${eventId}`, eventData);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data?.error || 'Failed to update event';
+    }
+  },};
 
 export default eventService;
