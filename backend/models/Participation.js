@@ -83,22 +83,44 @@ class Participation {
     }
   }
 
-  // Register user for an event
+  // Register user for an event (or re-register if previously cancelled)
   static async register(eventId, userId) {
     try {
-      const { data, error } = await supabase
-        .from('event_participation')
-        .insert({
-          event_id: eventId,
-          user_id: userId,
-          status: 'registered',
-          registered_at: new Date().toISOString()
-        })
-        .select()
-        .single();
+      // Check if participation already exists
+      const existing = await this.getUserEventParticipation(eventId, userId);
+      
+      if (existing) {
+        // Update existing record (for re-registration after cancellation)
+        const { data, error } = await supabase
+          .from('event_participation')
+          .update({
+            status: 'registered',
+            registered_at: new Date().toISOString(),
+            cancelled_at: null
+          })
+          .eq('event_id', eventId)
+          .eq('user_id', userId)
+          .select()
+          .single();
 
-      if (error) throw error;
-      return data;
+        if (error) throw error;
+        return data;
+      } else {
+        // Insert new record for first-time registration
+        const { data, error } = await supabase
+          .from('event_participation')
+          .insert({
+            event_id: eventId,
+            user_id: userId,
+            status: 'registered',
+            registered_at: new Date().toISOString()
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+        return data;
+      }
     } catch (error) {
       console.error('Error registering for event:', error);
       throw error;

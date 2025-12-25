@@ -19,29 +19,19 @@ class ParticipationController {
         return res.status(400).json({ error: 'Cannot register for completed or cancelled events' });
       }
 
-      // Check if user already registered
+      // Check if user already registered with active status
       const existingParticipation = await Participation.getUserEventParticipation(eventId, userId);
       
-      if (existingParticipation) {
-        if (existingParticipation.status === 'registered') {
-          return res.status(400).json({ error: 'You are already registered for this event' });
-        }
-        // If previously cancelled, allow re-registration
-        if (existingParticipation.status === 'cancelled') {
-          // Delete old record and create new one
-          const participation = await Participation.register(eventId, userId);
-          return res.status(200).json({
-            message: 'Successfully re-registered for event',
-            participation
-          });
-        }
+      if (existingParticipation && existingParticipation.status === 'registered') {
+        return res.status(400).json({ error: 'You are already registered for this event' });
       }
 
-      // Register user
+      // Register user (will update if previously cancelled, or insert if new)
       const participation = await Participation.register(eventId, userId);
+      const message = existingParticipation ? 'Successfully re-registered for event' : 'Successfully registered for event';
 
       res.status(201).json({
-        message: 'Successfully registered for event',
+        message,
         participation
       });
     } catch (error) {
@@ -100,7 +90,8 @@ class ParticipationController {
 
       res.status(200).json({
         participation: participation || null,
-        isRegistered: participation?.status === 'registered'
+        isRegistered: participation?.status === 'registered',
+        status: participation?.status || null
       });
     } catch (error) {
       console.error('Error in getStatus:', error);

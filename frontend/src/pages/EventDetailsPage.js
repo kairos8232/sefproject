@@ -237,23 +237,7 @@ function EventDetailsPage() {
               </div>
             )}
 
-            {!participationStatus?.isRegistered ? (
-              <button 
-                onClick={handleRegister} 
-                disabled={actionLoading}
-                className="register-button"
-              >
-                {actionLoading ? 'Processing...' : 'Register for Event'}
-              </button>
-            ) : participationStatus?.status === 'cancelled' ? (
-              <button 
-                onClick={handleRegister} 
-                disabled={actionLoading}
-                className="register-button"
-              >
-                {actionLoading ? 'Processing...' : 'Re-register for Event'}
-              </button>
-            ) : participationStatus?.status === 'registered' ? (
+            {participationStatus?.status === 'registered' ? (
               <button 
                 onClick={handleCancel} 
                 disabled={actionLoading}
@@ -261,7 +245,15 @@ function EventDetailsPage() {
               >
                 {actionLoading ? 'Processing...' : 'Cancel Registration'}
               </button>
-            ) : null}
+            ) : (
+              <button 
+                onClick={handleRegister} 
+                disabled={actionLoading}
+                className="register-button"
+              >
+                {actionLoading ? 'Processing...' : 'Register for Event'}
+              </button>
+            )}
           </div>
         )}
       </div>
