@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import eventService from '../services/eventService';
+import participationService from '../services/participationService';
 import './EventsPage.css';
 
 function EventsPage() {
@@ -16,7 +17,17 @@ function EventsPage() {
       setError('');
       
       let data;
-      if (filter === 'all') {
+      if (filter === 'registered') {
+        // Get user's registered events
+        const participations = await participationService.getMyParticipations();
+        // Filter only registered status (not cancelled)
+        const registeredEvents = participations
+          .filter(p => p.status === 'registered')
+          .map(p => p.event);
+        setEvents(registeredEvents);
+        setLoading(false);
+        return;
+      } else if (filter === 'all') {
         data = await eventService.getAllEvents();
       } else if (filter === 'upcoming' || filter === 'ongoing') {
         data = await eventService.getEventsByStatus(filter);
@@ -67,6 +78,7 @@ function EventsPage() {
         <label>Filter by: </label>
         <select value={filter} onChange={(e) => setFilter(e.target.value)}>
           <option value="all">All Events</option>
+          <option value="registered">My Registrations</option>
           <option value="upcoming">Upcoming</option>
           <option value="ongoing">Ongoing</option>
           <option value="campuswide">Campus Wide</option>
