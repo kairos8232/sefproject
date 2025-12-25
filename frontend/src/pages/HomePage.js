@@ -1,11 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import authService from '../services/authService';
+import participationService from '../services/participationService';
+import eventService from '../services/eventService';
 import './HomePage.css';
 
 function HomePage() {
   const [user, setUser] = useState(null);
   const [message, setMessage] = useState('');
+  const [stats, setStats] = useState({
+    registeredEvents: 0,
+    myEvents: 0,
+    upcomingRegistrations: []
+  });
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -24,7 +32,43 @@ function HomePage() {
     // Get current user info
     const currentUser = authService.getCurrentUser();
     setUser(currentUser);
+    loadDashboardData(currentUser);
   }, [navigate, location.state]);
+
+  const loadDashboardData = async (currentUser) => {
+    try {
+      setLoading(true);
+      
+      // Get registered events count and upcoming events
+      const participations = await participationService.getMyParticipations();
+      const registered = participations.filter(p => p.status === 'registered');
+      
+      // Filter upcoming events - event is directly in participation object
+      const upcoming = registered
+        .filter(p => {
+          if (!p.event || !p.event.start_datetime) return false;
+          return new Date(p.event.start_datetime) > new Date();
+        })
+        .sort((a, b) => new Date(a.event.start_datetime) - new Date(b.event.start_datetime))
+        .slice(0, 3); // Get next 3 upcoming events
+      
+      let myEventsCount = 0;
+      if (currentUser.role === 'event_organizer' || currentUser.role === 'administrator') {
+        const myEvents = await eventService.getAllEvents();
+        myEventsCount = myEvents.events?.filter(e => e.organizer_id === currentUser.id).length || 0;
+      }
+      
+      setStats({
+        registeredEvents: registered.length,
+        myEvents: myEventsCount,
+        upcomingRegistrations: upcoming
+      });
+    } catch (error) {
+      console.error('Failed to load dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogout = async () => {
     // UC-02: Logout from System
@@ -32,34 +76,198 @@ function HomePage() {
     navigate('/login', { state: { message: 'Logged out successfully' } });
   };
 
+  const formatDateTime = (datetime) => {
+    return new Date(datetime).toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const getRoleBasedFeatures = () => {
+    const role = user?.role;
+    
+    const commonFeatures = [
+      {
+        title: 'Browse Events',
+        description: 'Explore all campus events',
+        icon: '🎯',
+        path: '/events',
+        color: '#007bff'
+      },
+      {
+        title: 'My Registrations',
+        description: 'View events you registered for',
+        icon: '📅',
+        action: () => navigate('/events', { state: { filter: 'registered' } }),
+        color: '#28a745'
+      }
+    ];
+
+    const organizerFeatures = [
+      {
+        title: 'My Events',
+        description: 'Manage your created events',
+        icon: '🎪',
+        path: '/my-events',
+        color: '#ff6b6b'
+      },
+      {
+        title: 'Create Event',
+        description: 'Organize a new event',
+        icon: '➕',
+        path: '/create-event',
+        color: '#6c5ce7'
+      },
+      {
+        title: 'My Venue Requests',
+        description: 'View booking requests',
+        icon: '🏢',
+        path: '/my-bookings',
+        color: '#fd79a8'
+      }
+    ];
+
+    const adminFeatures = [
+      {
+        title: 'Manage Users',
+        description: 'User administration',
+        icon: '👥',
+        path: '/admin/users',
+        color: '#e67e22'
+      },
+      {
+        title: 'All Events',
+        description: 'Manage all events',
+        icon: '🗂️',
+        path: '/admin/events',
+        color: '#9b59b6'
+      },
+      {
+        title: 'Venue Bookings',
+        description: 'Review booking requests',
+        icon: '✅',
+        path: '/admin/bookings',
+        color: '#3498db'
+      }
+    ];
+
+    const facultyManagerFeatures = [
+      {
+        title: 'Manage Venues',
+        description: 'Faculty venue management',
+        icon: '🏛️',
+        path: '/faculty/venues',
+        color: '#16a085'
+      },
+      {
+        title: 'Approve Bookings',
+        description: 'Review venue requests',
+        icon: '✔️',
+        path: '/faculty/bookings',
+        color: '#27ae60'
+      }
+    ];
+
+    if (role === 'administrator') {
+      return [...commonFeatures, ...organizerFeatures, ...adminFeatures];
+    } else if (role === 'event_organizer') {
+      return [...commonFeatures, ...organizerFeatures];
+    } else if (role === 'faculty_manager') {
+      return [...commonFeatures, ...facultyManagerFeatures];
+    } else {
+      return commonFeatures;
+    }
+  };
+
   if (!user) {
-    return <div>Loading...</div>;
+    return <div className="loading-screen">Loading...</div>;
   }
+
+  const features = getRoleBasedFeatures();
 
   return (
     <div className="home-container">
-      <div className="home-box">
-        <h1>Welcome to the System</h1>
-        
-        {message && (
-          <div className="info-message">
-            {message}
-          </div>
-        )}
-        
-        <div className="user-info">
-          <p><strong>Email:</strong> {user.email}</p>
-          <p><strong>Role:</strong> {user.role}</p>
-          <p><strong>Status:</strong> <span className="status-active">Active</span></p>
+      {/* Header */}
+      <div className="home-header">
+        <div>
+          <h1>Welcome back, {user.name || user.email}! 👋</h1>
+          <p className="role-badge">{user.role.replace('_', ' ').toUpperCase()}</p>
         </div>
+        <button onClick={handleLogout} className="logout-button">
+          Logout
+        </button>
+      </div>
 
-        <div className="action-buttons">
-          <button onClick={() => navigate('/events')} className="events-button">
-            Browse Events
-          </button>
-          <button onClick={handleLogout} className="logout-button">
-            Logout
-          </button>
+      {message && (
+        <div className="info-message">
+          {message}
+        </div>
+      )}
+
+      {/* Quick Stats */}
+      {!loading && (
+        <div className="stats-section">
+          <div className="stat-card">
+            <div className="stat-icon">📊</div>
+            <div className="stat-content">
+              <div className="stat-value">{stats.registeredEvents}</div>
+              <div className="stat-label">Registered Events</div>
+            </div>
+          </div>
+          {(user.role === 'event_organizer' || user.role === 'administrator') && (
+            <div className="stat-card">
+              <div className="stat-icon">🎪</div>
+              <div className="stat-content">
+                <div className="stat-value">{stats.myEvents}</div>
+                <div className="stat-label">My Events</div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Upcoming Events Preview */}
+      {!loading && stats.upcomingRegistrations.length > 0 && (
+        <div className="upcoming-section">
+          <h2>Your Upcoming Events</h2>
+          <div className="upcoming-list">
+            {stats.upcomingRegistrations.map((participation) => (
+              <div 
+                key={participation.event.id} 
+                className="upcoming-item"
+                onClick={() => navigate(`/events/${participation.event.id}`)}
+              >
+                <div className="upcoming-date">
+                  {formatDateTime(participation.event.start_datetime)}
+                </div>
+                <div className="upcoming-details">
+                  <h4>{participation.event.event_name}</h4>
+                  <span className="event-type-badge">{participation.event.event_type}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Feature Cards */}
+      <div className="features-section">
+        <h2>Quick Actions</h2>
+        <div className="features-grid">
+          {features.map((feature, index) => (
+            <div 
+              key={index}
+              className="feature-card"
+              onClick={() => feature.path ? navigate(feature.path) : feature.action()}
+              style={{ borderLeft: `4px solid ${feature.color}` }}
+            >
+              <div className="feature-icon">{feature.icon}</div>
+              <h3>{feature.title}</h3>
+              <p>{feature.description}</p>
+            </div>
+          ))}
         </div>
       </div>
     </div>
