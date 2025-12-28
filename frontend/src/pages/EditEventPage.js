@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import eventService from '../services/eventService';
 import authService from '../services/authService';
@@ -44,11 +44,7 @@ function EditEventPage() {
     { value: 'inviteonly', label: 'Invite Only - Only invited users' }
   ];
 
-  useEffect(() => {
-    loadEvent();
-  }, [id]);
-
-  const loadEvent = async () => {
+  const loadEvent = useCallback(async () => {
     try {
       setLoading(true);
       const response = await eventService.getEventById(id);
@@ -90,7 +86,11 @@ function EditEventPage() {
       alert(error || 'Failed to load event');
       navigate('/my-events');
     }
-  };
+  }, [id, user.id, navigate, eventTypes]);
+
+  useEffect(() => {
+    loadEvent();
+  }, [loadEvent]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;

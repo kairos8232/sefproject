@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import venueBookingService from '../services/venueBookingService';
-import authService from '../services/authService';
 import './VenueBookingDetailsPage.css';
 
 function VenueBookingDetailsPage() {
@@ -10,13 +9,8 @@ function VenueBookingDetailsPage() {
   const [booking, setBooking] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const user = authService.getCurrentUser();
 
-  useEffect(() => {
-    loadBookingDetails();
-  }, [id]);
-
-  const loadBookingDetails = async () => {
+  const loadBookingDetails = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
@@ -28,7 +22,11 @@ function VenueBookingDetailsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    loadBookingDetails();
+  }, [loadBookingDetails]);
 
   const formatDateTime = (datetime) => {
     if (!datetime) return 'N/A';

@@ -9,6 +9,7 @@ import CreateEventPage from './pages/CreateEventPage';
 import EditEventPage from './pages/EditEventPage';
 import VenueBookingPage from './pages/VenueBookingPage';
 import VenueBookingDetailsPage from './pages/VenueBookingDetailsPage';
+import MyVenueRequestsPage from './pages/MyVenueRequestsPage';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
         <Route path="/events/:id" element={<EventDetailsPage />} />
         <Route path="/events/:id/edit" element={<EditEventPage />} />
         <Route path="/my-events" element={<MyEventsPage />} />
+        <Route path="/my-venue-requests" element={<MyVenueRequestsPage />} />
         <Route path="/create-event" element={<CreateEventPage />} />
         <Route path="/venue-booking" element={<VenueBookingPage />} />
         <Route path="/venue-bookings/:id" element={<VenueBookingDetailsPage />} />

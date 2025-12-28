@@ -104,13 +104,7 @@ class Venue {
         throw error;
       }
 
-      console.log(`Found ${venues?.length || 0} venues in database`);
-
       if (!venues || venues.length === 0) {
-        console.log('No venues found in database - please check if schema.sql has been executed');
-        return [];
-      }
-if (!venues || venues.length === 0) {
         return [];
       }
 
@@ -123,7 +117,13 @@ if (!venues || venues.length === 0) {
       );
 
       // Return only available venues
-      const availableVenues = availabilityChecks.filter(venue => venue.isAvailable
+      const availableVenues = availabilityChecks.filter(venue => venue.isAvailable);
+      
+      return availableVenues;
+    } catch (error) {
+      console.error('Error getting available venues:', error);
+      throw error;
+    }
   }
 }
 

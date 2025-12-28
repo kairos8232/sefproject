@@ -105,30 +105,6 @@ function HomePage() {
       }
     ];
 
-    const organizerFeatures = [
-      {
-        title: 'My Events',
-        description: 'Manage your created events',
-        icon: '🎪',
-        path: '/my-events',
-        color: '#ff6b6b'
-      },
-      {
-        title: 'Create Event',
-        description: 'Organize a new event',
-        icon: '➕',
-        path: '/create-event',
-        color: '#6c5ce7'
-      },
-      {
-        title: 'My Venue Requests',
-        description: 'View booking requests',
-        icon: '🏢',
-        path: '/my-bookings',
-        color: '#fd79a8'
-      }
-    ];
-
     const adminFeatures = [
       {
         title: 'Manage Users',
@@ -190,7 +166,7 @@ function HomePage() {
         title: 'My Venue Requests',
         description: 'Submit and track venue bookings',
         icon: '📝',
-        path: '/my-bookings',
+        path: '/my-venue-requests',
         color: '#f39c12'
       }
     ];

@@ -83,16 +83,20 @@ function MyEventsPage() {
 
   const handleBookVenue = async (event) => {
     try {
-      // Check if user already has a booking for this event
+      // Check if user already has an active booking for this event
       const response = await venueBookingService.getBookingsByEvent(event.id);
       const existingBookings = response.bookings || [];
       
-      // If there's an existing booking, navigate to its details page
-      if (existingBookings.length > 0) {
-        const existingBooking = existingBookings[0]; // Take the first/most recent booking
-        navigate(`/venue-bookings/${existingBooking.id}`);
+      // Filter for active bookings only (pending or approved)
+      const activeBooking = existingBookings.find(b => 
+        b.status === 'pending' || b.status === 'approved'
+      );
+      
+      // If there's an active booking, navigate to its details page
+      if (activeBooking) {
+        navigate(`/venue-bookings/${activeBooking.id}`);
       } else {
-        // No existing booking, proceed to booking form
+        // No active booking, proceed to booking form
         navigate('/venue-booking', { state: { event } });
       }
     } catch (err) {

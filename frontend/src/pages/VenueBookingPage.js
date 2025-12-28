@@ -135,11 +135,13 @@ function VenueBookingPage() {
   return (
     <div className="venue-booking-page">
       <div className="venue-booking-header">
+        <div>
+          <h1>Book Venue</h1>
+          <p className="event-info">For event: <strong>{event.event_name}</strong></p>
+        </div>
         <button onClick={() => navigate('/my-events')} className="back-button">
-          ← Back to My Events
+          Back to My Events
         </button>
-        <h1>Book Venue</h1>
-        <p className="event-info">For event: <strong>{event.event_name}</strong></p>
       </div>
 
       <div className="venue-booking-container">

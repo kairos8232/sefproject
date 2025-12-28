@@ -5,26 +5,36 @@
 }
 
 .venue-booking-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 30px;
+  padding: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .venue-booking-header h1 {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  font-size: 2.5rem;
-  margin: 10px 0;
+  margin: 0 0 5px 0;
+  font-size: 28px;
+}
+
+.venue-booking-header p {
+  margin: 0;
+  opacity: 0.9;
+  font-size: 14px;
 }
 
 .event-info {
-  color: #666;
-  font-size: 1.1rem;
-  margin-top: 10px;
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 14px;
+  margin-top: 5px;
 }
 
 .event-info strong {
-  color: #333;
+  color: white;
 }
 
 .back-button {
@@ -225,11 +235,12 @@
 
 .venue-details p {
   margin: 8px 0;
-  color: #666;
+  color: #555;
 }
 
 .venue-details strong {
-  color: #333;
+  color: #222;
+  font-weight: 700;
 }
 
 .selected-badge {
