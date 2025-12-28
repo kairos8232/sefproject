@@ -28,19 +28,20 @@
 }
 
 .back-button {
-  background: none;
+  padding: 10px 20px;
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
   border: none;
-  color: #667eea;
-  font-size: 1rem;
+  border-radius: 8px;
   cursor: pointer;
-  padding: 5px 10px;
-  margin-bottom: 10px;
-  transition: color 0.2s;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s;
+  white-space: nowrap;
 }
 
 .back-button:hover {
-  color: #764ba2;
-  text-decoration: underline;
+  background-color: rgba(255, 255, 255, 0.3);
 }
 
 .venue-booking-container {
@@ -117,22 +118,27 @@
 
 .search-button,
 .submit-button {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
   padding: 12px 30px;
+  border: none;
   border-radius: 8px;
-  font-size: 1rem;
+  font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: all 0.2s;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #28a745;
+  color: white;
   margin-top: 10px;
 }
 
 .search-button:hover,
 .submit-button:hover {
+  background-color: #218838;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
 }
 
 .search-button:disabled,

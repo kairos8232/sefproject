@@ -89,15 +89,19 @@ function VenueBookingDetailsPage() {
   return (
     <div className="booking-details-container">
       <div className="booking-details-header">
+        <div>
+          <h1>Venue Booking Details</h1>
+          <p>View your venue booking request status</p>
+        </div>
         <button onClick={() => navigate('/my-events')} className="back-button">
-          ← Back to My Events
+          Back to My Events
         </button>
-        <h1>Venue Booking Details</h1>
       </div>
 
       <div className="booking-details-content">
         {/* Status Badge */}
-        <div className="status-section">
+        <div className="booking-header">
+          <h2>Booking Request</h2>
           <span className={`status-badge ${getStatusBadgeClass(booking.status)}`}>
             {booking.status.toUpperCase()}
           </span>

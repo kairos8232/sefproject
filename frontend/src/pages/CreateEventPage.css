@@ -148,6 +148,7 @@
   display: flex;
   gap: 15px;
   justify-content: flex-end;
+  align-items: baseline;
   margin-top: 30px;
   padding-top: 20px;
   border-top: 1px solid #e0e0e0;
@@ -162,6 +163,10 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+  margin: 0;
+  line-height: 1.5;
+  min-height: 48px;
+  display: inline-block;
 }
 
 .cancel-button {
@@ -171,6 +176,8 @@
 
 .cancel-button:hover {
   background-color: #e0e0e0;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .submit-button {

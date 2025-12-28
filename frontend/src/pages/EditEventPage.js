@@ -324,10 +324,13 @@ function EditEventPage() {
             </div>
           ) : (
             <div className="visibility-locked">
-              <p><strong>Visibility:</strong> Campus Wide</p>
-              <p className="field-help">
-                As a {user.role.replace('_', ' ')}, your events are automatically set to Campus Wide visibility.
-              </p>
+              <div className="locked-info">
+                <span className="lock-icon">🔒</span>
+                <div>
+                  <strong>Campus Wide</strong>
+                  <p>Your events are visible to all logged-in users on campus.</p>
+                </div>
+              </div>
             </div>
           )}
         </div>
