@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import eventService from '../services/eventService';
 import authService from '../services/authService';
+import venueBookingService from '../services/venueBookingService';
 import './MyEventsPage.css';
 
 function MyEventsPage() {
@@ -9,15 +10,13 @@ function MyEventsPage() {
   const [totalEvents, setTotalEvents] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [filter, setFilter] = useState('all');
   const navigate = useNavigate();
+  const location = useLocation();
   const user = authService.getCurrentUser();
 
-  useEffect(() => {
-    loadMyEvents();
-  }, [filter]);
-
-  const loadMyEvents = async () => {
+  const loadMyEvents = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
@@ -41,7 +40,20 @@ function MyEventsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filter, user.id]);
+
+  useEffect(() => {
+    loadMyEvents();
+    
+    // Check for success message from navigation
+    if (location.state?.message) {
+      setSuccessMessage(location.state.message);
+      // Clear the message after 5 seconds
+      setTimeout(() => setSuccessMessage(''), 5000);
+      // Clear the state to prevent showing message on refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [filter, location, loadMyEvents]);
 
   const handleEditEvent = (eventId) => {
     navigate(`/events/${eventId}/edit`);
@@ -67,6 +79,27 @@ function MyEventsPage() {
 
   const handleCreateEvent = () => {
     navigate('/create-event', { state: { from: 'my-events' } });
+  };
+
+  const handleBookVenue = async (event) => {
+    try {
+      // Check if user already has a booking for this event
+      const response = await venueBookingService.getBookingsByEvent(event.id);
+      const existingBookings = response.bookings || [];
+      
+      // If there's an existing booking, navigate to its details page
+      if (existingBookings.length > 0) {
+        const existingBooking = existingBookings[0]; // Take the first/most recent booking
+        navigate(`/venue-bookings/${existingBooking.id}`);
+      } else {
+        // No existing booking, proceed to booking form
+        navigate('/venue-booking', { state: { event } });
+      }
+    } catch (err) {
+      console.error('Error checking existing bookings:', err);
+      // If error, still allow them to proceed to booking page
+      navigate('/venue-booking', { state: { event } });
+    }
   };
 
   const formatDateTime = (datetime) => {
@@ -117,6 +150,12 @@ function MyEventsPage() {
           </button>
         </div>
       </div>
+
+      {successMessage && (
+        <div className="success-notification">
+          ✅ {successMessage}
+        </div>
+      )}
 
       <div className="filter-section">
         <label>Filter by status: </label>
@@ -200,6 +239,13 @@ function MyEventsPage() {
                         title="View Details"
                       >
                         👁️
+                      </button>
+                      <button 
+                        onClick={() => handleBookVenue(event)}
+                        className="action-button book-button"
+                        title="Book Venue"
+                      >
+                        📍
                       </button>
                       <button 
                         onClick={() => handleEditEvent(event.id)}

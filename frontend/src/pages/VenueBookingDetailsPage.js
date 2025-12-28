@@ -1,0 +1,261 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import venueBookingService from '../services/venueBookingService';
+import authService from '../services/authService';
+import './VenueBookingDetailsPage.css';
+
+function VenueBookingDetailsPage() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [booking, setBooking] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const user = authService.getCurrentUser();
+
+  useEffect(() => {
+    loadBookingDetails();
+  }, [id]);
+
+  const loadBookingDetails = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const result = await venueBookingService.getBookingById(id);
+      setBooking(result.booking);
+    } catch (err) {
+      console.error('Load booking error:', err);
+      setError(err.response?.data?.error || 'Failed to load booking details');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatDateTime = (datetime) => {
+    if (!datetime) return 'N/A';
+    return new Date(datetime).toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const getStatusBadgeClass = (status) => {
+    switch (status) {
+      case 'pending':
+        return 'status-pending';
+      case 'approved':
+        return 'status-approved';
+      case 'rejected':
+        return 'status-rejected';
+      case 'cancelled':
+        return 'status-cancelled';
+      default:
+        return '';
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="booking-details-container">
+        <div className="loading">Loading booking details...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="booking-details-container">
+        <div className="error-message">{error}</div>
+        <button onClick={() => navigate('/my-events')} className="back-button">
+          Back to My Events
+        </button>
+      </div>
+    );
+  }
+
+  if (!booking) {
+    return (
+      <div className="booking-details-container">
+        <div className="error-message">Booking not found</div>
+        <button onClick={() => navigate('/my-events')} className="back-button">
+          Back to My Events
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="booking-details-container">
+      <div className="booking-details-header">
+        <button onClick={() => navigate('/my-events')} className="back-button">
+          ← Back to My Events
+        </button>
+        <h1>Venue Booking Details</h1>
+      </div>
+
+      <div className="booking-details-content">
+        {/* Status Badge */}
+        <div className="status-section">
+          <span className={`status-badge ${getStatusBadgeClass(booking.status)}`}>
+            {booking.status.toUpperCase()}
+          </span>
+        </div>
+
+        {/* Event Information */}
+        <div className="details-section">
+          <h2>Event Information</h2>
+          <div className="details-grid">
+            <div className="detail-item">
+              <span className="detail-label">Event Name:</span>
+              <span className="detail-value">{booking.event?.event_name || 'N/A'}</span>
+            </div>
+            <div className="detail-item">
+              <span className="detail-label">Event Start:</span>
+              <span className="detail-value">{formatDateTime(booking.event?.start_datetime)}</span>
+            </div>
+            <div className="detail-item">
+              <span className="detail-label">Event End:</span>
+              <span className="detail-value">{formatDateTime(booking.event?.end_datetime)}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Venue Information */}
+        <div className="details-section">
+          <h2>Venue Information</h2>
+          <div className="details-grid">
+            <div className="detail-item">
+              <span className="detail-label">Venue Name:</span>
+              <span className="detail-value">{booking.venue?.name || 'N/A'}</span>
+            </div>
+            <div className="detail-item">
+              <span className="detail-label">Venue Code:</span>
+              <span className="detail-value">{booking.venue?.code || 'N/A'}</span>
+            </div>
+            <div className="detail-item">
+              <span className="detail-label">Location:</span>
+              <span className="detail-value">{booking.venue?.location || 'N/A'}</span>
+            </div>
+            <div className="detail-item">
+              <span className="detail-label">Capacity:</span>
+              <span className="detail-value">{booking.venue?.capacity || 'N/A'} people</span>
+            </div>
+            <div className="detail-item">
+              <span className="detail-label">Faculty:</span>
+              <span className="detail-value">{booking.venue?.faculty?.name || 'N/A'}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Booking Details */}
+        <div className="details-section">
+          <h2>Booking Details</h2>
+          <div className="details-grid">
+            <div className="detail-item">
+              <span className="detail-label">Requested Start:</span>
+              <span className="detail-value">{formatDateTime(booking.requested_start_datetime)}</span>
+            </div>
+            <div className="detail-item">
+              <span className="detail-label">Requested End:</span>
+              <span className="detail-value">{formatDateTime(booking.requested_end_datetime)}</span>
+            </div>
+            {booking.expected_attendees && (
+              <div className="detail-item">
+                <span className="detail-label">Expected Attendees:</span>
+                <span className="detail-value">{booking.expected_attendees}</span>
+              </div>
+            )}
+            {booking.setup_time > 0 && (
+              <div className="detail-item">
+                <span className="detail-label">Setup Time:</span>
+                <span className="detail-value">{booking.setup_time} minutes</span>
+              </div>
+            )}
+            {booking.teardown_time > 0 && (
+              <div className="detail-item">
+                <span className="detail-label">Teardown Time:</span>
+                <span className="detail-value">{booking.teardown_time} minutes</span>
+              </div>
+            )}
+            {booking.remarks && (
+              <div className="detail-item full-width">
+                <span className="detail-label">Notes/Remarks:</span>
+                <span className="detail-value">{booking.remarks}</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Requester Information */}
+        <div className="details-section">
+          <h2>Request Information</h2>
+          <div className="details-grid">
+            <div className="detail-item">
+              <span className="detail-label">Requested By:</span>
+              <span className="detail-value">{booking.requester?.name || 'N/A'}</span>
+            </div>
+            <div className="detail-item">
+              <span className="detail-label">Requested At:</span>
+              <span className="detail-value">{formatDateTime(booking.created_at)}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Approval/Rejection Information */}
+        {booking.status === 'approved' && (
+          <div className="details-section success-section">
+            <h2>Approval Information</h2>
+            <div className="details-grid">
+              <div className="detail-item">
+                <span className="detail-label">Approved By:</span>
+                <span className="detail-value">{booking.approver?.name || 'N/A'}</span>
+              </div>
+              <div className="detail-item">
+                <span className="detail-label">Approved At:</span>
+                <span className="detail-value">{formatDateTime(booking.approved_at)}</span>
+              </div>
+              {booking.approval_notes && (
+                <div className="detail-item full-width">
+                  <span className="detail-label">Approval Notes:</span>
+                  <span className="detail-value">{booking.approval_notes}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {booking.status === 'rejected' && (
+          <div className="details-section error-section">
+            <h2>Rejection Information</h2>
+            <div className="details-grid">
+              {booking.rejection_reason && (
+                <div className="detail-item full-width">
+                  <span className="detail-label">Rejection Reason:</span>
+                  <span className="detail-value">{booking.rejection_reason}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {booking.status === 'cancelled' && (
+          <div className="details-section">
+            <h2>Cancellation Information</h2>
+            <div className="details-grid">
+              {booking.cancellation_reason && (
+                <div className="detail-item full-width">
+                  <span className="detail-label">Cancellation Reason:</span>
+                  <span className="detail-value">{booking.cancellation_reason}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default VenueBookingDetailsPage;

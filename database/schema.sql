@@ -580,8 +580,11 @@ SELECT
   CURRENT_TIMESTAMP - INTERVAL '25 days'
 WHERE EXISTS (SELECT 1 FROM users WHERE email = 'sarah.organizer@university.edu');
 
--- Sample Venue Bookings Data
--- Students, faculty managers, and event organizers can all submit venue requests
+-- ========================================
+-- Sample Venue Bookings Data (COMMENTED OUT FOR TESTING)
+-- Uncomment these if you want sample data
+-- ========================================
+/*
 INSERT INTO venue_bookings (event_id, venue_id, requester_user_id, requested_start_datetime, requested_end_datetime, approved_start_datetime, approved_end_datetime, setup_time, teardown_time, status, approved_user_id, approved_at, remarks, expected_attendees)
 SELECT 
   (SELECT id FROM events WHERE event_name = 'Campus Tech Workshop' LIMIT 1),
@@ -677,6 +680,7 @@ SELECT
   'Alumni networking event',
   20
 WHERE EXISTS (SELECT 1 FROM events WHERE event_name = 'Alumni Meetup');
+*/
 
 -- ========================================
 -- Sample Event Participation Data
