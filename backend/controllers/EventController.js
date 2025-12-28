@@ -249,6 +249,36 @@ class EventController {
       res.status(500).json({ error: 'Failed to update event' });
     }
   }
-}
+  // Delete event
+  deleteEvent = async (req, res) => {
+    try {
+      const eventId = req.params.id;
+      const userId = req.user.userId;
+      const userRole = req.user.role;
+
+      // Get event to check ownership
+      const event = await Event.getById(eventId);
+      
+      if (!event) {
+        return res.status(404).json({ error: 'Event not found' });
+      }
+
+      // Only organizer or administrator can delete event
+      if (event.organizer_id !== userId && userRole !== 'administrator') {
+        return res.status(403).json({ error: 'Not authorized to delete this event' });
+      }
+
+      // Delete event
+      await Event.delete(eventId);
+
+      res.json({
+        success: true,
+        message: 'Event deleted successfully'
+      });
+    } catch (error) {
+      console.error('Delete event error:', error);
+      res.status(500).json({ error: 'Failed to delete event' });
+    }
+  }}
 
 module.exports = new EventController();

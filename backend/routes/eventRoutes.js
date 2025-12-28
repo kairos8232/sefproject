@@ -21,4 +21,8 @@ router.post('/', AuthController.verifyToken, EventController.createEvent);
 // PUT /api/events/:id
 router.put('/:id', AuthController.verifyToken, EventController.updateEvent);
 
+// Delete event (protected route)
+// DELETE /api/events/:id
+router.delete('/:id', AuthController.verifyToken, EventController.deleteEvent);
+
 module.exports = router;

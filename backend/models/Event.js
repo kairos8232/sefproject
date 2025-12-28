@@ -182,6 +182,24 @@ class Event {
       throw error;
     }
   }
+
+  // Delete event
+  static async delete(id) {
+    try {
+      const { data, error } = await supabase
+        .from('events')
+        .delete()
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      throw error;
+    }
+  }
 }
 
 module.exports = Event;
