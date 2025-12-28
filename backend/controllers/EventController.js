@@ -163,6 +163,55 @@ class EventController {
     return false;
   }
 
+  // Create new event
+  createEvent = async (req, res) => {
+    try {
+      const userId = req.user.userId;
+      const userRole = req.user.role;
+      const eventData = req.body;
+
+      // Check if user can create events
+      if (userRole === 'administrator') {
+        return res.status(403).json({ error: 'Administrators cannot create events' });
+      }
+
+      // Validate required fields
+      if (!eventData.event_name || !eventData.start_datetime || !eventData.end_datetime) {
+        return res.status(400).json({ error: 'Missing required fields' });
+      }
+
+      // Set organizer_id to current user
+      eventData.organizer_id = userId;
+
+      // Set default visibility to campuswide if not specified
+      if (!eventData.visibility) {
+        eventData.visibility = 'campuswide';
+      }
+
+      // Only event_organizer can set custom visibility
+      if (userRole !== 'event_organizer' && userRole !== 'administrator') {
+        eventData.visibility = 'campuswide';
+      }
+
+      // Set default status to upcoming
+      if (!eventData.status) {
+        eventData.status = 'upcoming';
+      }
+
+      // Create event
+      const newEvent = await Event.create(eventData);
+
+      res.status(201).json({
+        success: true,
+        message: 'Event created successfully',
+        event: newEvent
+      });
+    } catch (error) {
+      console.error('Create event error:', error);
+      res.status(500).json({ error: 'Failed to create event' });
+    }
+  }
+
   // Update event
   updateEvent = async (req, res) => {
     try {

@@ -148,6 +148,23 @@ class Event {
     }
   }
 
+  // Create new event
+  static async create(eventData) {
+    try {
+      const { data, error } = await supabase
+        .from('events')
+        .insert([eventData])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error creating event:', error);
+      throw error;
+    }
+  }
+
   // Update event
   static async update(id, eventData) {
     try {

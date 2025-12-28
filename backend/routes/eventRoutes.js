@@ -13,6 +13,10 @@ router.get('/', AuthController.verifyToken, EventController.getEvents);
 // GET /api/events/:id
 router.get('/:id', AuthController.verifyToken, EventController.getEventById);
 
+// Create new event (protected route)
+// POST /api/events
+router.post('/', AuthController.verifyToken, EventController.createEvent);
+
 // Update event (protected route)
 // PUT /api/events/:id
 router.put('/:id', AuthController.verifyToken, EventController.updateEvent);
