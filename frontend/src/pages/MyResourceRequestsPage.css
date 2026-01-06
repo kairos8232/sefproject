@@ -234,7 +234,7 @@
   font-style: italic;
 }
 
-.rejection-reason {
+.my-resource-requests-page .rejection-reason {
   font-size: 11px;
   color: #721c24;
   margin-top: 5px;

@@ -25,4 +25,12 @@ router.put('/:id', AuthController.verifyToken, EventController.updateEvent);
 // DELETE /api/events/:id
 router.delete('/:id', AuthController.verifyToken, EventController.deleteEvent);
 
+// UC: Review Faculty Events - Get events in faculty's venues (faculty manager only)
+// GET /api/events/faculty/events
+router.get('/faculty/events', AuthController.verifyToken, EventController.getFacultyEvents);
+
+// UC: Review Faculty Events - Get detailed event info (faculty manager only)
+// GET /api/events/faculty/events/:id
+router.get('/faculty/events/:id', AuthController.verifyToken, EventController.getFacultyEventById);
+
 module.exports = router;

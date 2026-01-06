@@ -279,6 +279,88 @@ class EventController {
       console.error('Delete event error:', error);
       res.status(500).json({ error: 'Failed to delete event' });
     }
+  }
+
+  // UC: Review Faculty Events - Get events in faculty's venues
+  getFacultyEvents = async (req, res) => {
+    try {
+      const { role, facultyId } = req.user;
+
+      // Only faculty managers can access this
+      if (role !== 'faculty_manager') {
+        return res.status(403).json({ 
+          error: 'Only faculty managers can access faculty events' 
+        });
+      }
+
+      if (!facultyId) {
+        return res.status(400).json({ 
+          error: 'Faculty manager must have an assigned faculty' 
+        });
+      }
+
+      const { status, venue_id, booking_status, start_date, end_date } = req.query;
+
+      // Get events with venue bookings in this faculty
+      const events = await Event.getFacultyEvents(facultyId, {
+        status,
+        venue_id,
+        booking_status,
+        start_date,
+        end_date
+      });
+
+      res.json({
+        success: true,
+        count: events.length,
+        events
+      });
+    } catch (error) {
+      console.error('Get faculty events error:', error);
+      res.status(500).json({ 
+        error: 'An error occurred while fetching faculty events' 
+      });
+    }
+  }
+
+  // UC: Review Faculty Events - Get detailed event info for faculty
+  getFacultyEventById = async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { role, facultyId } = req.user;
+
+      // Only faculty managers can access this
+      if (role !== 'faculty_manager') {
+        return res.status(403).json({ 
+          error: 'Only faculty managers can access faculty events' 
+        });
+      }
+
+      if (!facultyId) {
+        return res.status(400).json({ 
+          error: 'Faculty manager must have an assigned faculty' 
+        });
+      }
+
+      // Get full event details including venue bookings and resources
+      const eventDetails = await Event.getFacultyEventDetails(id, facultyId);
+
+      if (!eventDetails) {
+        return res.status(404).json({ 
+          error: 'Event not found or not in your faculty\'s venues' 
+        });
+      }
+
+      res.json({
+        success: true,
+        event: eventDetails
+      });
+    } catch (error) {
+      console.error('Get faculty event details error:', error);
+      res.status(500).json({ 
+        error: 'An error occurred while fetching event details' 
+      });
+    }
   }}
 
 module.exports = new EventController();

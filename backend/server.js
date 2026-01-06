@@ -6,6 +6,7 @@ const eventRoutes = require('./routes/eventRoutes');
 const participationRoutes = require('./routes/participationRoutes');
 const venueBookingRoutes = require('./routes/venueBookingRoutes');
 const resourceRequestRoutes = require('./routes/resourceRequests');
+const venueRoutes = require('./routes/venueRoutes');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -19,6 +20,7 @@ app.use('/api/events', eventRoutes);
 app.use('/api/participation', participationRoutes);
 app.use('/api/venue-bookings', venueBookingRoutes);
 app.use('/api/resource-requests', resourceRequestRoutes);
+app.use('/api/venues', venueRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

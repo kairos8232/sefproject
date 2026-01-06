@@ -143,6 +143,13 @@ function HomePage() {
         icon: '✔️',
         path: '/faculty/bookings',
         color: '#27ae60'
+      },
+      {
+        title: 'Faculty Events',
+        description: 'Review events in your faculty\'s venues',
+        icon: '🏛️',
+        path: '/faculty-events',
+        color: '#8e44ad'
       }
     ];
 

@@ -12,6 +12,8 @@ import VenueBookingDetailsPage from './pages/VenueBookingDetailsPage';
 import MyVenueRequestsPage from './pages/MyVenueRequestsPage';
 import RequestResourcesPage from './pages/RequestResourcesPage';
 import MyResourceRequestsPage from './pages/MyResourceRequestsPage';
+import FacultyEventsPage from './pages/FacultyEventsPage';
+import FacultyEventDetailPage from './pages/FacultyEventDetailPage';
 
 function App() {
   return (
@@ -29,6 +31,8 @@ function App() {
         <Route path="/venue-booking" element={<VenueBookingPage />} />
         <Route path="/venue-bookings/:id" element={<VenueBookingDetailsPage />} />
         <Route path="/request-resources" element={<RequestResourcesPage />} />
+        <Route path="/faculty-events" element={<FacultyEventsPage />} />
+        <Route path="/faculty-events/:id" element={<FacultyEventDetailPage />} />
         <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>
     </Router>
