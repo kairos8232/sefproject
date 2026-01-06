@@ -123,65 +123,115 @@ function VenueBookingPage() {
       <div className="venue-booking-header">
         <div>
           <h1>Book Venue</h1>
-          <p className="event-info">For event: <strong>{event.event_name}</strong></p>
+          <p>Select a venue for your event</p>
+          <div className="event-info">
+            <strong>Event:</strong> {event.event_name}
+          </div>
+          <div className="event-info">
+            <strong>Time:</strong> {formatDateTime(event.start_datetime)} - {formatDateTime(event.end_datetime)}
+          </div>
         </div>
         <button onClick={() => navigate('/my-events')} className="back-button">
           Back to My Events
         </button>
       </div>
 
+      {error && <div className="error-message">{error}</div>}
+
       <div className="venue-booking-container">
-        {error && <div className="error-message">{error}</div>}
+        {/* Venue Selection Section */}
+        <div className="venue-selection-section">
+          <h2>Available Venues</h2>
 
-        {/* Step 1: Booking Details */}
-        <div className="booking-form-section">
-          <h2>Step 1: Enter Booking Requirements</h2>
-          <form onSubmit={handleSearchVenues}>
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="requested_start_datetime">Start Date & Time *</label>
-                <input
-                  type="datetime-local"
-                  id="requested_start_datetime"
-                  name="requested_start_datetime"
-                  value={formData.requested_start_datetime}
-                  onChange={handleInputChange}
-                  required
-                  readOnly
-                  className="readonly-field"
-                />
-                <small>Automatically set from event start time (cannot be changed)</small>
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="requested_end_datetime">End Date & Time *</label>
-                <input
-                  type="datetime-local"
-                  id="requested_end_datetime"
-                  name="requested_end_datetime"
-                  value={formData.requested_end_datetime}
-                  onChange={handleInputChange}
-                  required
-                  readOnly
-                  className="readonly-field"
-                />
-                <small>Automatically set from event end time (cannot be changed)</small>
-              </div>
+          {/* Filters */}
+          <div className="filter-section">
+            <div className="form-group">
+              <label htmlFor="expected_attendees">Expected Attendees (Optional)</label>
+              <input
+                type="number"
+                id="expected_attendees"
+                name="expected_attendees"
+                value={formData.expected_attendees}
+                onChange={handleInputChange}
+                min="1"
+                placeholder="e.g., 100"
+              />
+              <small>Filter venues by minimum capacity</small>
             </div>
+          </div>
 
-            <div className="form-row">
+          <button onClick={handleSearchVenues} className="search-button" disabled={loading}>
+            {loading ? 'Loading Venues...' : 'Search Venues'}
+          </button>
+
+          {loading ? (
+            <div className="loading">Loading venues...</div>
+          ) : searchPerformed && availableVenues.length === 0 ? (
+            <div className="no-venues">
+              <p>No venues are available for the selected date and time.</p>
+              <p>Please try different dates or contact the administrator.</p>
+            </div>
+          ) : searchPerformed ? (
+            <div className="venues-grid">
+              {availableVenues.map((venue) => (
+                <div
+                  key={venue.id}
+                  className={`venue-card ${selectedVenue?.id === venue.id ? 'selected' : ''}`}
+                  onClick={() => setSelectedVenue(venue)}
+                >
+                  <div className="venue-header">
+                    <h3>{venue.name}</h3>
+                    <span className="venue-code">{venue.code}</span>
+                  </div>
+                  <div className="venue-details">
+                    <p><strong>Faculty:</strong> {venue.faculty?.name || 'N/A'}</p>
+                    <p><strong>Location:</strong> {venue.location || 'N/A'}</p>
+                    <p><strong>Capacity:</strong> {venue.capacity || 'N/A'} people</p>
+                  </div>
+                  {selectedVenue?.id === venue.id && (
+                    <div className="selected-badge">Selected</div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </div>
+
+        {/* Booking Form Section */}
+        {selectedVenue && (
+          <div className="booking-form-section">
+            <h2>Booking Details</h2>
+            <form onSubmit={(e) => { e.preventDefault(); handleSubmitBooking(); }}>
               <div className="form-group">
-                <label htmlFor="expected_attendees">Expected Attendees</label>
+                <label>Selected Venue</label>
                 <input
-                  type="number"
-                  id="expected_attendees"
-                  name="expected_attendees"
-                  value={formData.expected_attendees}
-                  onChange={handleInputChange}
-                  min="1"
-                  placeholder="e.g., 100"
+                  type="text"
+                  value={`${selectedVenue.name} (${selectedVenue.code})`}
+                  readOnly
+                  className="readonly-field"
                 />
-                <small>Venues with insufficient capacity will be filtered out</small>
+              </div>
+
+              <div className="form-group">
+                <label>Start Date & Time</label>
+                <input
+                  type="text"
+                  value={formatDateTime(event.start_datetime)}
+                  readOnly
+                  className="readonly-field"
+                />
+                <small>Locked to event start time</small>
+              </div>
+
+              <div className="form-group">
+                <label>End Date & Time</label>
+                <input
+                  type="text"
+                  value={formatDateTime(event.end_datetime)}
+                  readOnly
+                  className="readonly-field"
+                />
+                <small>Locked to event end time</small>
               </div>
 
               <div className="form-group">
@@ -209,113 +259,41 @@ function VenueBookingPage() {
                   placeholder="e.g., 30"
                 />
               </div>
-            </div>
 
-            <div className="form-group">
-              <label htmlFor="remarks">Additional Notes / Special Requests</label>
-              <textarea
-                id="remarks"
-                name="remarks"
-                value={formData.remarks}
-                onChange={handleInputChange}
-                rows="3"
-                placeholder="e.g., Need projector, microphone setup, etc."
-              />
-            </div>
-
-            <button type="submit" className="search-button" disabled={loading}>
-              {loading ? 'Searching...' : 'Search Available Venues'}
-            </button>
-          </form>
-        </div>
-
-        {/* Step 2: Select Venue */}
-        {searchPerformed && (
-          <div className="venue-selection-section">
-            <h2>Step 2: Select a Venue</h2>
-            
-            {availableVenues.length === 0 ? (
-              <div className="no-venues-message">
-                <p>No venues are available for the selected date and time.</p>
-                <p>Please try different dates or contact the administrator.</p>
+              <div className="form-group">
+                <label htmlFor="remarks">Additional Notes / Special Requests</label>
+                <textarea
+                  id="remarks"
+                  name="remarks"
+                  value={formData.remarks}
+                  onChange={handleInputChange}
+                  rows="4"
+                  placeholder="e.g., Need projector, microphone setup, etc."
+                />
               </div>
-            ) : (
-              <>
-                <p className="venues-count">
-                  Found {availableVenues.length} available venue{availableVenues.length !== 1 ? 's' : ''}
-                </p>
-                <div className="venues-grid">
-                  {availableVenues.map((venue) => (
-                    <div
-                      key={venue.id}
-                      className={`venue-card ${selectedVenue?.id === venue.id ? 'selected' : ''}`}
-                      onClick={() => setSelectedVenue(venue)}
-                    >
-                      <div className="venue-header">
-                        <h3>{venue.name}</h3>
-                        <span className="venue-code">{venue.code}</span>
-                      </div>
-                      <div className="venue-details">
-                        <p><strong>Faculty:</strong> {venue.faculty?.name || 'N/A'}</p>
-                        <p><strong>Location:</strong> {venue.location || 'N/A'}</p>
-                        <p><strong>Capacity:</strong> {venue.capacity || 'N/A'} people</p>
-                      </div>
-                      {selectedVenue?.id === venue.id && (
-                        <div className="selected-badge">✓ Selected</div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-        )}
 
-        {/* Step 3: Review and Submit */}
-        {selectedVenue && (
-          <div className="booking-summary-section">
-            <h2>Step 3: Review and Submit</h2>
-            <div className="booking-summary">
-              <div className="summary-item">
-                <span className="summary-label">Event:</span>
-                <span className="summary-value">{event.event_name}</span>
+              <div className="form-actions">
+                <button
+                  type="button"
+                  onClick={() => navigate('/my-events')}
+                  className="cancel-button"
+                  disabled={loading}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="submit-button"
+                  disabled={loading}
+                >
+                  {loading ? 'Submitting...' : 'Submit Booking Request'}
+                </button>
               </div>
-              <div className="summary-item">
-                <span className="summary-label">Venue:</span>
-                <span className="summary-value">{selectedVenue.name} ({selectedVenue.code})</span>
-              </div>
-              <div className="summary-item">
-                <span className="summary-label">Date & Time:</span>
-                <span className="summary-value">
-                  {formatDateTime(formData.requested_start_datetime)} - {formatDateTime(formData.requested_end_datetime)}
-                </span>
-              </div>
-              {formData.expected_attendees && (
-                <div className="summary-item">
-                  <span className="summary-label">Expected Attendees:</span>
-                  <span className="summary-value">{formData.expected_attendees}</span>
-                </div>
-              )}
-              {formData.remarks && (
-                <div className="summary-item">
-                  <span className="summary-label">Notes:</span>
-                  <span className="summary-value">{formData.remarks}</span>
-                </div>
-              )}
-            </div>
 
-            <div className="submit-actions">
-              <button 
-                onClick={handleSubmitBooking} 
-                className="submit-button" 
-                disabled={loading}
-              >
-                {loading ? 'Submitting...' : 'Submit Booking Request'}
-              </button>
               <p className="submit-note">
-                Your booking will be submitted with status "Pending" and will require approval.
+                Note: Your booking request will be submitted with status "Pending" and will require approval from faculty managers.
               </p>
-            </div>
+            </form>
           </div>
         )}
       </div>
