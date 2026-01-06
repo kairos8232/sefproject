@@ -311,6 +311,14 @@
   background-color: #b2dfdb;
 }
 
+.resource-button {
+  background-color: #e8f5e9;
+}
+
+.resource-button:hover {
+  background-color: #c8e6c9;
+}
+
 .edit-button {
   background-color: #fff3cd;
 }

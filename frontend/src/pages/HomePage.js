@@ -168,6 +168,13 @@ function HomePage() {
         icon: '📝',
         path: '/my-venue-requests',
         color: '#f39c12'
+      },
+      {
+        title: 'My Resource Requests',
+        description: 'Request and track campus resources',
+        icon: '📦',
+        path: '/my-resource-requests',
+        color: '#4CAF50'
       }
     ];
 

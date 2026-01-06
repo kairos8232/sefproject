@@ -10,6 +10,8 @@
 -- 6. venue_bookings - Venue booking requests
 -- 7. event_invitations - Event invitation management
 -- 8. event_participation - Event participation/registration tracking
+-- 9. resources - Campus resources (equipment, furniture, etc.)
+-- 10. resource_requests - Resource requests for events
 -- ========================================
 
 -- Enable UUID extension (if not already enabled)
@@ -18,6 +20,8 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- ========================================
 -- Drop existing tables (in reverse order of dependencies)
 -- ========================================
+DROP TABLE IF EXISTS resource_requests CASCADE;
+DROP TABLE IF EXISTS resources CASCADE;
 DROP TABLE IF EXISTS event_participation CASCADE;
 DROP TABLE IF EXISTS event_invitations CASCADE;
 DROP TABLE IF EXISTS venue_bookings CASCADE;
@@ -232,6 +236,64 @@ CREATE INDEX idx_event_participation_status ON event_participation(status);
 CREATE INDEX idx_event_participation_registered_at ON event_participation(registered_at);
 
 -- ========================================
+-- Table: resources
+-- Stores available campus resources (equipment, furniture, etc.)
+-- ========================================
+CREATE TABLE resources (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name VARCHAR(255) NOT NULL,
+  category VARCHAR(100) NOT NULL, -- 'audio_visual', 'furniture', 'it_equipment', 'catering', 'other'
+  description TEXT,
+  total_quantity INTEGER NOT NULL DEFAULT 0, -- Total number available
+  available_quantity INTEGER NOT NULL DEFAULT 0, -- Currently available
+  unit VARCHAR(50), -- 'pieces', 'sets', 'units'
+  status VARCHAR(50) NOT NULL DEFAULT 'active', -- 'active', 'inactive', 'maintenance'
+  managed_by UUID REFERENCES users(id) ON DELETE SET NULL, -- Faculty manager or admin
+  notes TEXT, -- Usage restrictions, special instructions
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Indexes for resources
+CREATE INDEX idx_resources_category ON resources(category);
+CREATE INDEX idx_resources_status ON resources(status);
+CREATE INDEX idx_resources_managed_by ON resources(managed_by);
+
+-- ========================================
+-- Table: resource_requests
+-- Stores resource requests for events
+-- ========================================
+CREATE TABLE resource_requests (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+  venue_booking_id UUID NOT NULL REFERENCES venue_bookings(id) ON DELETE CASCADE,
+  resource_id UUID NOT NULL REFERENCES resources(id) ON DELETE CASCADE,
+  requester_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  requested_quantity INTEGER NOT NULL,
+  usage_start_datetime TIMESTAMP WITH TIME ZONE NOT NULL,
+  usage_end_datetime TIMESTAMP WITH TIME ZONE NOT NULL,
+  setup_instructions TEXT, -- Special instructions for setup
+  status VARCHAR(50) NOT NULL DEFAULT 'pending', -- 'pending', 'approved', 'rejected', 'cancelled'
+  approved_by UUID REFERENCES users(id) ON DELETE SET NULL,
+  approved_at TIMESTAMP WITH TIME ZONE,
+  approval_notes TEXT,
+  rejection_reason TEXT,
+  cancellation_reason TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Indexes for resource_requests
+CREATE INDEX idx_resource_requests_event_id ON resource_requests(event_id);
+CREATE INDEX idx_resource_requests_venue_booking_id ON resource_requests(venue_booking_id);
+CREATE INDEX idx_resource_requests_resource_id ON resource_requests(resource_id);
+CREATE INDEX idx_resource_requests_requester_user_id ON resource_requests(requester_user_id);
+CREATE INDEX idx_resource_requests_status ON resource_requests(status);
+CREATE INDEX idx_resource_requests_usage_start ON resource_requests(usage_start_datetime);
+CREATE INDEX idx_resource_requests_usage_end ON resource_requests(usage_end_datetime);
+CREATE INDEX idx_resource_requests_approved_by ON resource_requests(approved_by);
+
+-- ========================================
 -- Row Level Security (RLS)
 -- ========================================
 -- Enable RLS on tables
@@ -243,6 +305,8 @@ ALTER TABLE events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE venue_bookings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE event_invitations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE event_participation ENABLE ROW LEVEL SECURITY;
+ALTER TABLE resources ENABLE ROW LEVEL SECURITY;
+ALTER TABLE resource_requests ENABLE ROW LEVEL SECURITY;
 
 -- Backend can manage all users
 CREATE POLICY "Backend can read all users" ON users
@@ -369,6 +433,40 @@ CREATE POLICY "Backend can update event_invitations" ON event_invitations
   USING (true);
 
 CREATE POLICY "Backend can delete event_invitations" ON event_invitations
+  FOR DELETE
+  USING (true);
+
+-- Backend can manage all resources
+CREATE POLICY "Backend can read all resources" ON resources
+  FOR SELECT
+  USING (true);
+
+CREATE POLICY "Backend can insert resources" ON resources
+  FOR INSERT
+  WITH CHECK (true);
+
+CREATE POLICY "Backend can update resources" ON resources
+  FOR UPDATE
+  USING (true);
+
+CREATE POLICY "Backend can delete resources" ON resources
+  FOR DELETE
+  USING (true);
+
+-- Backend can manage all resource_requests
+CREATE POLICY "Backend can read all resource_requests" ON resource_requests
+  FOR SELECT
+  USING (true);
+
+CREATE POLICY "Backend can insert resource_requests" ON resource_requests
+  FOR INSERT
+  WITH CHECK (true);
+
+CREATE POLICY "Backend can update resource_requests" ON resource_requests
+  FOR UPDATE
+  USING (true);
+
+CREATE POLICY "Backend can delete resource_requests" ON resource_requests
   FOR DELETE
   USING (true);
 
@@ -581,10 +679,8 @@ SELECT
 WHERE EXISTS (SELECT 1 FROM users WHERE email = 'sarah.organizer@university.edu');
 
 -- ========================================
--- Sample Venue Bookings Data (COMMENTED OUT FOR TESTING)
--- Uncomment these if you want sample data
+-- Sample Venue Bookings Data
 -- ========================================
-/*
 INSERT INTO venue_bookings (event_id, venue_id, requester_user_id, requested_start_datetime, requested_end_datetime, approved_start_datetime, approved_end_datetime, setup_time, teardown_time, status, approved_user_id, approved_at, remarks, expected_attendees)
 SELECT 
   (SELECT id FROM events WHERE event_name = 'Campus Tech Workshop' LIMIT 1),
@@ -680,7 +776,6 @@ SELECT
   'Alumni networking event',
   20
 WHERE EXISTS (SELECT 1 FROM events WHERE event_name = 'Alumni Meetup');
-*/
 
 -- ========================================
 -- Sample Event Participation Data
@@ -788,6 +883,131 @@ SELECT
 WHERE EXISTS (SELECT 1 FROM events WHERE event_name = 'Alumni Meetup');
 
 -- ========================================
+-- Sample Resources Data
+-- ========================================
+INSERT INTO resources (name, category, description, total_quantity, available_quantity, unit, status, managed_by)
+SELECT 
+  'LCD Projector',
+  'audio_visual',
+  'Full HD projector with HDMI and VGA inputs',
+  10,
+  10,
+  'units',
+  'active',
+  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1)
+WHERE EXISTS (SELECT 1 FROM users WHERE email = 'admin@university.edu');
+
+INSERT INTO resources (name, category, description, total_quantity, available_quantity, unit, status, managed_by)
+SELECT 
+  'Wireless Microphone Set',
+  'audio_visual',
+  'Wireless microphone with receiver and batteries',
+  8,
+  8,
+  'sets',
+  'active',
+  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1)
+WHERE EXISTS (SELECT 1 FROM users WHERE email = 'admin@university.edu');
+
+INSERT INTO resources (name, category, description, total_quantity, available_quantity, unit, status, managed_by)
+SELECT 
+  'Folding Chairs',
+  'furniture',
+  'Portable folding chairs for events',
+  200,
+  200,
+  'pieces',
+  'active',
+  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1)
+WHERE EXISTS (SELECT 1 FROM users WHERE email = 'admin@university.edu');
+
+INSERT INTO resources (name, category, description, total_quantity, available_quantity, unit, status, managed_by)
+SELECT 
+  'Folding Tables (6ft)',
+  'furniture',
+  '6-foot folding tables',
+  50,
+  50,
+  'pieces',
+  'active',
+  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1)
+WHERE EXISTS (SELECT 1 FROM users WHERE email = 'admin@university.edu');
+
+INSERT INTO resources (name, category, description, total_quantity, available_quantity, unit, status, managed_by)
+SELECT 
+  'Laptop (Presentation)',
+  'it_equipment',
+  'Laptop pre-loaded with presentation software',
+  5,
+  5,
+  'units',
+  'active',
+  (SELECT id FROM users WHERE email = 'alice.wong@fci.edu' LIMIT 1)
+WHERE EXISTS (SELECT 1 FROM users WHERE email = 'alice.wong@fci.edu');
+
+INSERT INTO resources (name, category, description, total_quantity, available_quantity, unit, status, managed_by)
+SELECT 
+  'PA Sound System',
+  'audio_visual',
+  'Complete sound system with speakers and mixer',
+  4,
+  4,
+  'sets',
+  'active',
+  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1)
+WHERE EXISTS (SELECT 1 FROM users WHERE email = 'admin@university.edu');
+
+INSERT INTO resources (name, category, description, total_quantity, available_quantity, unit, status, managed_by, notes)
+SELECT 
+  'Catering Package (Snacks)',
+  'catering',
+  'Light refreshments package for events',
+  20,
+  20,
+  'packages',
+  'active',
+  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1),
+  'Requires 48 hours advance notice'
+WHERE EXISTS (SELECT 1 FROM users WHERE email = 'admin@university.edu');
+
+INSERT INTO resources (name, category, description, total_quantity, available_quantity, unit, status, managed_by)
+SELECT 
+  'Whiteboard (Mobile)',
+  'furniture',
+  'Large mobile whiteboard with markers',
+  15,
+  15,
+  'units',
+  'active',
+  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1)
+WHERE EXISTS (SELECT 1 FROM users WHERE email = 'admin@university.edu');
+
+INSERT INTO resources (name, category, description, total_quantity, available_quantity, unit, status, managed_by)
+SELECT 
+  'Portable LED Screen',
+  'audio_visual',
+  'Large LED display screen for outdoor events',
+  2,
+  2,
+  'units',
+  'active',
+  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1)
+WHERE EXISTS (SELECT 1 FROM users WHERE email = 'admin@university.edu');
+
+INSERT INTO resources (name, category, description, total_quantity, available_quantity, unit, status, managed_by, notes)
+SELECT 
+  'Video Camera Kit',
+  'audio_visual',
+  'Professional video camera with tripod',
+  3,
+  3,
+  'kits',
+  'active',
+  (SELECT id FROM users WHERE email = 'james.lee@fac.edu' LIMIT 1),
+  'FAC students only - requires training certification'
+WHERE EXISTS (SELECT 1 FROM users WHERE email = 'james.lee@fac.edu');
+
+-- ========================================
 -- Useful Functions
 -- ========================================
 
@@ -842,6 +1062,18 @@ BEFORE UPDATE ON event_participation
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();
 
+-- Trigger to auto-update updated_at on resources table
+CREATE TRIGGER update_resources_updated_at
+BEFORE UPDATE ON resources
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();
+
+-- Trigger to auto-update updated_at on resource_requests table
+CREATE TRIGGER update_resource_requests_updated_at
+BEFORE UPDATE ON resource_requests
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();
+
 -- Function to clean up expired sessions (can be run periodically)
 CREATE OR REPLACE FUNCTION clean_expired_sessions()
 RETURNS INTEGER AS $$
@@ -865,6 +1097,8 @@ COMMENT ON TABLE events IS 'Stores campus events information';
 COMMENT ON TABLE venue_bookings IS 'Stores venue booking requests for events';
 COMMENT ON TABLE event_invitations IS 'Stores user invitations for invite-only events';
 COMMENT ON TABLE event_participation IS 'Stores user participation/registration for events';
+COMMENT ON TABLE resources IS 'Stores available campus resources (equipment, furniture, etc.)';
+COMMENT ON TABLE resource_requests IS 'Stores resource requests for events';
 
 COMMENT ON COLUMN users.role IS 'User role: student (can create events), event_organizer (can create events with custom visibility), administrator (admin functions only, cannot create events), faculty_manager (can create events and manage venues)';
 COMMENT ON COLUMN users.status IS 'User account status: active, inactive, or blocked';
@@ -880,6 +1114,11 @@ COMMENT ON COLUMN events.visibility IS 'Event visibility: campuswide (all users)
 COMMENT ON COLUMN events.event_type IS 'Event type: seminar, workshop, sports, cultural, career, orientation, networking, general, or custom value when Other is selected';
 COMMENT ON COLUMN events.status IS 'Event status: upcoming (before start), ongoing (currently happening, can still register), completed (finished), cancelled';
 COMMENT ON COLUMN venue_bookings.status IS 'Booking status: pending, approved, rejected, cancelled';
+COMMENT ON COLUMN resources.category IS 'Resource category: audio_visual, furniture, it_equipment, catering, other';
+COMMENT ON COLUMN resources.total_quantity IS 'Total number of this resource available';
+COMMENT ON COLUMN resources.available_quantity IS 'Currently available quantity (updated as requests are approved/returned)';
+COMMENT ON COLUMN resources.status IS 'Resource status: active, inactive, maintenance';
+COMMENT ON COLUMN resource_requests.status IS 'Request status: pending, approved, rejected, cancelled';
 COMMENT ON COLUMN venue_bookings.setup_time IS 'Minutes needed before event for setup';
 COMMENT ON COLUMN venue_bookings.teardown_time IS 'Minutes needed after event for cleanup';
 COMMENT ON COLUMN venue_bookings.expected_attendees IS 'Expected number of attendees for capacity verification';

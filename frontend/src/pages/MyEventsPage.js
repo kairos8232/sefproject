@@ -7,6 +7,7 @@ import './MyEventsPage.css';
 
 function MyEventsPage() {
   const [events, setEvents] = useState([]);
+  const [eventBookings, setEventBookings] = useState({}); // Track venue bookings by event ID
   const [totalEvents, setTotalEvents] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -35,6 +36,24 @@ function MyEventsPage() {
       }
       
       setEvents(myEvents);
+
+      // Fetch venue bookings for each event
+      const bookingsMap = {};
+      await Promise.all(
+        myEvents.map(async (event) => {
+          try {
+            const response = await venueBookingService.getBookingsByEvent(event.id);
+            const approvedBooking = response.bookings?.find(b => b.status === 'approved');
+            if (approvedBooking) {
+              bookingsMap[event.id] = approvedBooking;
+            }
+          } catch (err) {
+            // Silently fail for individual booking fetches
+            console.error(`Failed to fetch bookings for event ${event.id}:`, err);
+          }
+        })
+      );
+      setEventBookings(bookingsMap);
     } catch (err) {
       setError(err || 'Failed to load events');
     } finally {
@@ -103,6 +122,13 @@ function MyEventsPage() {
       console.error('Error checking existing bookings:', err);
       // If error, still allow them to proceed to booking page
       navigate('/venue-booking', { state: { event } });
+    }
+  };
+
+  const handleRequestResources = (event) => {
+    const booking = eventBookings[event.id];
+    if (booking) {
+      navigate('/request-resources', { state: { event, venueBooking: booking } });
     }
   };
 
@@ -251,6 +277,15 @@ function MyEventsPage() {
                       >
                         📍
                       </button>
+                      {eventBookings[event.id] && (
+                        <button 
+                          onClick={() => handleRequestResources(event)}
+                          className="action-button resource-button"
+                          title="Request Resources"
+                        >
+                          📦
+                        </button>
+                      )}
                       <button 
                         onClick={() => handleEditEvent(event.id)}
                         className="action-button edit-button"

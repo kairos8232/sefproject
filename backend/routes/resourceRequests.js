@@ -1,0 +1,42 @@
+const express = require('express');
+const router = express.Router();
+const resourceRequestController = require('../controllers/ResourceRequestController');
+const AuthController = require('../controllers/AuthController');
+
+// All routes require authentication
+router.use(AuthController.verifyToken);
+
+// Check resource availability
+router.get('/availability', resourceRequestController.checkAvailability);
+
+// Get all resource requests (faculty managers only)
+router.get('/', resourceRequestController.getResourceRequests);
+
+// Get user's own resource requests
+router.get('/my-requests', resourceRequestController.getMyRequests);
+
+// Get resource requests by event
+router.get('/event/:eventId', resourceRequestController.getRequestsByEvent);
+
+// Get resource request by ID
+router.get('/:id', resourceRequestController.getResourceRequestById);
+
+// Create resource request
+router.post('/', resourceRequestController.createResourceRequest);
+
+// Update resource request
+router.put('/:id', resourceRequestController.updateResourceRequest);
+
+// Approve resource request (faculty managers only)
+router.post('/:id/approve', resourceRequestController.approveResourceRequest);
+
+// Reject resource request (faculty managers only)
+router.post('/:id/reject', resourceRequestController.rejectResourceRequest);
+
+// Cancel resource request
+router.post('/:id/cancel', resourceRequestController.cancelResourceRequest);
+
+// Delete resource request
+router.delete('/:id', resourceRequestController.deleteResourceRequest);
+
+module.exports = router;
