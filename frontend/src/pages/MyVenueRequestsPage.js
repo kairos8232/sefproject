@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import venueBookingService from '../services/venueBookingService';
+import { formatDateTime } from '../utils/dateUtils';
 import './MyVenueRequestsPage.css';
 
 function MyVenueRequestsPage() {
@@ -51,17 +52,6 @@ function MyVenueRequestsPage() {
     } catch (err) {
       alert(err.response?.data?.error || 'Failed to cancel booking');
     }
-  };
-
-  const formatDateTime = (datetime) => {
-    if (!datetime) return 'N/A';
-    return new Date(datetime).toLocaleString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
   };
 
   const getStatusBadgeClass = (status) => {

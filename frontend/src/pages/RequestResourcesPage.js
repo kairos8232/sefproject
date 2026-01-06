@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import resourceRequestService from '../services/resourceRequestService';
+import { formatDateTime } from '../utils/dateUtils';
 import './RequestResourcesPage.css';
 
 function RequestResourcesPage() {
@@ -98,16 +99,6 @@ function RequestResourcesPage() {
     } finally {
       setSubmitting(false);
     }
-  };
-
-  const formatDateTime = (datetime) => {
-    return new Date(datetime).toLocaleString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
   };
 
   const getCategoryLabel = (category) => {

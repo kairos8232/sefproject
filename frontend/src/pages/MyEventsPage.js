@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import eventService from '../services/eventService';
 import authService from '../services/authService';
 import venueBookingService from '../services/venueBookingService';
+import { formatDateTime } from '../utils/dateUtils';
 import './MyEventsPage.css';
 
 function MyEventsPage() {
@@ -130,16 +131,6 @@ function MyEventsPage() {
     if (booking) {
       navigate('/request-resources', { state: { event, venueBooking: booking } });
     }
-  };
-
-  const formatDateTime = (datetime) => {
-    return new Date(datetime).toLocaleString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
   };
 
   const formatVisibility = (visibility) => {

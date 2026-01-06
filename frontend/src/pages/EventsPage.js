@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import eventService from '../services/eventService';
 import participationService from '../services/participationService';
+import { formatDateTime } from '../utils/dateUtils';
 import './EventsPage.css';
 
 function EventsPage() {
@@ -54,16 +55,6 @@ function EventsPage() {
 
   const handleBackToHome = () => {
     navigate('/home');
-  };
-
-  const formatDateTime = (datetime) => {
-    return new Date(datetime).toLocaleString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
   };
 
   const formatVisibility = (visibility) => {

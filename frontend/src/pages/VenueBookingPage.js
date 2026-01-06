@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import venueBookingService from '../services/venueBookingService';
+import { toDateTimeLocalInput, fromDateTimeLocalInput, formatDateTime } from '../utils/dateUtils';
 import './VenueBookingPage.css';
 
 function VenueBookingPage() {
@@ -8,21 +9,9 @@ function VenueBookingPage() {
   const location = useLocation();
   const event = location.state?.event;
 
-  // Convert event datetime to input format (YYYY-MM-DDTHH:mm)
-  const formatDatetimeForInput = (datetime) => {
-    if (!datetime) return '';
-    const date = new Date(datetime);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
-  };
-
   const [formData, setFormData] = useState({
-    requested_start_datetime: event ? formatDatetimeForInput(event.start_datetime) : '',
-    requested_end_datetime: event ? formatDatetimeForInput(event.end_datetime) : '',
+    requested_start_datetime: event ? toDateTimeLocalInput(event.start_datetime) : '',
+    requested_end_datetime: event ? toDateTimeLocalInput(event.end_datetime) : '',
     expected_attendees: '',
     setup_time: 0,
     teardown_time: 0,
@@ -79,8 +68,8 @@ function VenueBookingPage() {
 
     try {
       const result = await venueBookingService.checkAvailability(
-        formData.requested_start_datetime,
-        formData.requested_end_datetime,
+        fromDateTimeLocalInput(formData.requested_start_datetime),
+        fromDateTimeLocalInput(formData.requested_end_datetime),
         formData.expected_attendees || null,
         null // faculty_id - could be added as filter later
       );
@@ -108,8 +97,8 @@ function VenueBookingPage() {
       const bookingData = {
         event_id: event.id,
         venue_id: selectedVenue.id,
-        requested_start_datetime: formData.requested_start_datetime,
-        requested_end_datetime: formData.requested_end_datetime,
+        requested_start_datetime: fromDateTimeLocalInput(formData.requested_start_datetime),
+        requested_end_datetime: fromDateTimeLocalInput(formData.requested_end_datetime),
         expected_attendees: formData.expected_attendees ? parseInt(formData.expected_attendees) : null,
         setup_time: formData.setup_time ? parseInt(formData.setup_time) : 0,
         teardown_time: formData.teardown_time ? parseInt(formData.teardown_time) : 0,
@@ -127,10 +116,7 @@ function VenueBookingPage() {
     }
   };
 
-  const formatDateTime = (datetime) => {
-    if (!datetime) return '';
-    return new Date(datetime).toLocaleString();
-  };
+
 
   return (
     <div className="venue-booking-page">

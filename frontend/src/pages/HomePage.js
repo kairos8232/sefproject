@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import authService from '../services/authService';
 import participationService from '../services/participationService';
 import eventService from '../services/eventService';
+import { formatDateTime } from '../utils/dateUtils';
 import './HomePage.css';
 
 function HomePage() {
@@ -74,15 +75,6 @@ function HomePage() {
     // UC-02: Logout from System
     await authService.logout();
     navigate('/login', { state: { message: 'Logged out successfully' } });
-  };
-
-  const formatDateTime = (datetime) => {
-    return new Date(datetime).toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
   };
 
   const getRoleBasedFeatures = () => {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getFacultyEvents } from '../services/facultyEventService';
+import { formatDateTime } from '../utils/dateUtils';
 import axios from 'axios';
 import './FacultyEventsPage.css';
 
@@ -69,18 +70,6 @@ function FacultyEventsPage() {
 
   const handleViewDetails = (eventId) => {
     navigate(`/faculty-events/${eventId}`);
-  };
-
-  const formatDateTime = (dateString) => {
-    if (!dateString) return 'N/A';
-    const date = new Date(dateString);
-    return date.toLocaleString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
   };
 
   const getStatusBadge = (status) => {

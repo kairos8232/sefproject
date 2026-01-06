@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getBlockedSlots, createBlock, updateBlock, deleteBlock } from '../services/venueAvailabilityService';
+import { toDateTimeLocalInput, fromDateTimeLocalInput, formatDateTime } from '../utils/dateUtils';
 import axios from 'axios';
 import './VenueAvailabilityPage.css';
 
@@ -65,11 +66,18 @@ function VenueAvailabilityPage() {
     setSuccess('');
 
     try {
+      const blockData = {
+        venue_id: formData.venue_id,
+        blocked_start_datetime: fromDateTimeLocalInput(formData.blocked_start_datetime),
+        blocked_end_datetime: fromDateTimeLocalInput(formData.blocked_end_datetime),
+        reason: formData.reason
+      };
+
       if (editingBlock) {
-        await updateBlock(editingBlock.id, formData);
+        await updateBlock(editingBlock.id, blockData);
         setSuccess('Time slot updated successfully');
       } else {
-        await createBlock(formData);
+        await createBlock(blockData);
         setSuccess('Time slot blocked successfully');
       }
       
@@ -92,8 +100,8 @@ function VenueAvailabilityPage() {
     setEditingBlock(block);
     setFormData({
       venue_id: block.venue_id,
-      blocked_start_datetime: block.blocked_start_datetime,
-      blocked_end_datetime: block.blocked_end_datetime,
+      blocked_start_datetime: toDateTimeLocalInput(block.blocked_start_datetime),
+      blocked_end_datetime: toDateTimeLocalInput(block.blocked_end_datetime),
       reason: block.reason || ''
     });
     setShowForm(true);
@@ -125,18 +133,6 @@ function VenueAvailabilityPage() {
     setShowForm(false);
     setEditingBlock(null);
     setError('');
-  };
-
-  const formatDateTime = (dateString) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleString('en-US', {
-      weekday: 'short',
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
   };
 
   const getVenueName = (venueId) => {

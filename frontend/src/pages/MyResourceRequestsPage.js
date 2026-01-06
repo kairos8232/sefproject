@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import resourceRequestService from '../services/resourceRequestService';
+import { formatDateTime } from '../utils/dateUtils';
 import './MyResourceRequestsPage.css';
 
 function MyResourceRequestsPage() {
@@ -58,16 +59,6 @@ function MyResourceRequestsPage() {
     } catch (err) {
       alert(err.response?.data?.error || 'Failed to cancel request');
     }
-  };
-
-  const formatDateTime = (datetime) => {
-    return new Date(datetime).toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
   };
 
   const getStatusBadgeClass = (status) => {

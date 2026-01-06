@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import eventService from '../services/eventService';
 import participationService from '../services/participationService';
-import authService from '../services/authService';
+import { formatDateTime } from '../utils/dateUtils';
 import './EventDetailsPage.css';
 
 function EventDetailsPage() {
@@ -15,7 +15,6 @@ function EventDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const currentUser = authService.getCurrentUser();
   
   // Check if user came from My Events page (management view)
   const isManagementView = location.state?.fromMyEvents;
@@ -96,17 +95,6 @@ function EventDetailsPage() {
     } else {
       navigate('/events');
     }
-  };
-
-  const formatDateTime = (datetime) => {
-    return new Date(datetime).toLocaleString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
   };
 
   const calculateDuration = (start, end) => {

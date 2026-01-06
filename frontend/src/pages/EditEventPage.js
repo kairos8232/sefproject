@@ -2,7 +2,26 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import eventService from '../services/eventService';
 import authService from '../services/authService';
+import { toDateTimeLocalInput, fromDateTimeLocalInput } from '../utils/dateUtils';
 import './CreateEventPage.css'; // Reuse CreateEventPage styles
+
+const eventTypes = [
+  { value: 'seminar', label: 'Seminar' },
+  { value: 'workshop', label: 'Workshop' },
+  { value: 'sports', label: 'Sports' },
+  { value: 'cultural', label: 'Cultural' },
+  { value: 'career', label: 'Career' },
+  { value: 'orientation', label: 'Orientation' },
+  { value: 'networking', label: 'Networking' },
+  { value: 'general', label: 'General' },
+  { value: 'other', label: 'Other (Specify)' }
+];
+
+const visibilityOptions = [
+  { value: 'campuswide', label: 'Campus Wide - All users can see' },
+  { value: 'facultyonly', label: 'Faculty Only - Only your faculty members' },
+  { value: 'inviteonly', label: 'Invite Only - Only invited users' }
+];
 
 function EditEventPage() {
   const navigate = useNavigate();
@@ -25,24 +44,6 @@ function EditEventPage() {
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
-
-  const eventTypes = [
-    { value: 'seminar', label: 'Seminar' },
-    { value: 'workshop', label: 'Workshop' },
-    { value: 'sports', label: 'Sports' },
-    { value: 'cultural', label: 'Cultural' },
-    { value: 'career', label: 'Career' },
-    { value: 'orientation', label: 'Orientation' },
-    { value: 'networking', label: 'Networking' },
-    { value: 'general', label: 'General' },
-    { value: 'other', label: 'Other (Specify)' }
-  ];
-
-  const visibilityOptions = [
-    { value: 'campuswide', label: 'Campus Wide - All users can see' },
-    { value: 'facultyonly', label: 'Faculty Only - Only your faculty members' },
-    { value: 'inviteonly', label: 'Invite Only - Only invited users' }
-  ];
 
   const loadEvent = useCallback(async () => {
     try {
@@ -73,8 +74,8 @@ function EditEventPage() {
         description: event.description || '',
         visibility: event.visibility,
         event_type: isCustomType ? 'other' : event.event_type,
-        start_datetime: event.start_datetime.slice(0, 16), // Format for datetime-local input
-        end_datetime: event.end_datetime.slice(0, 16)
+        start_datetime: toDateTimeLocalInput(event.start_datetime),
+        end_datetime: toDateTimeLocalInput(event.end_datetime)
       });
 
       if (isCustomType) {
@@ -86,7 +87,7 @@ function EditEventPage() {
       alert(error || 'Failed to load event');
       navigate('/my-events');
     }
-  }, [id, user.id, navigate, eventTypes]);
+  }, [id, user.id, navigate]);
 
   useEffect(() => {
     loadEvent();
@@ -153,6 +154,9 @@ function EditEventPage() {
         ...formData,
         // Use custom event type if 'other' is selected
         event_type: formData.event_type === 'other' ? customEventType : formData.event_type,
+        // Convert datetime-local input to ISO string (UTC)
+        start_datetime: fromDateTimeLocalInput(formData.start_datetime),
+        end_datetime: fromDateTimeLocalInput(formData.end_datetime)
       };
 
       await eventService.updateEvent(id, eventData);

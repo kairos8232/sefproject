@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getFacultyEventById } from '../services/facultyEventService';
+import { formatDateTime, formatDate } from '../utils/dateUtils';
 import './FacultyEventDetailPage.css';
 
 function FacultyEventDetailPage() {
@@ -27,29 +28,6 @@ function FacultyEventDetailPage() {
   useEffect(() => {
     loadEventDetails();
   }, [loadEventDetails]);
-
-  const formatDateTime = (dateString) => {
-    if (!dateString) return 'N/A';
-    const date = new Date(dateString);
-    return date.toLocaleString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
 
   const getStatusBadge = (status) => {
     const statusClasses = {

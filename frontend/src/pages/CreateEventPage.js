@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import eventService from '../services/eventService';
 import authService from '../services/authService';
+import { fromDateTimeLocalInput } from '../utils/dateUtils';
 import './CreateEventPage.css';
 
 function CreateEventPage() {
@@ -110,7 +111,10 @@ function CreateEventPage() {
         // Use custom event type if 'other' is selected
         event_type: formData.event_type === 'other' ? customEventType : formData.event_type,
         organizer_id: user.id,
-        status: 'upcoming'
+        status: 'upcoming',
+        // Convert datetime-local input to ISO string (UTC)
+        start_datetime: fromDateTimeLocalInput(formData.start_datetime),
+        end_datetime: fromDateTimeLocalInput(formData.end_datetime)
       };
 
       const result = await eventService.createEvent(eventData);

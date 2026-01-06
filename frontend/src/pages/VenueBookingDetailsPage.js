@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import venueBookingService from '../services/venueBookingService';
+import { formatDateTime } from '../utils/dateUtils';
 import './VenueBookingDetailsPage.css';
 
 function VenueBookingDetailsPage() {
@@ -27,17 +28,6 @@ function VenueBookingDetailsPage() {
   useEffect(() => {
     loadBookingDetails();
   }, [loadBookingDetails]);
-
-  const formatDateTime = (datetime) => {
-    if (!datetime) return 'N/A';
-    return new Date(datetime).toLocaleString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
 
   const getStatusBadgeClass = (status) => {
     switch (status) {
