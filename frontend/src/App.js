@@ -18,6 +18,7 @@ import FacultyProvideFeedbackPage from './pages/FacultyProvideFeedbackPage';
 import FacultyBookingRequestsPage from './pages/FacultyBookingRequestsPage';
 import FacultyBookingRequestDetailPage from './pages/FacultyBookingRequestDetailPage';
 import VenueAvailabilityPage from './pages/VenueAvailabilityPage';
+import RecordAttendancePage from './pages/RecordAttendancePage';
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
         <Route path="/events/:id" element={<EventDetailsPage />} />
         <Route path="/events/:id/edit" element={<EditEventPage />} />
         <Route path="/my-events" element={<MyEventsPage />} />
+        <Route path="/my-events/:eventId/attendance" element={<RecordAttendancePage />} />
         <Route path="/my-venue-requests" element={<MyVenueRequestsPage />} />
         <Route path="/my-resource-requests" element={<MyResourceRequestsPage />} />
         <Route path="/create-event" element={<CreateEventPage />} />

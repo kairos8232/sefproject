@@ -98,7 +98,7 @@
 }
 
 /* Status Badges */
-.status-badge {
+.booking-detail-page .status-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -108,21 +108,20 @@
   font-weight: 600;
   text-transform: capitalize;
   white-space: nowrap;
-  height: 32px;
   line-height: 1;
 }
 
-.status-pending {
+.booking-detail-page .status-pending {
   background-color: #fff3cd;
   color: #856404;
 }
 
-.status-approved {
+.booking-detail-page .status-approved {
   background-color: #d4edda;
   color: #155724;
 }
 
-.status-rejected {
+.booking-detail-page .status-rejected {
   background-color: #f8d7da;
   color: #721c24;
 }

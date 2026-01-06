@@ -21,4 +21,7 @@ router.post('/event/:eventId/cancel', ParticipationController.cancel);
 // Get event participants (organizers/admins only)
 router.get('/event/:eventId/participants', ParticipationController.getEventParticipants);
 
+// Record attendance for an event (organizers only)
+router.post('/event/:eventId/record-attendance', ParticipationController.recordAttendance);
+
 module.exports = router;

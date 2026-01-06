@@ -165,6 +165,61 @@ class Participation {
       throw error;
     }
   }
+
+  // Update attendance for multiple participants
+  static async updateAttendance(attendanceUpdates) {
+    try {
+      // attendanceUpdates is an array of { participationId, attended }
+      const updates = attendanceUpdates.map(async (update) => {
+        const { participationId, attended } = update;
+        const now = new Date().toISOString();
+        
+        const { data, error } = await supabase
+          .from('event_participation')
+          .update({
+            status: attended ? 'attended' : 'registered',
+            check_in_datetime: attended ? now : null,
+            updated_at: now
+          })
+          .eq('id', participationId)
+          .select()
+          .single();
+
+        if (error) throw error;
+        return data;
+      });
+
+      const results = await Promise.all(updates);
+      return results;
+    } catch (error) {
+      console.error('Error updating attendance:', error);
+      throw error;
+    }
+  }
+
+  // Mark single participant as attended
+  static async markAttended(participationId) {
+    try {
+      const now = new Date().toISOString();
+      
+      const { data, error } = await supabase
+        .from('event_participation')
+        .update({
+          status: 'attended',
+          check_in_datetime: now,
+          updated_at: now
+        })
+        .eq('id', participationId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error marking participant as attended:', error);
+      throw error;
+    }
+  }
 }
 
 module.exports = Participation;

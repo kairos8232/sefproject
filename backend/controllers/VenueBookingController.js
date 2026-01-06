@@ -395,23 +395,15 @@ class VenueBookingController {
   // Get booking requests for faculty's venues
   getFacultyBookingRequests = async (req, res) => {
     try {
-      console.log('[VenueBookingController] getFacultyBookingRequests called');
-      console.log('[VenueBookingController] User:', req.user);
-      
       const userRole = req.user.role;
       const facultyId = req.user.facultyId;
 
-      console.log('[VenueBookingController] User role:', userRole);
-      console.log('[VenueBookingController] Faculty ID:', facultyId);
-
       // Only faculty managers can access this
       if (userRole !== 'faculty_manager') {
-        console.log('[VenueBookingController] Access denied - not a faculty manager');
         return res.status(403).json({ error: 'Only faculty managers can access booking requests' });
       }
 
       if (!facultyId) {
-        console.log('[VenueBookingController] Access denied - no faculty ID');
         return res.status(400).json({ error: 'Faculty ID not found for this user' });
       }
 
@@ -424,11 +416,7 @@ class VenueBookingController {
         sort_order: req.query.sort_order || 'desc'
       };
 
-      console.log('[VenueBookingController] Filters:', filters);
-
       const bookings = await VenueBooking.getByFacultyId(facultyId, filters);
-
-      console.log('[VenueBookingController] Found bookings:', bookings?.length || 0);
 
       res.json({
         success: true,

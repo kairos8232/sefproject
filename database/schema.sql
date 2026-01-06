@@ -1636,7 +1636,7 @@ SELECT
   'a1111111-1111-1111-1111-111111111111',
   id,
   'attended',
-  ('2025-11-10 ' || (10 + (random() * 14)::int) || ':' || (random() * 59)::int || ':00+00')::TIMESTAMP WITH TIME ZONE
+  ('2025-11-10 ' || (10 + (random() * 13)::int) || ':' || (random() * 59)::int || ':00+00')::TIMESTAMP WITH TIME ZONE
 FROM users 
 WHERE role IN ('student', 'event_organizer')
 LIMIT 15;
@@ -1647,7 +1647,7 @@ SELECT
   'a2222222-2222-2222-2222-222222222222',
   id,
   'attended',
-  ('2025-12-05 ' || (9 + (random() * 12)::int) || ':' || (random() * 59)::int || ':00+00')::TIMESTAMP WITH TIME ZONE
+  ('2025-12-05 ' || (9 + (random() * 11)::int) || ':' || (random() * 59)::int || ':00+00')::TIMESTAMP WITH TIME ZONE
 FROM users 
 WHERE role IN ('student', 'event_organizer')
 LIMIT 10;
@@ -1658,7 +1658,7 @@ SELECT
   'a3333333-3333-3333-3333-333333333333',
   id,
   'attended',
-  ('2025-12-15 ' || (10 + (random() * 10)::int) || ':' || (random() * 59)::int || ':00+00')::TIMESTAMP WITH TIME ZONE
+  ('2025-12-15 ' || (10 + (random() * 9)::int) || ':' || (random() * 59)::int || ':00+00')::TIMESTAMP WITH TIME ZONE
 FROM users 
 WHERE role IN ('student', 'event_organizer')
 LIMIT 25;
@@ -1669,7 +1669,7 @@ SELECT
   'a4444444-4444-4444-4444-444444444444',
   id,
   'attended',
-  ('2025-12-28 ' || (11 + (random() * 10)::int) || ':' || (random() * 59)::int || ':00+00')::TIMESTAMP WITH TIME ZONE
+  ('2025-12-28 ' || (11 + (random() * 9)::int) || ':' || (random() * 59)::int || ':00+00')::TIMESTAMP WITH TIME ZONE
 FROM users 
 WHERE role IN ('student', 'event_organizer')
 LIMIT 12;
@@ -1757,6 +1757,49 @@ VALUES (
   '2026-01-27 23:59:00+00',
   'Annual maintenance and equipment upgrade',
   (SELECT id FROM users WHERE role = 'faculty_manager' LIMIT 1)
+);
+
+-- ========================================
+-- Additional Test Data for Record Attendance Feature (UC-12)
+-- ========================================
+
+-- Add more participants to "Campus Tech Workshop" for testing attendance recording
+-- This event is created by sarah.organizer@university.edu
+INSERT INTO event_participation (event_id, user_id, status, registered_at)
+SELECT 
+  (SELECT id FROM events WHERE event_name = 'Campus Tech Workshop' LIMIT 1),
+  id,
+  'registered',
+  CURRENT_TIMESTAMP - INTERVAL '2 days'
+FROM users 
+WHERE email IN (
+  'michael.kumar@student.edu',
+  'lisa.chong@student.edu',
+  'david.lim@student.edu'
+)
+AND NOT EXISTS (
+  SELECT 1 FROM event_participation ep
+  WHERE ep.event_id = (SELECT id FROM events WHERE event_name = 'Campus Tech Workshop' LIMIT 1)
+  AND ep.user_id = users.id
+);
+
+-- Add participants to "Annual Sports Day" (created by sarah.organizer@university.edu)
+INSERT INTO event_participation (event_id, user_id, status, registered_at)
+SELECT 
+  (SELECT id FROM events WHERE event_name = 'Annual Sports Day' LIMIT 1),
+  id,
+  'registered',
+  CURRENT_TIMESTAMP - INTERVAL '3 days'
+FROM users 
+WHERE email IN (
+  'john.student@student.edu',
+  'emily.tan@student.edu',
+  'david.lim@student.edu'
+)
+AND NOT EXISTS (
+  SELECT 1 FROM event_participation ep
+  WHERE ep.event_id = (SELECT id FROM events WHERE event_name = 'Annual Sports Day' LIMIT 1)
+  AND ep.user_id = users.id
 );
 
 -- Faculty event block

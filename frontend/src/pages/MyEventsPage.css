@@ -214,26 +214,26 @@
 }
 
 /* Event Name Cell */
-.event-name-cell {
+.my-events-container .event-name-cell {
   max-width: 300px;
 }
 
-.event-name {
+.my-events-container .event-name {
   font-weight: 600;
   color: #333;
   margin-bottom: 5px;
 }
 
-.event-description-preview {
+.my-events-container .event-description-preview {
   font-size: 12px;
   color: #666;
   line-height: 1.4;
 }
 
 /* Badges */
-.event-type-badge,
-.status-badge,
-.visibility-badge {
+.my-events-container .event-type-badge,
+.my-events-container .status-badge,
+.my-events-container .visibility-badge {
   display: inline-block;
   padding: 4px 10px;
   border-radius: 12px;
@@ -242,46 +242,46 @@
   text-transform: capitalize;
 }
 
-.event-type-badge {
+.my-events-container .event-type-badge {
   background-color: #e7f3ff;
   color: #0066cc;
 }
 
-.visibility-badge {
+.my-events-container .visibility-badge {
   background-color: #f0f0f0;
   color: #666;
 }
 
-.status-badge {
+.my-events-container .status-badge {
   text-transform: capitalize;
 }
 
-.status-upcoming {
+.my-events-container .status-upcoming {
   background-color: #d1ecf1;
   color: #0c5460;
 }
 
-.status-ongoing {
+.my-events-container .status-ongoing {
   background-color: #fff3cd;
   color: #856404;
 }
 
-.status-completed {
+.my-events-container .status-completed {
   background-color: #d4edda;
   color: #155724;
 }
 
-.status-cancelled {
+.my-events-container .status-cancelled {
   background-color: #f8d7da;
   color: #721c24;
 }
 
 /* Actions Cell */
-.actions-cell {
+.my-events-container .actions-cell {
   white-space: nowrap;
 }
 
-.action-button {
+.my-events-container .action-button {
   padding: 6px 10px;
   border: none;
   border-radius: 6px;
@@ -291,47 +291,60 @@
   transition: all 0.2s;
 }
 
-.action-button:hover {
+.my-events-container .action-button:hover {
   transform: scale(1.1);
 }
 
-.view-button {
+.my-events-container .view-button {
   background-color: #e7f3ff;
 }
 
-.view-button:hover {
+.my-events-container .view-button:hover {
   background-color: #cce5ff;
 }
 
-.book-button {
+.my-events-container .book-button {
   background-color: #e0f2f1;
 }
 
-.book-button:hover {
+.my-events-container .book-button:hover {
   background-color: #b2dfdb;
 }
 
-.resource-button {
+.my-events-container .resource-button {
   background-color: #e8f5e9;
 }
 
-.resource-button:hover {
+.my-events-container .resource-button:hover {
   background-color: #c8e6c9;
 }
 
-.edit-button {
+.my-events-container .attendance-button {
+  background-color: #f3e5f5;
+}
+
+.my-events-container .attendance-button:hover:not(:disabled) {
+  background-color: #e1bee7;
+}
+
+.my-events-container .attendance-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.my-events-container .edit-button {
   background-color: #fff3cd;
 }
 
-.edit-button:hover {
+.my-events-container .edit-button:hover {
   background-color: #ffe69c;
 }
 
-.delete-button {
+.my-events-container .delete-button {
   background-color: #f8d7da;
 }
 
-.delete-button:hover {
+.my-events-container .delete-button:hover {
   background-color: #f5c6cb;
 }
 

@@ -133,6 +133,10 @@ function MyEventsPage() {
     }
   };
 
+  const handleRecordAttendance = (event) => {
+    navigate(`/my-events/${event.id}/attendance`);
+  };
+
   const formatVisibility = (visibility) => {
     if (visibility === 'campuswide') return 'Campus-Wide';
     if (visibility === 'facultyonly') return 'Faculty Only';
@@ -277,6 +281,13 @@ function MyEventsPage() {
                           📦
                         </button>
                       )}
+                      <button 
+                        onClick={() => handleRecordAttendance(event)}
+                        className="action-button attendance-button"
+                        title="Record Attendance"
+                      >
+                        📋
+                      </button>
                       <button 
                         onClick={() => handleEditEvent(event.id)}
                         className="action-button edit-button"

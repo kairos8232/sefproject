@@ -306,6 +306,7 @@
 /* Calendar Section */
 .calendar-section {
   margin-bottom: 30px;
+  overflow: visible;
 }
 
 .calendar-header {
@@ -378,7 +379,7 @@
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 10px;
   width: 100%;
-  overflow-x: hidden;
+  overflow: visible;
 }
 
 .calendar-day-header {
@@ -406,6 +407,7 @@
 .calendar-day:hover:not(.empty) {
   border-color: #667eea;
   box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+  z-index: 10;
 }
 
 .calendar-day.empty {
@@ -527,17 +529,19 @@
   border-radius: 8px;
   padding: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  z-index: 1000;
+  z-index: 1001;
   min-width: 250px;
   max-width: 350px;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.2s;
+  white-space: normal;
 }
 
 .calendar-day:hover .day-tooltip {
   opacity: 1;
   pointer-events: auto;
+  z-index: 1001;
 }
 
 .tooltip-header {
