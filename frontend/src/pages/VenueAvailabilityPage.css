@@ -375,8 +375,10 @@
 
 .calendar-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 10px;
+  width: 100%;
+  overflow-x: hidden;
 }
 
 .calendar-day-header {
@@ -388,7 +390,8 @@
 }
 
 .calendar-day {
-  min-height: 120px;
+  min-height: 150px;
+  max-height: 250px;
   border: 1px solid #e0e0e0;
   border-radius: 6px;
   padding: 8px;
@@ -397,6 +400,7 @@
   transition: all 0.2s;
   display: flex;
   flex-direction: column;
+  overflow: visible;
 }
 
 .calendar-day:hover:not(.empty) {
@@ -427,24 +431,45 @@
   flex-direction: column;
   gap: 3px;
   overflow-y: auto;
+  overflow-x: hidden;
   flex: 1;
-  max-height: 90px;
+  max-height: 200px;
+  padding-right: 4px;
+}
+
+.day-indicators::-webkit-scrollbar {
+  width: 4px;
+}
+
+.day-indicators::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 2px;
+}
+
+.day-indicators::-webkit-scrollbar-thumb {
+  background: #667eea;
+  border-radius: 2px;
+}
+
+.day-indicators::-webkit-scrollbar-thumb:hover {
+  background: #5568d3;
 }
 
 .booking-bar-indicator {
   width: 100%;
-  min-height: 20px;
+  min-height: 22px;
   background: #2196F3;
   border-radius: 3px;
   cursor: pointer;
   transition: all 0.2s;
-  padding: 2px 6px;
+  padding: 3px 6px;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   font-size: 0.7rem;
   color: white;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .booking-bar-indicator:hover {
@@ -455,18 +480,19 @@
 
 .block-bar-indicator {
   width: 100%;
-  min-height: 20px;
+  min-height: 22px;
   background: #FF9800;
   border-radius: 3px;
   cursor: pointer;
   transition: all 0.2s;
-  padding: 2px 6px;
+  padding: 3px 6px;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   font-size: 0.7rem;
   color: white;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .block-bar-indicator:hover {
@@ -486,6 +512,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   flex: 1;
+  min-width: 0;
 }
 
 /* Day Tooltip */
