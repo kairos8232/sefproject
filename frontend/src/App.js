@@ -14,6 +14,7 @@ import RequestResourcesPage from './pages/RequestResourcesPage';
 import MyResourceRequestsPage from './pages/MyResourceRequestsPage';
 import FacultyEventsPage from './pages/FacultyEventsPage';
 import FacultyEventDetailPage from './pages/FacultyEventDetailPage';
+import FacultyProvideFeedbackPage from './pages/FacultyProvideFeedbackPage';
 import VenueAvailabilityPage from './pages/VenueAvailabilityPage';
 
 function App() {
@@ -34,6 +35,7 @@ function App() {
         <Route path="/request-resources" element={<RequestResourcesPage />} />
         <Route path="/faculty-events" element={<FacultyEventsPage />} />
         <Route path="/faculty-events/:id" element={<FacultyEventDetailPage />} />
+        <Route path="/faculty-events/:eventId/feedback" element={<FacultyProvideFeedbackPage />} />
         <Route path="/venue-availability" element={<VenueAvailabilityPage />} />
         <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>

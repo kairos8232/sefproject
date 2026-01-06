@@ -319,10 +319,21 @@ class Event {
         throw eventError;
       }
 
+      console.log('Event found:', eventId);
+      console.log('Faculty ID checking:', facultyId);
+      console.log('Event venue bookings:', event.venue_bookings?.map(b => ({
+        id: b.id,
+        status: b.status,
+        venue_id: b.venue?.id,
+        venue_faculty_id: b.venue?.faculty_id
+      })));
+
       // Verify the event is in this faculty's venues
       const hasFacultyVenue = event.venue_bookings?.some(
         booking => booking.venue?.faculty_id === facultyId
       );
+
+      console.log('Has faculty venue:', hasFacultyVenue);
 
       if (!hasFacultyVenue) {
         return null;

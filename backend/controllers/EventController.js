@@ -310,10 +310,32 @@ class EventController {
         end_date
       });
 
+      // Enrich events with user feedback
+      const userId = req.user.userId;
+      const EventFeedback = require('../models/EventFeedback');
+      
+      const eventsWithFeedback = await Promise.all(
+        events.map(async (event) => {
+          try {
+            const feedback = await EventFeedback.getUserFeedbackForEvent(userId, event.id);
+            return {
+              ...event,
+              user_feedback: feedback || null
+            };
+          } catch (err) {
+            console.error(`[Event ${event.id}] Error fetching feedback:`, err);
+            return {
+              ...event,
+              user_feedback: null
+            };
+          }
+        })
+      );
+
       res.json({
         success: true,
-        count: events.length,
-        events
+        count: eventsWithFeedback.length,
+        events: eventsWithFeedback
       });
     } catch (error) {
       console.error('Get faculty events error:', error);
@@ -347,7 +369,7 @@ class EventController {
 
       if (!eventDetails) {
         return res.status(404).json({ 
-          error: 'Event not found or not in your faculty\'s venues' 
+          error: 'Can only provide feedback for events in your faculty venues' 
         });
       }
 

@@ -53,7 +53,7 @@ class VenueBooking {
         .from('venue_bookings')
         .select(`
           *,
-          venue:venues(id, code, name, capacity, location, faculty:faculties(code, name)),
+          venue:venues(id, code, name, capacity, location, faculty_id, faculty:faculties(id, code, name)),
           requester:users!requester_user_id(id, name, email),
           approver:users!approved_user_id(id, name, email)
         `)

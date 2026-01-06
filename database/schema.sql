@@ -13,6 +13,7 @@
 -- 9. resources - Campus resources (equipment, furniture, etc.)
 -- 10. resource_requests - Resource requests for events
 -- 11. venue_availability_blocks - Venue blocked time slots
+-- 12. event_feedbacks - Feedback from faculty staff on completed events
 -- ========================================
 
 -- Enable UUID extension (if not already enabled)
@@ -21,6 +22,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- ========================================
 -- Drop existing tables (in reverse order of dependencies)
 -- ========================================
+DROP TABLE IF EXISTS event_feedbacks CASCADE;
 DROP TABLE IF EXISTS venue_availability_blocks CASCADE;
 DROP TABLE IF EXISTS resource_requests CASCADE;
 DROP TABLE IF EXISTS resources CASCADE;
@@ -1158,3 +1160,496 @@ COMMENT ON TABLE venue_availability_blocks IS 'Blocked time slots for venues man
 COMMENT ON COLUMN venue_availability_blocks.reason IS 'Optional reason for blocking the time slot (e.g., Maintenance, Faculty event)';
 COMMENT ON COLUMN venue_availability_blocks.created_by IS 'Faculty manager who created this block';
 
+-- ========================================
+-- Table: event_feedbacks
+-- Stores feedback from faculty staff on completed events
+-- ========================================
+CREATE TABLE event_feedbacks (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  venue_condition_rating INTEGER CHECK (venue_condition_rating >= 1 AND venue_condition_rating <= 5),
+  event_organization_rating INTEGER CHECK (event_organization_rating >= 1 AND event_organization_rating <= 5),
+  cleanliness_rating INTEGER CHECK (cleanliness_rating >= 1 AND cleanliness_rating <= 5),
+  overall_rating INTEGER CHECK (overall_rating >= 1 AND overall_rating <= 5),
+  comments TEXT NOT NULL,
+  suggestions TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT unique_feedback_per_user_event UNIQUE(event_id, user_id)
+);
+
+-- Indexes for better performance
+CREATE INDEX idx_event_feedbacks_event_id ON event_feedbacks(event_id);
+CREATE INDEX idx_event_feedbacks_user_id ON event_feedbacks(user_id);
+CREATE INDEX idx_event_feedbacks_created_at ON event_feedbacks(created_at);
+
+-- Comments
+COMMENT ON TABLE event_feedbacks IS 'Feedback provided by faculty staff on completed events held in their faculty venues';
+COMMENT ON COLUMN event_feedbacks.venue_condition_rating IS 'Rating 1-5 for venue condition';
+COMMENT ON COLUMN event_feedbacks.event_organization_rating IS 'Rating 1-5 for event organization';
+COMMENT ON COLUMN event_feedbacks.cleanliness_rating IS 'Rating 1-5 for cleanliness';
+COMMENT ON COLUMN event_feedbacks.overall_rating IS 'Rating 1-5 for overall experience';
+COMMENT ON COLUMN event_feedbacks.comments IS 'Required feedback comments';
+COMMENT ON COLUMN event_feedbacks.suggestions IS 'Optional suggestions for improvement';
+
+-- ========================================
+-- Row Level Security for venue_availability_blocks and event_feedbacks
+-- ========================================
+ALTER TABLE venue_availability_blocks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE event_feedbacks ENABLE ROW LEVEL SECURITY;
+
+-- Backend can manage all venue_availability_blocks
+CREATE POLICY "Backend can read all venue_availability_blocks" ON venue_availability_blocks
+  FOR SELECT
+  USING (true);
+
+CREATE POLICY "Backend can insert venue_availability_blocks" ON venue_availability_blocks
+  FOR INSERT
+  WITH CHECK (true);
+
+CREATE POLICY "Backend can update venue_availability_blocks" ON venue_availability_blocks
+  FOR UPDATE
+  USING (true);
+
+CREATE POLICY "Backend can delete venue_availability_blocks" ON venue_availability_blocks
+  FOR DELETE
+  USING (true);
+
+-- Backend can manage all event_feedbacks
+CREATE POLICY "Backend can read all event_feedbacks" ON event_feedbacks
+  FOR SELECT
+  USING (true);
+
+CREATE POLICY "Backend can insert event_feedbacks" ON event_feedbacks
+  FOR INSERT
+  WITH CHECK (true);
+
+CREATE POLICY "Backend can update event_feedbacks" ON event_feedbacks
+  FOR UPDATE
+  USING (true);
+
+CREATE POLICY "Backend can delete event_feedbacks" ON event_feedbacks
+  FOR DELETE
+  USING (true);
+
+-- ========================================
+-- TEST DATA
+-- This section adds sample data for testing
+-- Date reference: January 7, 2026
+-- ========================================
+
+-- ========================================
+-- Additional Test Events with Various Statuses
+-- ========================================
+
+-- COMPLETED EVENT 1 (November 2025 - within 3 months)
+INSERT INTO events (id, organizer_id, event_name, description, visibility, event_type, status, start_datetime, end_datetime, created_at)
+VALUES (
+  'a1111111-1111-1111-1111-111111111111',
+  (SELECT id FROM users WHERE role = 'event_organizer' LIMIT 1),
+  'Web Development Workshop',
+  'Hands-on workshop covering HTML, CSS, and JavaScript fundamentals',
+  'campuswide',
+  'workshop',
+  'completed',
+  '2025-11-15 09:00:00+00',
+  '2025-11-15 17:00:00+00',
+  '2025-11-01 10:00:00+00'
+);
+
+-- COMPLETED EVENT 2 (December 2025 - within 3 months)
+INSERT INTO events (id, organizer_id, event_name, description, visibility, event_type, status, start_datetime, end_datetime, created_at)
+VALUES (
+  'a2222222-2222-2222-2222-222222222222',
+  (SELECT id FROM users WHERE role = 'event_organizer' LIMIT 1),
+  'AI & Machine Learning Seminar',
+  'Expert talks on latest trends in AI and ML',
+  'facultyonly',
+  'seminar',
+  'completed',
+  '2025-12-10 14:00:00+00',
+  '2025-12-10 16:30:00+00',
+  '2025-11-20 08:00:00+00'
+);
+
+-- COMPLETED EVENT 3 (Late December 2025 - 2 day event)
+INSERT INTO events (id, organizer_id, event_name, description, visibility, event_type, status, start_datetime, end_datetime, created_at)
+VALUES (
+  'a3333333-3333-3333-3333-333333333333',
+  (SELECT id FROM users WHERE role = 'event_organizer' LIMIT 1),
+  'Year-End Hackathon 2025',
+  '48-hour coding marathon with prizes',
+  'campuswide',
+  'competition',
+  'completed',
+  '2025-12-20 08:00:00+00',
+  '2025-12-22 08:00:00+00',
+  '2025-12-01 10:00:00+00'
+);
+
+-- COMPLETED EVENT 4 (Early January 2026 - just completed)
+INSERT INTO events (id, organizer_id, event_name, description, visibility, event_type, status, start_datetime, end_datetime, created_at)
+VALUES (
+  'a4444444-4444-4444-4444-444444444444',
+  (SELECT id FROM users WHERE role = 'event_organizer' LIMIT 1),
+  'New Year Tech Talk',
+  'Technology predictions for 2026',
+  'campuswide',
+  'seminar',
+  'completed',
+  '2026-01-03 10:00:00+00',
+  '2026-01-03 12:00:00+00',
+  '2025-12-15 09:00:00+00'
+);
+
+-- ONGOING EVENT (Currently happening)
+INSERT INTO events (id, organizer_id, event_name, description, visibility, event_type, status, start_datetime, end_datetime, created_at)
+VALUES (
+  'a5555555-5555-5555-5555-555555555555',
+  (SELECT id FROM users WHERE role = 'event_organizer' LIMIT 1),
+  'Week-Long Design Sprint',
+  'Intensive design thinking workshop',
+  'facultyonly',
+  'workshop',
+  'ongoing',
+  '2026-01-06 09:00:00+00',
+  '2026-01-10 18:00:00+00',
+  '2025-12-20 11:00:00+00'
+);
+
+-- UPCOMING EVENTS
+INSERT INTO events (id, organizer_id, event_name, description, visibility, event_type, status, start_datetime, end_datetime, created_at)
+VALUES (
+  'a6666666-6666-6666-6666-666666666666',
+  (SELECT id FROM users WHERE role = 'event_organizer' LIMIT 1),
+  'Cybersecurity Workshop',
+  'Learn about protecting digital assets',
+  'campuswide',
+  'workshop',
+  'upcoming',
+  '2026-01-20 13:00:00+00',
+  '2026-01-20 17:00:00+00',
+  '2026-01-02 14:00:00+00'
+);
+
+INSERT INTO events (id, organizer_id, event_name, description, visibility, event_type, status, start_datetime, end_datetime, created_at)
+VALUES (
+  'a7777777-7777-7777-7777-777777777777',
+  (SELECT id FROM users WHERE role = 'event_organizer' LIMIT 1),
+  'Mobile App Development Bootcamp',
+  'Build your first mobile app in React Native',
+  'campuswide',
+  'workshop',
+  'upcoming',
+  '2026-02-05 09:00:00+00',
+  '2026-02-07 17:00:00+00',
+  '2026-01-05 10:00:00+00'
+);
+
+-- ========================================
+-- Venue Bookings for the events above
+-- ========================================
+
+-- Booking for Web Development Workshop (APPROVED)
+INSERT INTO venue_bookings (
+  id, event_id, venue_id, requester_user_id, 
+  requested_start_datetime, requested_end_datetime,
+  approved_start_datetime, approved_end_datetime,
+  status, approved_user_id, approved_at,
+  approval_notes, expected_attendees
+)
+VALUES (
+  'b1111111-1111-1111-1111-111111111111',
+  'a1111111-1111-1111-1111-111111111111',
+  (SELECT id FROM venues WHERE code = 'LT-FCI-01' LIMIT 1),
+  (SELECT id FROM users WHERE role = 'event_organizer' LIMIT 1),
+  '2025-11-15 09:00:00+00',
+  '2025-11-15 17:00:00+00',
+  '2025-11-15 08:30:00+00',
+  '2025-11-15 17:30:00+00',
+  'approved',
+  (SELECT id FROM users WHERE role = 'faculty_manager' LIMIT 1),
+  '2025-11-05 14:00:00+00',
+  'Approved with extra setup/teardown time',
+  50
+);
+
+-- Booking for AI Seminar (APPROVED)
+INSERT INTO venue_bookings (
+  id, event_id, venue_id, requester_user_id,
+  requested_start_datetime, requested_end_datetime,
+  approved_start_datetime, approved_end_datetime,
+  status, approved_user_id, approved_at,
+  expected_attendees
+)
+VALUES (
+  'b2222222-2222-2222-2222-222222222222',
+  'a2222222-2222-2222-2222-222222222222',
+  (SELECT id FROM venues WHERE code = 'LT-FCI-01' LIMIT 1),
+  (SELECT id FROM users WHERE role = 'event_organizer' LIMIT 1),
+  '2025-12-10 14:00:00+00',
+  '2025-12-10 16:30:00+00',
+  '2025-12-10 14:00:00+00',
+  '2025-12-10 16:30:00+00',
+  'approved',
+  (SELECT id FROM users WHERE role = 'faculty_manager' LIMIT 1),
+  '2025-11-25 09:00:00+00',
+  30
+);
+
+-- Booking for Hackathon (APPROVED) - Multi-day
+INSERT INTO venue_bookings (
+  id, event_id, venue_id, requester_user_id,
+  requested_start_datetime, requested_end_datetime,
+  approved_start_datetime, approved_end_datetime,
+  status, approved_user_id, approved_at,
+  approval_notes, expected_attendees
+)
+VALUES (
+  'b3333333-3333-3333-3333-333333333333',
+  'a3333333-3333-3333-3333-333333333333',
+  (SELECT id FROM venues WHERE code = 'LAB-CS-01' LIMIT 1),
+  (SELECT id FROM users WHERE role = 'event_organizer' LIMIT 1),
+  '2025-12-20 08:00:00+00',
+  '2025-12-22 08:00:00+00',
+  '2025-12-20 08:00:00+00',
+  '2025-12-22 08:00:00+00',
+  'approved',
+  (SELECT id FROM users WHERE role = 'faculty_manager' LIMIT 1),
+  '2025-12-05 16:00:00+00',
+  'Approved for full 48-hour access',
+  100
+);
+
+-- Booking for Tech Talk (APPROVED)
+INSERT INTO venue_bookings (
+  id, event_id, venue_id, requester_user_id,
+  requested_start_datetime, requested_end_datetime,
+  approved_start_datetime, approved_end_datetime,
+  status, approved_user_id, approved_at,
+  expected_attendees
+)
+VALUES (
+  'b4444444-4444-4444-4444-444444444444',
+  'a4444444-4444-4444-4444-444444444444',
+  (SELECT id FROM venues WHERE code = 'LT-FCI-01' LIMIT 1),
+  (SELECT id FROM users WHERE role = 'event_organizer' LIMIT 1),
+  '2026-01-03 10:00:00+00',
+  '2026-01-03 12:00:00+00',
+  '2026-01-03 10:00:00+00',
+  '2026-01-03 12:00:00+00',
+  'approved',
+  (SELECT id FROM users WHERE role = 'faculty_manager' LIMIT 1),
+  '2025-12-18 11:00:00+00',
+  40
+);
+
+-- Booking for Design Sprint (APPROVED - ongoing)
+INSERT INTO venue_bookings (
+  id, event_id, venue_id, requester_user_id,
+  requested_start_datetime, requested_end_datetime,
+  approved_start_datetime, approved_end_datetime,
+  status, approved_user_id, approved_at,
+  expected_attendees
+)
+VALUES (
+  'b5555555-5555-5555-5555-555555555555',
+  'a5555555-5555-5555-5555-555555555555',
+  (SELECT id FROM venues WHERE code LIKE '%LAB%' LIMIT 1),
+  (SELECT id FROM users WHERE role = 'event_organizer' LIMIT 1),
+  '2026-01-06 09:00:00+00',
+  '2026-01-10 18:00:00+00',
+  '2026-01-06 09:00:00+00',
+  '2026-01-10 18:00:00+00',
+  'approved',
+  (SELECT id FROM users WHERE role = 'faculty_manager' LIMIT 1),
+  '2025-12-22 15:00:00+00',
+  25
+);
+
+-- Booking for Cybersecurity Workshop (APPROVED - upcoming)
+INSERT INTO venue_bookings (
+  id, event_id, venue_id, requester_user_id,
+  requested_start_datetime, requested_end_datetime,
+  approved_start_datetime, approved_end_datetime,
+  status, approved_user_id, approved_at,
+  expected_attendees
+)
+VALUES (
+  'b6666666-6666-6666-6666-666666666666',
+  'a6666666-6666-6666-6666-666666666666',
+  (SELECT id FROM venues WHERE code LIKE '%CR%' LIMIT 1),
+  (SELECT id FROM users WHERE role = 'event_organizer' LIMIT 1),
+  '2026-01-20 13:00:00+00',
+  '2026-01-20 17:00:00+00',
+  '2026-01-20 13:00:00+00',
+  '2026-01-20 17:00:00+00',
+  'approved',
+  (SELECT id FROM users WHERE role = 'faculty_manager' LIMIT 1),
+  '2026-01-04 10:00:00+00',
+  30
+);
+
+-- Booking for Mobile App Bootcamp (PENDING - upcoming)
+INSERT INTO venue_bookings (
+  id, event_id, venue_id, requester_user_id,
+  requested_start_datetime, requested_end_datetime,
+  status, expected_attendees
+)
+VALUES (
+  'b7777777-7777-7777-7777-777777777777',
+  'a7777777-7777-7777-7777-777777777777',
+  (SELECT id FROM venues ORDER BY capacity DESC LIMIT 1),
+  (SELECT id FROM users WHERE role = 'event_organizer' LIMIT 1),
+  '2026-02-05 09:00:00+00',
+  '2026-02-07 17:00:00+00',
+  'pending',
+  60
+);
+
+-- ========================================
+-- Sample Event Participants
+-- ========================================
+
+-- Participants for Web Development Workshop
+INSERT INTO event_participation (event_id, user_id, status, registered_at)
+SELECT 
+  'a1111111-1111-1111-1111-111111111111',
+  id,
+  'attended',
+  ('2025-11-10 ' || (10 + (random() * 14)::int) || ':' || (random() * 59)::int || ':00+00')::TIMESTAMP WITH TIME ZONE
+FROM users 
+WHERE role IN ('student', 'event_organizer')
+LIMIT 15;
+
+-- Participants for AI Seminar
+INSERT INTO event_participation (event_id, user_id, status, registered_at)
+SELECT 
+  'a2222222-2222-2222-2222-222222222222',
+  id,
+  'attended',
+  ('2025-12-05 ' || (9 + (random() * 12)::int) || ':' || (random() * 59)::int || ':00+00')::TIMESTAMP WITH TIME ZONE
+FROM users 
+WHERE role IN ('student', 'event_organizer')
+LIMIT 10;
+
+-- Participants for Hackathon
+INSERT INTO event_participation (event_id, user_id, status, registered_at)
+SELECT 
+  'a3333333-3333-3333-3333-333333333333',
+  id,
+  'attended',
+  ('2025-12-15 ' || (10 + (random() * 10)::int) || ':' || (random() * 59)::int || ':00+00')::TIMESTAMP WITH TIME ZONE
+FROM users 
+WHERE role IN ('student', 'event_organizer')
+LIMIT 25;
+
+-- Participants for Tech Talk
+INSERT INTO event_participation (event_id, user_id, status, registered_at)
+SELECT 
+  'a4444444-4444-4444-4444-444444444444',
+  id,
+  'attended',
+  ('2025-12-28 ' || (11 + (random() * 10)::int) || ':' || (random() * 59)::int || ':00+00')::TIMESTAMP WITH TIME ZONE
+FROM users 
+WHERE role IN ('student', 'event_organizer')
+LIMIT 12;
+
+-- ========================================
+-- Sample Feedbacks (for completed events)
+-- ========================================
+
+-- Feedback 1 for Web Development Workshop
+INSERT INTO event_feedbacks (
+  event_id, user_id,
+  venue_condition_rating, event_organization_rating, cleanliness_rating, overall_rating,
+  comments, suggestions,
+  created_at
+)
+VALUES (
+  'a1111111-1111-1111-1111-111111111111',
+  (SELECT id FROM users WHERE role = 'faculty_manager' LIMIT 1),
+  5, 4, 5, 5,
+  'Excellent workshop! The venue was in perfect condition and the event was well-organized. Students were very engaged throughout the session.',
+  'Consider providing more power outlets for students to charge their laptops.',
+  '2025-11-16 10:30:00+00'
+);
+
+-- Feedback 2 for AI Seminar (different faculty manager)
+INSERT INTO event_feedbacks (
+  event_id, user_id,
+  venue_condition_rating, event_organization_rating, cleanliness_rating, overall_rating,
+  comments, suggestions,
+  created_at
+)
+VALUES (
+  'a2222222-2222-2222-2222-222222222222',
+  (SELECT id FROM users WHERE role = 'faculty_manager' OFFSET 1 LIMIT 1),
+  4, 5, 4, 4,
+  'Great seminar with excellent speakers. The venue audio system worked perfectly. A few minor issues with temperature control but overall very good.',
+  'Would recommend scheduling similar events in the afternoon - better attendance.',
+  '2025-12-11 09:00:00+00'
+);
+
+-- Feedback 3 for Hackathon
+INSERT INTO event_feedbacks (
+  event_id, user_id,
+  venue_condition_rating, event_organization_rating, cleanliness_rating, overall_rating,
+  comments, suggestions,
+  created_at
+)
+VALUES (
+  'a3333333-3333-3333-3333-333333333333',
+  (SELECT id FROM users WHERE role = 'faculty_manager' LIMIT 1),
+  3, 4, 3, 4,
+  'The 48-hour event was challenging to manage. Venue held up well but cleanliness became an issue by day 2. Organizers did a good job managing the large crowd.',
+  'For future multi-day events, schedule cleaning breaks. Also need better waste management.',
+  '2025-12-23 14:00:00+00'
+);
+
+-- Feedback 4 for Tech Talk (recent - within 24hr edit window)
+INSERT INTO event_feedbacks (
+  event_id, user_id,
+  venue_condition_rating, event_organization_rating, cleanliness_rating, overall_rating,
+  comments, suggestions,
+  created_at
+)
+VALUES (
+  'a4444444-4444-4444-4444-444444444444',
+  (SELECT id FROM users WHERE role = 'faculty_manager' OFFSET 1 LIMIT 1),
+  5, 5, 5, 5,
+  'Perfect way to start the new year! Everything was excellent - venue was spotless, AV equipment worked flawlessly, and the event ran right on schedule.',
+  'No suggestions - this was a model event!',
+  '2026-01-06 08:00:00+00'
+);
+
+-- ========================================
+-- Additional Venue Availability Blocks
+-- ========================================
+
+-- Maintenance block
+INSERT INTO venue_availability_blocks (
+  venue_id, blocked_start_datetime, blocked_end_datetime,
+  reason, created_by
+)
+VALUES (
+  (SELECT id FROM venues WHERE code = 'LT-FCI-01' LIMIT 1),
+  '2026-01-25 00:00:00+00',
+  '2026-01-27 23:59:00+00',
+  'Annual maintenance and equipment upgrade',
+  (SELECT id FROM users WHERE role = 'faculty_manager' LIMIT 1)
+);
+
+-- Faculty event block
+INSERT INTO venue_availability_blocks (
+  venue_id, blocked_start_datetime, blocked_end_datetime,
+  reason, created_by
+)
+VALUES (
+  (SELECT id FROM venues WHERE code = 'LAB-CS-01' LIMIT 1),
+  '2026-02-10 08:00:00+00',
+  '2026-02-12 18:00:00+00',
+  'Faculty retreat and planning session',
+  (SELECT id FROM users WHERE role = 'faculty_manager' LIMIT 1)
+);

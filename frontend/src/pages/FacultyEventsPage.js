@@ -92,6 +92,52 @@ function FacultyEventsPage() {
     return <span className={statusClasses[status] || 'booking-status'}>{status}</span>;
   };
 
+  // Check if event is eligible for feedback (completed + last 3 months + approved booking)
+  const isEligibleForFeedback = (event) => {
+    if (event.status !== 'completed') return false;
+    
+    const eventEnd = new Date(event.end_datetime);
+    const now = new Date();
+    const threeMonthsAgo = new Date();
+    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+    
+    const hasApprovedBooking = event.venue_bookings?.some(b => b.status === 'approved');
+    
+    return eventEnd < now && eventEnd > threeMonthsAgo && hasApprovedBooking;
+  };
+
+  // Navigate to feedback page
+  const handleProvideFeedback = (event) => {
+    navigate(`/faculty-events/${event.id}/feedback`);
+  };
+
+  // Get feedback button info based on state
+  const getFeedbackButtonInfo = (event) => {
+    if (!event.user_feedback) {
+      return {
+        icon: '📝',
+        tooltip: 'Provide Feedback',
+        className: 'btn-feedback-new',
+        canEdit: true
+      };
+    }
+    
+    // Check if feedback is within 24 hours (editable)
+    // Always use created_at for the 24-hour window calculation
+    // (updated_at from database seeding is not reliable)
+    const feedbackDate = new Date(event.user_feedback.created_at);
+    const now = new Date();
+    const hoursSinceSubmission = (now - feedbackDate) / (1000 * 60 * 60);
+    const canEdit = hoursSinceSubmission < 24;
+    
+    return {
+      icon: canEdit ? '✏️' : '👁️',
+      tooltip: canEdit ? 'Edit Feedback (within 24h)' : 'View Feedback (read-only)',
+      className: canEdit ? 'btn-feedback-edit' : 'btn-feedback-view',
+      canEdit: canEdit
+    };
+  };
+
   // Filter events by search term
   const filteredEvents = events.filter(event => {
     if (!filters.search) return true;
@@ -256,12 +302,31 @@ function FacultyEventsPage() {
                           {booking?.expected_attendees || 'N/A'}
                         </td>
                         <td>
-                          <button
-                            onClick={() => handleViewDetails(event.id)}
-                            className="btn-view"
-                          >
-                            View Details
-                          </button>
+                          <div className="action-buttons">
+                            <button
+                              onClick={() => handleViewDetails(event.id)}
+                              className="btn-icon btn-view"
+                              title="View Event Details"
+                            >
+                              👁
+                            </button>
+                            {isEligibleForFeedback(event) && (() => {
+                              const feedbackInfo = getFeedbackButtonInfo(event);
+                              // Only show feedback button if it's actionable (new or editable)
+                              // Don't show for read-only feedback (>24h old)
+                              if (!feedbackInfo.canEdit) return null;
+                              
+                              return (
+                                <button
+                                  onClick={() => handleProvideFeedback(event)}
+                                  className={`btn-icon ${feedbackInfo.className}`}
+                                  title={feedbackInfo.tooltip}
+                                >
+                                  {feedbackInfo.icon}
+                                </button>
+                              );
+                            })()}
+                          </div>
                         </td>
                       </tr>
                     );

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getFacultyEventById } from '../services/facultyEventService';
+import { getFeedbacksForEvent } from '../services/feedbackService';
 import { formatDateTime, formatDate } from '../utils/dateUtils';
 import './FacultyEventDetailPage.css';
 
@@ -8,6 +9,7 @@ function FacultyEventDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [event, setEvent] = useState(null);
+  const [feedbacks, setFeedbacks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -17,6 +19,17 @@ function FacultyEventDetailPage() {
       setError('');
       const response = await getFacultyEventById(id);
       setEvent(response.event);
+      
+      // Load feedbacks if event is completed
+      if (response.event && response.event.status === 'completed') {
+        try {
+          const feedbackResponse = await getFeedbacksForEvent(id);
+          setFeedbacks(feedbackResponse.feedbacks || []);
+        } catch (err) {
+          console.error('Error loading feedbacks:', err);
+          // Don't show error for feedbacks, just log it
+        }
+      }
     } catch (err) {
       console.error('Error loading event details:', err);
       setError(err.response?.data?.error || 'Failed to load event details');
@@ -289,6 +302,93 @@ function FacultyEventDetailPage() {
           <p className="no-data">No participants registered yet.</p>
         )}
       </div>
+
+      {/* Feedback Section - Only for completed events */}
+      {event.status === 'completed' && (
+        <div className="detail-section feedback-section">
+          <h2>📝 Event Feedback ({feedbacks.length})</h2>
+          {feedbacks.length > 0 ? (
+            <div className="feedbacks-list">
+              {feedbacks.map((feedback, index) => (
+                <div key={feedback.id} className="feedback-card">
+                  <div className="feedback-header">
+                    <div>
+                      <h4>{feedback.user?.name}</h4>
+                      <small className="feedback-date">{formatDate(feedback.created_at)}</small>
+                    </div>
+                    {feedback.overall_rating > 0 && (
+                      <div className="overall-rating">
+                        <span className="rating-label">Overall:</span>
+                        <div className="stars-display">
+                          {[1, 2, 3, 4, 5].map(star => (
+                            <span key={star} className={`star ${star <= feedback.overall_rating ? 'filled' : ''}`}>
+                              ★
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="feedback-ratings">
+                    {feedback.venue_condition_rating > 0 && (
+                      <div className="rating-item">
+                        <span className="rating-label">Venue Condition:</span>
+                        <div className="stars-display">
+                          {[1, 2, 3, 4, 5].map(star => (
+                            <span key={star} className={`star ${star <= feedback.venue_condition_rating ? 'filled' : ''}`}>
+                              ★
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {feedback.event_organization_rating > 0 && (
+                      <div className="rating-item">
+                        <span className="rating-label">Event Organization:</span>
+                        <div className="stars-display">
+                          {[1, 2, 3, 4, 5].map(star => (
+                            <span key={star} className={`star ${star <= feedback.event_organization_rating ? 'filled' : ''}`}>
+                              ★
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {feedback.cleanliness_rating > 0 && (
+                      <div className="rating-item">
+                        <span className="rating-label">Cleanliness:</span>
+                        <div className="stars-display">
+                          {[1, 2, 3, 4, 5].map(star => (
+                            <span key={star} className={`star ${star <= feedback.cleanliness_rating ? 'filled' : ''}`}>
+                              ★
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="feedback-content">
+                    <div className="feedback-comments">
+                      <strong>Comments:</strong>
+                      <p>{feedback.comments}</p>
+                    </div>
+                    {feedback.suggestions && (
+                      <div className="feedback-suggestions">
+                        <strong>Suggestions:</strong>
+                        <p>{feedback.suggestions}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="no-data">No feedback received yet.</p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
