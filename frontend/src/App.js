@@ -14,6 +14,7 @@ import RequestResourcesPage from './pages/RequestResourcesPage';
 import MyResourceRequestsPage from './pages/MyResourceRequestsPage';
 import FacultyEventsPage from './pages/FacultyEventsPage';
 import FacultyEventDetailPage from './pages/FacultyEventDetailPage';
+import VenueAvailabilityPage from './pages/VenueAvailabilityPage';
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
         <Route path="/request-resources" element={<RequestResourcesPage />} />
         <Route path="/faculty-events" element={<FacultyEventsPage />} />
         <Route path="/faculty-events/:id" element={<FacultyEventDetailPage />} />
+        <Route path="/venue-availability" element={<VenueAvailabilityPage />} />
         <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>
     </Router>

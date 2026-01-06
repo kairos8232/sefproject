@@ -28,15 +28,20 @@ If you're joining the team, you need to decrypt the environment files:
    brew install git-crypt
    ```
 
-2. **Get the encryption key** from your team lead (shared privately)
+2. **Install dotenv**:
+   ```bash
+   npm install dotenv
+   ```
+
+3. **Get the encryption key** from your team lead (shared privately)
    - Save `git-crypt-key` in the project root
 
-3. **Unlock the encrypted files**:
+4. **Unlock the encrypted files**:
    ```bash
    git-crypt unlock git-crypt-key
    ```
 
-4. **Verify**:
+5. **Verify**:
    ```bash
    cat backend/.env
    cat frontend/.env

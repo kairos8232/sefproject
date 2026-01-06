@@ -12,6 +12,7 @@
 -- 8. event_participation - Event participation/registration tracking
 -- 9. resources - Campus resources (equipment, furniture, etc.)
 -- 10. resource_requests - Resource requests for events
+-- 11. venue_availability_blocks - Venue blocked time slots
 -- ========================================
 
 -- Enable UUID extension (if not already enabled)
@@ -20,6 +21,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- ========================================
 -- Drop existing tables (in reverse order of dependencies)
 -- ========================================
+DROP TABLE IF EXISTS venue_availability_blocks CASCADE;
 DROP TABLE IF EXISTS resource_requests CASCADE;
 DROP TABLE IF EXISTS resources CASCADE;
 DROP TABLE IF EXISTS event_participation CASCADE;
@@ -1129,4 +1131,30 @@ COMMENT ON COLUMN event_participation.status IS 'Participation status: registere
 COMMENT ON COLUMN event_participation.registered_at IS 'When user registered for the event';
 COMMENT ON COLUMN event_participation.cancelled_at IS 'When user cancelled their registration (can re-register after cancellation)';
 COMMENT ON COLUMN event_participation.check_in_datetime IS 'When user checked in at the event (for attendance tracking)';
+
+-- ========================================
+-- Table: venue_availability_blocks
+-- Stores blocked time slots for venues (faculty manager maintenance)
+-- ========================================
+CREATE TABLE venue_availability_blocks (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  venue_id UUID NOT NULL REFERENCES venues(id) ON DELETE CASCADE,
+  blocked_start_datetime TIMESTAMP WITH TIME ZONE NOT NULL,
+  blocked_end_datetime TIMESTAMP WITH TIME ZONE NOT NULL,
+  reason TEXT,
+  created_by UUID NOT NULL REFERENCES users(id),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT valid_time_range CHECK (blocked_end_datetime > blocked_start_datetime)
+);
+
+-- Indexes for better performance
+CREATE INDEX idx_venue_availability_blocks_venue_id ON venue_availability_blocks(venue_id);
+CREATE INDEX idx_venue_availability_blocks_datetime ON venue_availability_blocks(blocked_start_datetime, blocked_end_datetime);
+CREATE INDEX idx_venue_availability_blocks_created_by ON venue_availability_blocks(created_by);
+
+-- Comments
+COMMENT ON TABLE venue_availability_blocks IS 'Blocked time slots for venues managed by faculty managers';
+COMMENT ON COLUMN venue_availability_blocks.reason IS 'Optional reason for blocking the time slot (e.g., Maintenance, Faculty event)';
+COMMENT ON COLUMN venue_availability_blocks.created_by IS 'Faculty manager who created this block';
 

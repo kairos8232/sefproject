@@ -131,13 +131,6 @@ function HomePage() {
 
     const facultyManagerFeatures = [
       {
-        title: 'Manage Venues',
-        description: 'Faculty venue management',
-        icon: '🏛️',
-        path: '/faculty/venues',
-        color: '#16a085'
-      },
-      {
         title: 'Approve Bookings',
         description: 'Review venue requests',
         icon: '✔️',
@@ -150,6 +143,13 @@ function HomePage() {
         icon: '🏛️',
         path: '/faculty-events',
         color: '#8e44ad'
+      },
+      {
+        title: 'Venue Availability',
+        description: 'Manage venue availability and blocked time slots',
+        icon: '🔒',
+        path: '/venue-availability',
+        color: '#e67e22'
       }
     ];
 
