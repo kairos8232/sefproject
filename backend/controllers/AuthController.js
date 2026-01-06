@@ -96,6 +96,11 @@ class AuthController {
   // Verify token middleware
   async verifyToken(req, res, next) {
     try {
+      // Allow OPTIONS requests (CORS preflight) to pass through
+      if (req.method === 'OPTIONS') {
+        return next();
+      }
+
       const token = req.headers.authorization?.replace('Bearer ', '');
 
       if (!token) {

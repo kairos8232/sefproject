@@ -254,7 +254,7 @@ function VenueAvailabilityPage() {
     <div className="venue-availability-page">
       <div className="page-header">
         <div>
-          <h1>🔒 Venue Availability</h1>
+          <h1>🔒 Venue Availability Management</h1>
           <p>Block and unblock time slots for your faculty's venues</p>
         </div>
         <button onClick={() => navigate('/home')} className="back-button">
@@ -309,7 +309,7 @@ function VenueAvailabilityPage() {
         <div className="block-management-section">
           {!selectedVenue ? (
             <div className="no-selection">
-              <p>Select a venue from the left to manage its availability.</p>
+              <p>👈 Select a venue from the left to manage its availability</p>
             </div>
           ) : (
             <>

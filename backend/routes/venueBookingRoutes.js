@@ -38,6 +38,10 @@ router.get('/availability', AuthController.verifyToken, VenueBookingController.c
 // GET /api/venue-bookings/my-bookings
 router.get('/my-bookings', AuthController.verifyToken, VenueBookingController.getMyBookings);
 
+// UC-11: Review Venue Booking Requests - Get faculty's booking requests
+// GET /api/venue-bookings/faculty/requests?status=pending&venue_id=...&search=...&sort_by=...&sort_order=...
+router.get('/faculty/requests', AuthController.verifyToken, VenueBookingController.getFacultyBookingRequests);
+
 // UC-07: Submit Venue Booking - Get bookings for specific event
 // GET /api/venue-bookings/event/:eventId
 router.get('/event/:eventId', AuthController.verifyToken, VenueBookingController.getBookingsByEvent);
@@ -49,6 +53,10 @@ router.get('/', AuthController.verifyToken, VenueBookingController.getVenueBooki
 // UC-07: Submit Venue Booking - Get booking by ID
 // GET /api/venue-bookings/:id
 router.get('/:id', AuthController.verifyToken, VenueBookingController.getVenueBookingById);
+
+// UC-11: Review Venue Booking Requests - Get detailed booking request
+// GET /api/venue-bookings/:id/details
+router.get('/:id/details', AuthController.verifyToken, VenueBookingController.getBookingRequestDetails);
 
 // UC-07: Submit Venue Booking - Create new booking
 // POST /api/venue-bookings
@@ -66,8 +74,16 @@ router.post('/:id/cancel', AuthController.verifyToken, VenueBookingController.ca
 // POST /api/venue-bookings/:id/approve
 router.post('/:id/approve', AuthController.verifyToken, VenueBookingController.approveVenueBooking);
 
+// UC-11: Review Venue Booking Requests - Approve booking request
+// POST /api/venue-bookings/:id/approve-request
+router.post('/:id/approve-request', AuthController.verifyToken, VenueBookingController.approveBookingRequest);
+
 // UC-07: Submit Venue Booking - Reject booking (admin/faculty manager)
 // POST /api/venue-bookings/:id/reject
 router.post('/:id/reject', AuthController.verifyToken, VenueBookingController.rejectVenueBooking);
+
+// UC-11: Review Venue Booking Requests - Reject booking request
+// POST /api/venue-bookings/:id/reject-request
+router.post('/:id/reject-request', AuthController.verifyToken, VenueBookingController.rejectBookingRequest);
 
 module.exports = router;

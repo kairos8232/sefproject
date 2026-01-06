@@ -391,6 +391,207 @@ class VenueBookingController {
       res.status(500).json({ error: 'Failed to reject venue booking' });
     }
   }
+
+  // Get booking requests for faculty's venues
+  getFacultyBookingRequests = async (req, res) => {
+    try {
+      console.log('[VenueBookingController] getFacultyBookingRequests called');
+      console.log('[VenueBookingController] User:', req.user);
+      
+      const userRole = req.user.role;
+      const facultyId = req.user.facultyId;
+
+      console.log('[VenueBookingController] User role:', userRole);
+      console.log('[VenueBookingController] Faculty ID:', facultyId);
+
+      // Only faculty managers can access this
+      if (userRole !== 'faculty_manager') {
+        console.log('[VenueBookingController] Access denied - not a faculty manager');
+        return res.status(403).json({ error: 'Only faculty managers can access booking requests' });
+      }
+
+      if (!facultyId) {
+        console.log('[VenueBookingController] Access denied - no faculty ID');
+        return res.status(400).json({ error: 'Faculty ID not found for this user' });
+      }
+
+      // Get filters from query params
+      const filters = {
+        status: req.query.status || 'pending',
+        venue_id: req.query.venue_id,
+        search: req.query.search,
+        sort_by: req.query.sort_by || 'created_at',
+        sort_order: req.query.sort_order || 'desc'
+      };
+
+      console.log('[VenueBookingController] Filters:', filters);
+
+      const bookings = await VenueBooking.getByFacultyId(facultyId, filters);
+
+      console.log('[VenueBookingController] Found bookings:', bookings?.length || 0);
+
+      res.json({
+        success: true,
+        bookings
+      });
+    } catch (error) {
+      console.error('[VenueBookingController] Get faculty booking requests error:', error);
+      res.status(500).json({ error: 'Failed to get booking requests' });
+    }
+  }
+
+  // Get detailed booking request by ID
+  getBookingRequestDetails = async (req, res) => {
+    try {
+      const bookingId = req.params.id;
+      const userRole = req.user.role;
+      const facultyId = req.user.facultyId;
+
+      // Only faculty managers can access this
+      if (userRole !== 'faculty_manager') {
+        return res.status(403).json({ error: 'Only faculty managers can access booking details' });
+      }
+
+      const booking = await VenueBooking.getByIdWithDetails(bookingId);
+
+      if (!booking) {
+        return res.status(404).json({ error: 'Booking request not found' });
+      }
+
+      // Verify the booking is for a venue in the faculty manager's faculty
+      if (booking.venue.faculty_id !== facultyId) {
+        return res.status(403).json({ error: 'This booking is not for a venue in your faculty' });
+      }
+
+      res.json({
+        success: true,
+        booking
+      });
+    } catch (error) {
+      console.error('Get booking request details error:', error);
+      res.status(500).json({ error: 'Failed to get booking details' });
+    }
+  }
+
+  // Approve booking request
+  approveBookingRequest = async (req, res) => {
+    try {
+      const bookingId = req.params.id;
+      const userId = req.user.userId;
+      const userRole = req.user.role;
+      const facultyId = req.user.facultyId;
+
+      // Only faculty managers can approve
+      if (userRole !== 'faculty_manager') {
+        return res.status(403).json({ error: 'Only faculty managers can approve bookings' });
+      }
+
+      // Get booking details to verify
+      const booking = await VenueBooking.getByIdWithDetails(bookingId);
+
+      if (!booking) {
+        return res.status(404).json({ error: 'Booking request not found' });
+      }
+
+      // Verify the booking is for a venue in the faculty manager's faculty
+      if (booking.venue.faculty_id !== facultyId) {
+        return res.status(403).json({ error: 'This booking is not for a venue in your faculty' });
+      }
+
+      // Check if already processed
+      if (booking.status !== 'pending') {
+        const approverName = booking.approver ? booking.approver.name : 'another user';
+        return res.status(400).json({ 
+          error: `This booking has already been ${booking.status} by ${approverName}`,
+          currentStatus: booking.status,
+          processedBy: approverName,
+          processedAt: booking.approved_at
+        });
+      }
+
+      // Get adjustment data from request body
+      const adjustments = {
+        approval_notes: req.body.approval_notes,
+        approved_start_datetime: req.body.approved_start_datetime,
+        approved_end_datetime: req.body.approved_end_datetime
+      };
+
+      const approvedBooking = await VenueBooking.approveWithAdjustments(bookingId, userId, adjustments);
+
+      res.json({
+        success: true,
+        message: 'Booking request approved successfully',
+        booking: approvedBooking
+      });
+    } catch (error) {
+      console.error('Approve booking request error:', error);
+      
+      if (error.message && error.message.includes('already')) {
+        return res.status(400).json({ error: error.message });
+      }
+      
+      res.status(500).json({ error: 'Failed to approve booking request' });
+    }
+  }
+
+  // Reject booking request
+  rejectBookingRequest = async (req, res) => {
+    try {
+      const bookingId = req.params.id;
+      const userId = req.user.userId;
+      const userRole = req.user.role;
+      const facultyId = req.user.facultyId;
+      const { rejection_reason } = req.body;
+
+      // Only faculty managers can reject
+      if (userRole !== 'faculty_manager') {
+        return res.status(403).json({ error: 'Only faculty managers can reject bookings' });
+      }
+
+      if (!rejection_reason || rejection_reason.trim().length < 10) {
+        return res.status(400).json({ error: 'Rejection reason must be at least 10 characters' });
+      }
+
+      // Get booking details to verify
+      const booking = await VenueBooking.getByIdWithDetails(bookingId);
+
+      if (!booking) {
+        return res.status(404).json({ error: 'Booking request not found' });
+      }
+
+      // Verify the booking is for a venue in the faculty manager's faculty
+      if (booking.venue.faculty_id !== facultyId) {
+        return res.status(403).json({ error: 'This booking is not for a venue in your faculty' });
+      }
+
+      // Check if already processed
+      if (booking.status !== 'pending') {
+        const approverName = booking.approver ? booking.approver.name : 'another user';
+        return res.status(400).json({ 
+          error: `This booking has already been ${booking.status} by ${approverName}`,
+          currentStatus: booking.status,
+          processedBy: approverName,
+          processedAt: booking.approved_at
+        });
+      }
+
+      const rejectedBooking = await VenueBooking.rejectWithReason(bookingId, userId, rejection_reason);
+
+      res.json({
+        success: true,
+        message: 'Booking request rejected successfully',
+        booking: rejectedBooking
+      });
+    } catch (error) {
+      console.error('Reject booking request error:', error);
+      
+      if (error.message && error.message.includes('already')) {
+        return res.status(400).json({ error: error.message });
+      }
+      
+      res.status(500).json({ error: 'Failed to reject booking request' });
+    }
+  }
 }
 
 module.exports = new VenueBookingController();

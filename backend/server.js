@@ -12,9 +12,19 @@ const eventFeedbackRoutes = require('./routes/eventFeedbackRoutes');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
-app.use(cors());
+// Middleware - CORS must be configured properly
+app.use(cors({
+  origin: 'http://localhost:3000',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json());
+
+// Handle OPTIONS requests globally (CORS preflight)
+app.options('*', (req, res) => {
+  res.status(200).end();
+});
 
 // Routes
 app.use('/api/auth', authRoutes);

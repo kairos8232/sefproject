@@ -1509,6 +1509,124 @@ VALUES (
 );
 
 -- ========================================
+-- Additional Test Bookings for Faculty Review
+-- ========================================
+
+-- Pending booking request #1 (FCI venue)
+INSERT INTO venue_bookings (
+  id, event_id, venue_id, requester_user_id,
+  requested_start_datetime, requested_end_datetime,
+  setup_time, teardown_time,
+  status, remarks, expected_attendees
+)
+VALUES (
+  'b8888888-8888-8888-8888-888888888888',
+  'a1111111-1111-1111-1111-111111111111',
+  (SELECT id FROM venues WHERE code = 'LT-FCI-01' LIMIT 1),
+  (SELECT id FROM users WHERE role = 'event_organizer' LIMIT 1),
+  '2026-01-15 14:00:00+00',
+  '2026-01-15 16:00:00+00',
+  30,
+  15,
+  'pending',
+  'Need projector and sound system for technical presentation',
+  150
+);
+
+-- Pending booking request #2 (FCI venue - different event)
+INSERT INTO venue_bookings (
+  id, event_id, venue_id, requester_user_id,
+  requested_start_datetime, requested_end_datetime,
+  setup_time, teardown_time,
+  status, remarks, expected_attendees
+)
+VALUES (
+  'b9999999-9999-9999-9999-999999999999',
+  'a2222222-2222-2222-2222-222222222222',
+  (SELECT id FROM venues WHERE code = 'LAB-CS-01' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'emily.tan@student.edu' LIMIT 1),
+  '2026-01-20 09:00:00+00',
+  '2026-01-20 12:00:00+00',
+  15,
+  10,
+  'pending',
+  'Workshop requires computers for all participants',
+  30
+);
+
+-- Pending booking request #3 (FCI venue - urgent)
+INSERT INTO venue_bookings (
+  id, event_id, venue_id, requester_user_id,
+  requested_start_datetime, requested_end_datetime,
+  setup_time,
+  status, remarks, expected_attendees
+)
+VALUES (
+  'ba000000-a000-a000-a000-a00000000000',
+  'a3333333-3333-3333-3333-333333333333',
+  (SELECT id FROM venues WHERE code = 'LT-FCI-01' LIMIT 1),
+  (SELECT id FROM users WHERE role = 'event_organizer' LIMIT 1),
+  '2026-01-12 13:00:00+00',
+  '2026-01-12 17:00:00+00',
+  45,
+  'pending',
+  'Annual CS Department networking event - high priority',
+  200
+);
+
+-- Approved booking (for comparison)
+INSERT INTO venue_bookings (
+  id, event_id, venue_id, requester_user_id,
+  requested_start_datetime, requested_end_datetime,
+  approved_start_datetime, approved_end_datetime,
+  setup_time, teardown_time,
+  status, approved_user_id, approved_at,
+  approval_notes, remarks, expected_attendees
+)
+VALUES (
+  'bb111111-b111-b111-b111-b11111111111',
+  'a4444444-4444-4444-4444-444444444444',
+  (SELECT id FROM venues WHERE code = 'LAB-CS-01' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'michael.kumar@student.edu' LIMIT 1),
+  '2026-01-18 10:00:00+00',
+  '2026-01-18 12:00:00+00',
+  '2026-01-18 10:00:00+00',
+  '2026-01-18 12:00:00+00',
+  20,
+  10,
+  'approved',
+  (SELECT id FROM users WHERE role = 'faculty_manager' AND faculty_id = (SELECT id FROM faculties WHERE code = 'FCI' LIMIT 1) LIMIT 1),
+  '2026-01-05 09:30:00+00',
+  'Approved. Please ensure lab safety protocols are followed.',
+  'Coding competition for students',
+  25
+);
+
+-- Rejected booking (for comparison)
+INSERT INTO venue_bookings (
+  id, event_id, venue_id, requester_user_id,
+  requested_start_datetime, requested_end_datetime,
+  setup_time,
+  status, approved_user_id, approved_at,
+  rejection_reason, remarks, expected_attendees
+)
+VALUES (
+  'bc222222-c222-c222-c222-c22222222222',
+  'a5555555-5555-5555-5555-555555555555',
+  (SELECT id FROM venues WHERE code = 'LT-FCI-01' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'lisa.chong@student.edu' LIMIT 1),
+  '2026-01-11 14:00:00+00',
+  '2026-01-11 16:00:00+00',
+  15,
+  'rejected',
+  (SELECT id FROM users WHERE role = 'faculty_manager' AND faculty_id = (SELECT id FROM faculties WHERE code = 'FCI' LIMIT 1) LIMIT 1),
+  '2026-01-04 14:20:00+00',
+  'The requested time slot conflicts with a scheduled faculty meeting. Please choose an alternative time or venue.',
+  'Study group session',
+  20
+);
+
+-- ========================================
 -- Sample Event Participants
 -- ========================================
 

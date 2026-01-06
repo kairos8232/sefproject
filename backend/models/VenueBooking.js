@@ -239,6 +239,158 @@ class VenueBooking {
       throw error;
     }
   }
+
+  // Get bookings for faculty's venues
+  static async getByFacultyId(facultyId, filters = {}) {
+    try {
+      let query = supabase
+        .from('venue_bookings')
+        .select(`
+          *,
+          event:events(id, event_name, description, start_datetime, end_datetime, organizer_id),
+          venue:venues!inner(id, code, name, capacity, location, faculty_id, faculty:faculties(id, code, name)),
+          requester:users!requester_user_id(id, name, email, role),
+          approver:users!approved_user_id(id, name, email)
+        `)
+        .eq('venue.faculty_id', facultyId);
+
+      // Apply filters
+      if (filters.status) {
+        query = query.eq('status', filters.status);
+      }
+      
+      if (filters.venue_id) {
+        query = query.eq('venue_id', filters.venue_id);
+      }
+
+      if (filters.search) {
+        query = query.or(`event.event_name.ilike.%${filters.search}%,requester.name.ilike.%${filters.search}%`);
+      }
+
+      // Apply sorting
+      const sortBy = filters.sort_by || 'created_at';
+      const sortOrder = filters.sort_order === 'asc' ? { ascending: true } : { ascending: false };
+      query = query.order(sortBy, sortOrder);
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error getting bookings by faculty ID:', error);
+      throw error;
+    }
+  }
+
+  // Get booking by ID with full details
+  static async getByIdWithDetails(id) {
+    try {
+      const { data, error } = await supabase
+        .from('venue_bookings')
+        .select(`
+          *,
+          event:events(
+            id, 
+            event_name, 
+            description, 
+            event_type,
+            start_datetime, 
+            end_datetime, 
+            organizer_id,
+            organizer:users!organizer_id(id, name, email, role)
+          ),
+          venue:venues(
+            id, 
+            code, 
+            name, 
+            capacity, 
+            location,
+            faculty_id,
+            faculty:faculties(id, code, name)
+          ),
+          requester:users!requester_user_id(id, name, email, role),
+          approver:users!approved_user_id(id, name, email)
+        `)
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error getting booking details:', error);
+      throw error;
+    }
+  }
+
+  // Approve booking with optional adjustments
+  static async approveWithAdjustments(id, approverId, adjustments = {}) {
+    try {
+      const booking = await this.getById(id);
+      
+      // Check if booking is still pending
+      if (booking.status !== 'pending') {
+        throw new Error(`Booking is already ${booking.status}`);
+      }
+
+      const updateData = {
+        status: 'approved',
+        approved_user_id: approverId,
+        approved_at: new Date().toISOString(),
+        approval_notes: adjustments.approval_notes || null,
+        approved_start_datetime: adjustments.approved_start_datetime || booking.requested_start_datetime,
+        approved_end_datetime: adjustments.approved_end_datetime || booking.requested_end_datetime,
+        updated_at: new Date().toISOString()
+      };
+
+      const { data, error } = await supabase
+        .from('venue_bookings')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error approving venue booking:', error);
+      throw error;
+    }
+  }
+
+  // Reject booking with reason
+  static async rejectWithReason(id, approverId, rejectionReason) {
+    try {
+      const booking = await this.getById(id);
+      
+      // Check if booking is still pending
+      if (booking.status !== 'pending') {
+        throw new Error(`Booking is already ${booking.status}`);
+      }
+
+      if (!rejectionReason || rejectionReason.trim().length < 10) {
+        throw new Error('Rejection reason must be at least 10 characters');
+      }
+
+      const { data, error } = await supabase
+        .from('venue_bookings')
+        .update({
+          status: 'rejected',
+          approved_user_id: approverId,
+          approved_at: new Date().toISOString(),
+          rejection_reason: rejectionReason,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error rejecting venue booking:', error);
+      throw error;
+    }
+  }
 }
 
 module.exports = VenueBooking;
