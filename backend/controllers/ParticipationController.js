@@ -155,36 +155,24 @@ class ParticipationController {
       const userId = req.user.userId;
       const userRole = req.user.role;
 
-      console.log('[ParticipationController] recordAttendance called');
-      console.log('[ParticipationController] eventId:', eventId);
-      console.log('[ParticipationController] userId:', userId);
-      console.log('[ParticipationController] attendanceUpdates:', JSON.stringify(attendanceUpdates, null, 2));
-
       // Validate input
       if (!attendanceUpdates || !Array.isArray(attendanceUpdates) || attendanceUpdates.length === 0) {
-        console.log('[ParticipationController] Validation failed: attendanceUpdates invalid');
         return res.status(400).json({ error: 'attendanceUpdates array is required' });
       }
 
       // Check if event exists
       const event = await Event.getById(eventId);
-      console.log('[ParticipationController] Event found:', event ? event.event_name : 'null');
       if (!event) {
         return res.status(404).json({ error: 'Event not found' });
       }
 
       // Only event organizer can record attendance
-      console.log('[ParticipationController] Event organizer_id:', event.organizer_id);
-      console.log('[ParticipationController] Current userId:', userId);
       if (event.organizer_id !== userId) {
-        console.log('[ParticipationController] Permission denied: not event organizer');
         return res.status(403).json({ error: 'Only the event organizer can record attendance' });
       }
 
       // Update attendance
-      console.log('[ParticipationController] Calling updateAttendance...');
       const updatedParticipations = await Participation.updateAttendance(attendanceUpdates);
-      console.log('[ParticipationController] Updated participations count:', updatedParticipations.length);
 
       res.status(200).json({
         message: 'Attendance recorded successfully',
