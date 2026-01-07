@@ -99,6 +99,13 @@ function HomePage() {
 
     const adminFeatures = [
       {
+        title: 'Browse Events',
+        description: 'Explore all campus events',
+        icon: '🎯',
+        path: '/events',
+        color: '#007bff'
+      },
+      {
         title: 'Manage Users',
         description: 'Create and manage user accounts',
         icon: '👥',
@@ -106,18 +113,25 @@ function HomePage() {
         color: '#e67e22'
       },
       {
-        title: 'Browse Events',
-        description: 'View all campus events',
-        icon: '🗂️',
-        path: '/events',
+        title: 'Manage Faculties',
+        description: 'Create and manage faculties',
+        icon: '🏛️',
+        path: '/admin/faculties',
         color: '#9b59b6'
+      },
+      {
+        title: 'Manage Venues',
+        description: 'Create and manage campus venues',
+        icon: '🏢',
+        path: '/admin/venues',
+        color: '#3498db'
       },
       {
         title: 'Venue Availability',
         description: 'Manage venue availability',
         icon: '🔒',
         path: '/venue-availability',
-        color: '#3498db'
+        color: '#d35400'
       }
     ];
 
@@ -178,7 +192,7 @@ function HomePage() {
     ];
 
     if (role === 'administrator') {
-      return [...commonFeatures, ...adminFeatures];
+      return adminFeatures;
     } else if (role === 'event_organizer') {
       return [...commonFeatures, ...eventCreationFeatures];
     } else if (role === 'faculty_manager') {
@@ -218,13 +232,15 @@ function HomePage() {
       {/* Quick Stats */}
       {!loading && (
         <div className="stats-section">
-          <div className="stat-card">
-            <div className="stat-icon">📊</div>
-            <div className="stat-content">
-              <div className="stat-value">{stats.registeredEvents}</div>
-              <div className="stat-label">Registered Events</div>
+          {user.role !== 'administrator' && (
+            <div className="stat-card">
+              <div className="stat-icon">📊</div>
+              <div className="stat-content">
+                <div className="stat-value">{stats.registeredEvents}</div>
+                <div className="stat-label">Registered Events</div>
+              </div>
             </div>
-          </div>
+          )}
           {(user.role === 'student' || user.role === 'faculty_manager' || user.role === 'event_organizer') && (
             <div className="stat-card">
               <div className="stat-icon">🎪</div>
@@ -238,7 +254,7 @@ function HomePage() {
       )}
 
       {/* Upcoming Events Preview */}
-      {!loading && stats.upcomingRegistrations.length > 0 && (
+      {!loading && stats.upcomingRegistrations.length > 0 && user.role !== 'administrator' && (
         <div className="upcoming-section">
           <h2>Your Upcoming Events</h2>
           <div className="upcoming-list">

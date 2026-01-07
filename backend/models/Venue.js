@@ -1,20 +1,36 @@
 const supabase = require('../config/supabase');
 
 class Venue {
-  // Get all venues
-  static async getAll() {
+  // Get all venues with optional filters
+  static async getAll(filters = {}) {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('venues')
         .select(`
           *,
-          faculty:faculties(code, name)
-        `)
-        .eq('status', 'active')
-        .order('name', { ascending: true });
+          faculty:faculties(id, code, name)
+        `);
 
+      // Apply status filter
+      if (filters.status) {
+        query = query.eq('status', filters.status);
+      }
+
+      // Apply faculty filter
+      if (filters.facultyId) {
+        query = query.eq('faculty_id', filters.facultyId);
+      }
+
+      // Apply search filter (name or code)
+      if (filters.search) {
+        query = query.or(`name.ilike.%${filters.search}%,code.ilike.%${filters.search}%`);
+      }
+
+      query = query.order('name', { ascending: true });
+
+      const { data, error } = await query;
       if (error) throw error;
-      return data;
+      return data || [];
     } catch (error) {
       console.error('Error getting venues:', error);
       throw error;
@@ -28,7 +44,7 @@ class Venue {
         .from('venues')
         .select(`
           *,
-          faculty:faculties(code, name)
+          faculty:faculties(id, code, name)
         `)
         .eq('id', id)
         .single();
@@ -37,6 +53,112 @@ class Venue {
       return data;
     } catch (error) {
       console.error('Error getting venue by ID:', error);
+      throw error;
+    }
+  }
+
+  // Find venue by code (for duplicate checking)
+  static async findByCode(code) {
+    try {
+      const { data, error } = await supabase
+        .from('venues')
+        .select('*')
+        .eq('code', code)
+        .single();
+
+      if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows returned
+      return data;
+    } catch (error) {
+      console.error('Error finding venue by code:', error);
+      throw error;
+    }
+  }
+
+  // Create new venue
+  static async create(venueData) {
+    try {
+      const { data, error } = await supabase
+        .from('venues')
+        .insert([{
+          faculty_id: venueData.faculty_id,
+          code: venueData.code,
+          name: venueData.name,
+          location: venueData.location || null,
+          capacity: venueData.capacity || null,
+          status: 'active'
+        }])
+        .select(`
+          *,
+          faculty:faculties(id, code, name)
+        `)
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error creating venue:', error);
+      throw error;
+    }
+  }
+
+  // Update venue
+  static async update(id, updates) {
+    try {
+      const updateData = {
+        updated_at: new Date().toISOString()
+      };
+
+      if (updates.faculty_id !== undefined) updateData.faculty_id = updates.faculty_id;
+      if (updates.code !== undefined) updateData.code = updates.code;
+      if (updates.name !== undefined) updateData.name = updates.name;
+      if (updates.location !== undefined) updateData.location = updates.location;
+      if (updates.capacity !== undefined) updateData.capacity = updates.capacity;
+      if (updates.status !== undefined) updateData.status = updates.status;
+
+      const { data, error } = await supabase
+        .from('venues')
+        .update(updateData)
+        .eq('id', id)
+        .select(`
+          *,
+          faculty:faculties(id, code, name)
+        `)
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error updating venue:', error);
+      throw error;
+    }
+  }
+
+  // Check if venue has upcoming bookings with specific statuses
+  static async hasUpcomingBookings(venueId) {
+    try {
+      const { data, error } = await supabase
+        .from('venue_bookings')
+        .select(`
+          id,
+          event:events(id, status)
+        `)
+        .eq('venue_id', venueId)
+        .in('status', ['pending', 'approved']);
+
+      if (error) throw error;
+      
+      if (!data || data.length === 0) return false;
+
+      // Check if any bookings have events with status: pending, approved, upcoming, or ongoing
+      const hasUpcoming = data.some(booking => {
+        const event = booking.event;
+        if (!event) return false;
+        return ['upcoming', 'ongoing'].includes(event.status);
+      });
+
+      return hasUpcoming;
+    } catch (error) {
+      console.error('Error checking upcoming bookings:', error);
       throw error;
     }
   }

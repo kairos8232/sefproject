@@ -414,7 +414,7 @@ function UserManagementPage() {
 
               {(formData.role === 'student' || formData.role === 'faculty_manager') && (
                 <div className="form-group">
-                  <label>Faculty</label>
+                  <label>Faculty *</label>
                   <select
                     value={formData.faculty_id}
                     onChange={(e) => setFormData({ ...formData, faculty_id: e.target.value })}
