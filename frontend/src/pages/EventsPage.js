@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import eventService from '../services/eventService';
-import participationService from '../services/participationService';
 import { formatDateTime } from '../utils/dateUtils';
 import './EventsPage.css';
 
@@ -9,6 +8,7 @@ function EventsPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [events, setEvents] = useState([]);
+  const [allEvents, setAllEvents] = useState([]); // Store all events for client-side filtering
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filter, setFilter] = useState(location.state?.filter || 'all');
@@ -18,36 +18,39 @@ function EventsPage() {
       setLoading(true);
       setError('');
       
-      let data;
-      if (filter === 'registered') {
-        // Get user's registered events
-        const participations = await participationService.getMyParticipations();
-        // Filter only registered status (not cancelled)
-        const registeredEvents = participations
-          .filter(p => p.status === 'registered')
-          .map(p => p.event);
-        setEvents(registeredEvents);
-        setLoading(false);
-        return;
-      } else if (filter === 'all') {
-        data = await eventService.getAllEvents();
-      } else if (filter === 'upcoming' || filter === 'ongoing') {
-        data = await eventService.getEventsByStatus(filter);
-      } else {
-        data = await eventService.getEventsByVisibility(filter);
-      }
-      
-      setEvents(data.events || []);
+      // Fetch all events for client-side filtering
+      const data = await eventService.getAllEvents();
+      setAllEvents(data.events || []);
     } catch (err) {
       setError(err);
     } finally {
       setLoading(false);
     }
-  }, [filter]);
+  }, []);
 
   useEffect(() => {
     loadEvents();
   }, [loadEvents]);
+
+  // Client-side filtering when filter changes
+  useEffect(() => {
+    const applyFilter = () => {
+      let filtered = [...allEvents];
+      
+      if (filter === 'upcoming') {
+        filtered = filtered.filter(e => e.status === 'upcoming');
+      } else if (filter === 'ongoing') {
+        filtered = filtered.filter(e => e.status === 'ongoing');
+      } else if (filter === 'campuswide' || filter === 'facultyonly' || filter === 'inviteonly') {
+        filtered = filtered.filter(e => e.visibility === filter);
+      }
+      // 'all' shows everything, 'registered' will be handled separately if needed
+      
+      setEvents(filtered);
+    };
+    
+    applyFilter();
+  }, [allEvents, filter]);
 
   const handleEventClick = (eventId) => {
     navigate(`/events/${eventId}`, { state: { fromEventsPage: true, filter } });

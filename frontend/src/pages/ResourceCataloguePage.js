@@ -12,6 +12,7 @@ const ResourceCataloguePage = () => {
 
   // Categories state
   const [categories, setCategories] = useState([]);
+  const [allCategories, setAllCategories] = useState([]); // Store all categories for client-side filtering
   const [categoryFilters, setCategoryFilters] = useState({
     status: 'active',
     search: ''
@@ -55,20 +56,37 @@ const ResourceCataloguePage = () => {
   useEffect(() => {
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [categoryFilters, typeFilters]);
+  }, []);
 
-  // Client-side filtering when category is selected
+  // Client-side filtering for categories when search/status changes
   useEffect(() => {
+    const filtered = allCategories.filter(category =>
+      (categoryFilters.status === '' || category.status === categoryFilters.status) &&
+      (categoryFilters.search === '' ||
+        category.name.toLowerCase().includes(categoryFilters.search.toLowerCase()) ||
+        category.code.toLowerCase().includes(categoryFilters.search.toLowerCase()))
+    );
+    setCategories(filtered);
+  }, [allCategories, categoryFilters]);
+
+  // Client-side filtering for types when search/status/category changes
+  useEffect(() => {
+    let filtered = allTypes.filter(type =>
+      (typeFilters.status === '' || type.status === typeFilters.status) &&
+      (typeFilters.search === '' ||
+        type.name.toLowerCase().includes(typeFilters.search.toLowerCase()) ||
+        type.code.toLowerCase().includes(typeFilters.search.toLowerCase()))
+    );
+
+    // Apply category filter
     if (selectedCategoryId) {
-      const filtered = allTypes.filter(type => type.category_id === selectedCategoryId);
-      setTypes(filtered);
+      filtered = filtered.filter(type => type.category_id === selectedCategoryId);
     } else if (typeFilters.category_id) {
-      const filtered = allTypes.filter(type => type.category_id === typeFilters.category_id);
-      setTypes(filtered);
-    } else {
-      setTypes(allTypes);
+      filtered = filtered.filter(type => type.category_id === typeFilters.category_id);
     }
-  }, [selectedCategoryId, allTypes, typeFilters.category_id]);
+
+    setTypes(filtered);
+  }, [selectedCategoryId, allTypes, typeFilters]);
 
   const loadData = async () => {
     try {
@@ -88,23 +106,14 @@ const ResourceCataloguePage = () => {
         return;
       }
 
-      // Load categories and types in parallel for faster loading
+      // Load all categories and types for client-side filtering
       const [categoriesData, typesData] = await Promise.all([
-        resourceCategoryService.getAllCategories(categoryFilters),
-        resourceTypeService.getAllTypes({ status: typeFilters.status, search: typeFilters.search })
+        resourceCategoryService.getAllCategories({}),
+        resourceTypeService.getAllTypes({})
       ]);
 
-      setCategories(categoriesData);
+      setAllCategories(categoriesData);
       setAllTypes(typesData);
-      
-      // Apply client-side filtering
-      if (selectedCategoryId) {
-        setTypes(typesData.filter(type => type.category_id === selectedCategoryId));
-      } else if (typeFilters.category_id) {
-        setTypes(typesData.filter(type => type.category_id === typeFilters.category_id));
-      } else {
-        setTypes(typesData);
-      }
 
       setLoading(false);
     } catch (err) {

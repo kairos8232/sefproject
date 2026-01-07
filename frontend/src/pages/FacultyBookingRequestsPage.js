@@ -4,6 +4,7 @@ import './FacultyBookingRequestsPage.css';
 
 const FacultyBookingRequestsPage = () => {
   const [bookings, setBookings] = useState([]);
+  const [allBookings, setAllBookings] = useState([]); // Store all bookings for client-side filtering
   const [venues, setVenues] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -41,9 +42,6 @@ const FacultyBookingRequestsPage = () => {
       }
 
       const params = new URLSearchParams();
-      if (statusFilter) params.append('status', statusFilter);
-      if (venueFilter) params.append('venue_id', venueFilter);
-      if (searchQuery) params.append('search', searchQuery);
       if (sortBy) params.append('sort_by', sortBy);
       if (sortOrder) params.append('sort_order', sortOrder);
 
@@ -68,14 +66,28 @@ const FacultyBookingRequestsPage = () => {
 
       console.log('[FacultyBookingRequests] Successfully loaded', data.bookings?.length || 0, 'bookings');
       console.log('[FacultyBookingRequests] First booking structure:', JSON.stringify(data.bookings?.[0], null, 2));
-      setBookings(data.bookings || []);
+      setAllBookings(data.bookings || []);
     } catch (err) {
       console.error('[FacultyBookingRequests] Fetch error:', err);
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  }, [statusFilter, venueFilter, searchQuery, sortBy, sortOrder, navigate]);
+  }, [sortBy, sortOrder, navigate]);
+
+  // Client-side filtering for status, venue and search
+  useEffect(() => {
+    const filtered = allBookings.filter(booking => {
+      const matchesStatus = !statusFilter || statusFilter === 'all' || booking.status === statusFilter;
+      const matchesVenue = !venueFilter || booking.venue_id === venueFilter;
+      const matchesSearch = !searchQuery || 
+        booking.event_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        booking.organizer?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        booking.venue?.name?.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesStatus && matchesVenue && matchesSearch;
+    });
+    setBookings(filtered);
+  }, [allBookings, statusFilter, venueFilter, searchQuery]);
 
   const fetchVenues = useCallback(async () => {
     try {

@@ -113,18 +113,11 @@ function HomePage() {
         color: '#e67e22'
       },
       {
-        title: 'Manage Faculties',
-        description: 'Create and manage faculties',
+        title: 'Faculties & Venues',
+        description: 'Manage faculties and campus venues',
         icon: '🏛️',
         path: '/admin/faculties',
         color: '#9b59b6'
-      },
-      {
-        title: 'Manage Venues',
-        description: 'Create and manage campus venues',
-        icon: '🏢',
-        path: '/admin/venues',
-        color: '#3498db'
       },
       {
         title: 'Resource Catalogue',

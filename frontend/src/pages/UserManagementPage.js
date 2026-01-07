@@ -7,6 +7,7 @@ import './UserManagementPage.css';
 function UserManagementPage() {
   const navigate = useNavigate();
   const [users, setUsers] = useState([]);
+  const [allUsers, setAllUsers] = useState([]); // Store all users for client-side filtering
   const [faculties, setFaculties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -45,7 +46,19 @@ function UserManagementPage() {
   useEffect(() => {
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters]);
+  }, []);
+
+  // Client-side filtering when search/role/status changes
+  useEffect(() => {
+    const filtered = allUsers.filter(user =>
+      (filters.role === '' || user.role === filters.role) &&
+      (filters.status === '' || user.status === filters.status) &&
+      (filters.search === '' ||
+        user.name.toLowerCase().includes(filters.search.toLowerCase()) ||
+        user.email.toLowerCase().includes(filters.search.toLowerCase()))
+    );
+    setUsers(filtered);
+  }, [allUsers, filters]);
 
   const loadData = async () => {
     try {
@@ -66,13 +79,13 @@ function UserManagementPage() {
         }
       }
 
-      // Load users and faculties
+      // Load users and faculties (without filters for client-side filtering)
       const [usersData, facultiesData] = await Promise.all([
-        userService.getAllUsers(filters),
+        userService.getAllUsers({}),
         facultyService.getAllFaculties()
       ]);
 
-      setUsers(usersData);
+      setAllUsers(usersData);
       setFaculties(facultiesData);
     } catch (err) {
       console.error('Error loading data:', err);
