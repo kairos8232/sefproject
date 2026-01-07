@@ -138,7 +138,7 @@ const SystemConfigurationPage = () => {
           <div className="section-header">
             <h2>📅 Booking Rules</h2>
             <p className="section-description">
-              Configure advance booking requirements for venue reservations
+              Configure advance booking requirements for events, venues, and resources
             </p>
           </div>
 
@@ -201,11 +201,17 @@ const SystemConfigurationPage = () => {
 
         <div className="info-section">
           <h3>ℹ️ Important Notes</h3>
+          <p><strong>These settings affect 3 key areas:</strong></p>
           <ul>
-            <li>These settings apply to all future venue bookings</li>
-            <li>Existing bookings will not be affected by these changes</li>
+            <li><strong>Event Creation</strong> - Events must be scheduled within these advance booking limits</li>
+            <li><strong>Venue Bookings</strong> - Venue reservations must comply with these day restrictions</li>
+            <li><strong>Resource Requests</strong> - Resource requests must follow these advance notice rules</li>
+          </ul>
+          <p><strong>Additional rules:</strong></p>
+          <ul>
+            <li>Existing bookings/events will not be affected by these changes</li>
             <li>The minimum advance booking days must be less than the maximum</li>
-            <li>A 24-hour cancellation policy is enforced system-wide</li>
+            <li>Both values must be greater than 0</li>
           </ul>
         </div>
       </div>

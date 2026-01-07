@@ -1,4 +1,5 @@
 const Event = require('../models/Event');
+const SystemSetting = require('../models/SystemSetting');
 
 class EventController {
   // UC-03: Browse Events - Get list of events
@@ -196,6 +197,27 @@ class EventController {
       // Set default status to upcoming
       if (!eventData.status) {
         eventData.status = 'upcoming';
+      }
+
+      // Check advance booking restrictions (UC-17)
+      const settings = await SystemSetting.getSettingsObject();
+      const minAdvanceDays = parseInt(settings.min_advance_booking_days) || 3;
+      const maxAdvanceDays = parseInt(settings.max_advance_booking_days) || 30;
+      
+      const eventStartDate = new Date(eventData.start_datetime);
+      const now = new Date();
+      const daysInAdvance = Math.floor((eventStartDate - now) / (1000 * 60 * 60 * 24));
+      
+      if (daysInAdvance < minAdvanceDays) {
+        return res.status(400).json({ 
+          error: `Event must be scheduled at least ${minAdvanceDays} days in advance` 
+        });
+      }
+      
+      if (daysInAdvance > maxAdvanceDays) {
+        return res.status(400).json({ 
+          error: `Event cannot be scheduled more than ${maxAdvanceDays} days in advance` 
+        });
       }
 
       // Create event

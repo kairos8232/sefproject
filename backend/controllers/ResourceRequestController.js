@@ -2,6 +2,7 @@ const ResourceRequest = require('../models/ResourceRequest');
 const Resource = require('../models/Resource');
 const VenueBooking = require('../models/VenueBooking');
 const Event = require('../models/Event');
+const SystemSetting = require('../models/SystemSetting');
 
 class ResourceRequestController {
   // Get all resource requests (faculty managers only)
@@ -185,6 +186,27 @@ class ResourceRequestController {
       
       if (!resource || resource.status !== 'active') {
         return res.status(404).json({ error: 'Resource not found or inactive' });
+      }
+
+      // Check advance booking restrictions (UC-17)
+      const settings = await SystemSetting.getSettingsObject();
+      const minAdvanceDays = parseInt(settings.min_advance_booking_days) || 3;
+      const maxAdvanceDays = parseInt(settings.max_advance_booking_days) || 30;
+      
+      const resourceStartDate = new Date(requestData.usage_start_datetime);
+      const now = new Date();
+      const daysInAdvance = Math.floor((resourceStartDate - now) / (1000 * 60 * 60 * 24));
+      
+      if (daysInAdvance < minAdvanceDays) {
+        return res.status(400).json({ 
+          error: `Resource must be requested at least ${minAdvanceDays} days in advance` 
+        });
+      }
+      
+      if (daysInAdvance > maxAdvanceDays) {
+        return res.status(400).json({ 
+          error: `Resource cannot be requested more than ${maxAdvanceDays} days in advance` 
+        });
       }
 
       // Check resource availability

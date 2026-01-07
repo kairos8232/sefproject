@@ -1,6 +1,7 @@
 const VenueBooking = require('../models/VenueBooking');
 const Venue = require('../models/Venue');
 const Event = require('../models/Event');
+const SystemSetting = require('../models/SystemSetting');
 
 class VenueBookingController {
   // Get all venue bookings (admin/faculty manager)
@@ -172,6 +173,27 @@ class VenueBookingController {
         return res.status(404).json({ error: 'Venue not found or inactive' });
       }
 
+      // Check advance booking restrictions (UC-17)
+      const settings = await SystemSetting.getSettingsObject();
+      const minAdvanceDays = parseInt(settings.min_advance_booking_days) || 3;
+      const maxAdvanceDays = parseInt(settings.max_advance_booking_days) || 30;
+      
+      const requestedStartDate = new Date(bookingData.requested_start_datetime);
+      const now = new Date();
+      const daysInAdvance = Math.floor((requestedStartDate - now) / (1000 * 60 * 60 * 24));
+      
+      if (daysInAdvance < minAdvanceDays) {
+        return res.status(400).json({ 
+          error: `Venue must be booked at least ${minAdvanceDays} days in advance` 
+        });
+      }
+      
+      if (daysInAdvance > maxAdvanceDays) {
+        return res.status(400).json({ 
+          error: `Venue cannot be booked more than ${maxAdvanceDays} days in advance` 
+        });
+      }
+
       // Check venue availability
       const isAvailable = await Venue.checkAvailability(
         bookingData.venue_id,
@@ -242,6 +264,27 @@ class VenueBookingController {
         const venueId = updateData.venue_id || booking.venue_id;
         const startTime = updateData.requested_start_datetime || booking.requested_start_datetime;
         const endTime = updateData.requested_end_datetime || booking.requested_end_datetime;
+
+        // Check advance booking restrictions (UC-17)
+        const settings = await SystemSetting.getSettingsObject();
+        const minAdvanceDays = parseInt(settings.min_advance_booking_days) || 3;
+        const maxAdvanceDays = parseInt(settings.max_advance_booking_days) || 30;
+        
+        const requestedStartDate = new Date(startTime);
+        const now = new Date();
+        const daysInAdvance = Math.floor((requestedStartDate - now) / (1000 * 60 * 60 * 24));
+        
+        if (daysInAdvance < minAdvanceDays) {
+          return res.status(400).json({ 
+            error: `Venue must be booked at least ${minAdvanceDays} days in advance` 
+          });
+        }
+        
+        if (daysInAdvance > maxAdvanceDays) {
+          return res.status(400).json({ 
+            error: `Venue cannot be booked more than ${maxAdvanceDays} days in advance` 
+          });
+        }
 
         const isAvailable = await Venue.checkAvailability(venueId, startTime, endTime, bookingId);
 
