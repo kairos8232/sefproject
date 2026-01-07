@@ -498,13 +498,13 @@ const FacultyBookingRequestsPage = () => {
                   <label>Time:</label>
                   <span>{formatTime(selectedBooking.requested_start_datetime)} - {formatTime(selectedBooking.requested_end_datetime)}</span>
                 </div>
-                {selectedBooking.setup_time && (
+                {selectedBooking.setup_time > 0 && (
                   <div className="detail-row">
                     <label>Setup Time:</label>
                     <span>{selectedBooking.setup_time} minutes before</span>
                   </div>
                 )}
-                {selectedBooking.teardown_time && (
+                {selectedBooking.teardown_time > 0 && (
                   <div className="detail-row">
                     <label>Teardown Time:</label>
                     <span>{selectedBooking.teardown_time} minutes after</span>

@@ -46,13 +46,12 @@ class Venue {
     try {
       // Check for overlapping bookings
       // A booking overlaps if: booking_start < search_end AND booking_end > search_start
+      // Need to account for setup and teardown time in existing bookings
       let query = supabase
         .from('venue_bookings')
-        .select('*')
+        .select('id, requested_start_datetime, requested_end_datetime, setup_time, teardown_time, status')
         .eq('venue_id', venueId)
-        .in('status', ['pending', 'approved'])
-        .lt('requested_start_datetime', endDatetime)
-        .gt('requested_end_datetime', startDatetime);
+        .in('status', ['pending', 'approved']);
 
       // Exclude a specific booking (useful for updates)
       if (excludeBookingId) {
@@ -66,10 +65,28 @@ class Venue {
         throw error;
       }
       
-      // If there are any overlapping bookings, venue is not available
-      const isAvailable = !data || data.length === 0;
+      // Check each booking for overlap, including setup and teardown time
+      const hasOverlap = data && data.some(booking => {
+        // Calculate actual start time (including setup)
+        const bookingStart = new Date(booking.requested_start_datetime);
+        const setupMinutes = booking.setup_time || 0;
+        const actualStart = new Date(bookingStart.getTime() - setupMinutes * 60 * 1000);
+        
+        // Calculate actual end time (including teardown)
+        const bookingEnd = new Date(booking.requested_end_datetime);
+        const teardownMinutes = booking.teardown_time || 0;
+        const actualEnd = new Date(bookingEnd.getTime() + teardownMinutes * 60 * 1000);
+        
+        // Check for overlap
+        const searchStart = new Date(startDatetime);
+        const searchEnd = new Date(endDatetime);
+        
+        const overlaps = actualStart < searchEnd && actualEnd > searchStart;
+        
+        return overlaps;
+      });
       
-      return isAvailable;
+      return !hasOverlap;
     } catch (error) {
       console.error('Error checking venue availability:', error);
       // If there's an error (like table doesn't exist), assume venue is available

@@ -327,13 +327,13 @@ const FacultyBookingRequestDetailPage = () => {
             <label>End Date & Time</label>
             <p>{formatDateTime(booking.requested_end_datetime)}</p>
           </div>
-          {booking.setup_time && (
+          {booking.setup_time > 0 && (
             <div className="info-item">
               <label>Setup Time</label>
               <p>{booking.setup_time} minutes</p>
             </div>
           )}
-          {booking.teardown_time && (
+          {booking.teardown_time > 0 && (
             <div className="info-item">
               <label>Teardown Time</label>
               <p>{booking.teardown_time} minutes</p>

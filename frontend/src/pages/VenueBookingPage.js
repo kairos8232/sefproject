@@ -67,9 +67,16 @@ function VenueBookingPage() {
     setLoading(true);
 
     try {
+      // Calculate actual start and end time including setup and teardown
+      const setupMinutes = formData.setup_time ? parseInt(formData.setup_time) : 0;
+      const teardownMinutes = formData.teardown_time ? parseInt(formData.teardown_time) : 0;
+      
+      const actualStartTime = new Date(startTime.getTime() - setupMinutes * 60 * 1000);
+      const actualEndTime = new Date(endTime.getTime() + teardownMinutes * 60 * 1000);
+      
       const result = await venueBookingService.checkAvailability(
-        fromDateTimeLocalInput(formData.requested_start_datetime),
-        fromDateTimeLocalInput(formData.requested_end_datetime),
+        actualStartTime.toISOString(),
+        actualEndTime.toISOString(),
         formData.expected_attendees || null,
         null // faculty_id - could be added as filter later
       );

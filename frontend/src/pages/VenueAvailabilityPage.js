@@ -223,8 +223,17 @@ function VenueAvailabilityPage() {
     const dayEnd = new Date(year, month, day, 23, 59, 59);
     
     const dayBookings = selectedVenueBookings.filter(booking => {
-      const bookingStart = new Date(booking.approved_start_datetime || booking.requested_start_datetime);
-      const bookingEnd = new Date(booking.approved_end_datetime || booking.requested_end_datetime);
+      let bookingStart = new Date(booking.approved_start_datetime || booking.requested_start_datetime);
+      let bookingEnd = new Date(booking.approved_end_datetime || booking.requested_end_datetime);
+      
+      // Include setup and teardown time
+      if (booking.setup_time) {
+        bookingStart = new Date(bookingStart.getTime() - booking.setup_time * 60 * 1000);
+      }
+      if (booking.teardown_time) {
+        bookingEnd = new Date(bookingEnd.getTime() + booking.teardown_time * 60 * 1000);
+      }
+      
       return (bookingStart <= dayEnd && bookingEnd >= dayStart);
     });
     
@@ -415,7 +424,13 @@ function VenueAvailabilityPage() {
                         <div className="day-number">{day}</div>
                         <div className="day-indicators">
                           {dayBookings.map(booking => {
-                            const eventStart = new Date(booking.approved_start_datetime || booking.requested_start_datetime);
+                            let eventStart = new Date(booking.approved_start_datetime || booking.requested_start_datetime);
+                            
+                            // Include setup time in the display
+                            if (booking.setup_time) {
+                              eventStart = new Date(eventStart.getTime() - booking.setup_time * 60 * 1000);
+                            }
+                            
                             const currentDay = new Date(year, month, day);
                             const startsBeforeToday = eventStart < currentDay;
                             
@@ -466,8 +481,17 @@ function VenueAvailabilityPage() {
                               <div className="tooltip-section">
                                 <div className="tooltip-section-title">📅 Approved Bookings ({dayBookings.length})</div>
                                 {dayBookings.map(booking => {
-                                  const eventStart = new Date(booking.approved_start_datetime || booking.requested_start_datetime);
-                                  const eventEnd = new Date(booking.approved_end_datetime || booking.requested_end_datetime);
+                                  let eventStart = new Date(booking.approved_start_datetime || booking.requested_start_datetime);
+                                  let eventEnd = new Date(booking.approved_end_datetime || booking.requested_end_datetime);
+                                  
+                                  // Include setup and teardown time
+                                  if (booking.setup_time) {
+                                    eventStart = new Date(eventStart.getTime() - booking.setup_time * 60 * 1000);
+                                  }
+                                  if (booking.teardown_time) {
+                                    eventEnd = new Date(eventEnd.getTime() + booking.teardown_time * 60 * 1000);
+                                  }
+                                  
                                   const currentDay = new Date(year, month, day);
                                   const nextDay = new Date(year, month, day + 1);
                                   
