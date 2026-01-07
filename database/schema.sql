@@ -12,7 +12,6 @@
 -- 8. event_participation - Event participation/registration tracking
 -- 9. event_registration_fields - Custom registration form fields for events
 -- 10. event_registration_responses - Participant responses to custom fields
--- 11. resources - Campus resources (equipment, furniture, etc.)
 -- 12. resource_requests - Resource requests for events
 -- 13. venue_availability_blocks - Venue blocked time slots
 -- 14. event_feedbacks - Feedback from faculty staff on completed events
@@ -20,6 +19,9 @@
 
 -- Enable UUID extension (if not already enabled)
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- Set database timezone to UTC+8 (Asia/Singapore, Asia/Kuala_Lumpur, etc.)
+SET TIME ZONE 'Asia/Singapore';
 
 -- ========================================
 -- Drop existing tables (in reverse order of dependencies)
@@ -39,6 +41,7 @@ DROP TABLE IF EXISTS venues CASCADE;
 DROP TABLE IF EXISTS faculties CASCADE;
 DROP TABLE IF EXISTS sessions CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS system_settings CASCADE;
 
 -- ========================================
 -- Table: users
@@ -333,30 +336,7 @@ CREATE INDEX idx_resource_types_managed_by ON resource_types(managed_by);
 -- Table: resources (LEGACY - kept for backward compatibility)
 -- Stores available campus resources (equipment, furniture, etc.)
 -- ========================================
-CREATE TABLE resources (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  name VARCHAR(255) NOT NULL,
-  category VARCHAR(100) NOT NULL, -- 'audio_visual', 'furniture', 'it_equipment', 'catering', 'other'
-  description TEXT,
-  total_quantity INTEGER NOT NULL DEFAULT 0, -- Total number available
-  available_quantity INTEGER NOT NULL DEFAULT 0, -- Currently available
-  unit VARCHAR(50), -- 'pieces', 'sets', 'units'
-  status VARCHAR(50) NOT NULL DEFAULT 'active', -- 'active', 'inactive', 'maintenance'
-  managed_by UUID REFERENCES users(id) ON DELETE SET NULL, -- Faculty manager or admin
-  notes TEXT, -- Usage restrictions, special instructions
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
 
--- Indexes for resources
-CREATE INDEX idx_resources_category ON resources(category);
-CREATE INDEX idx_resources_status ON resources(status);
-CREATE INDEX idx_resources_managed_by ON resources(managed_by);
-
--- ========================================
--- Table: resource_requests
--- Stores resource requests for events
--- Updated to use resource_types instead of legacy resources table
 -- ========================================
 CREATE TABLE resource_requests (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -404,7 +384,6 @@ ALTER TABLE event_registration_fields ENABLE ROW LEVEL SECURITY;
 ALTER TABLE event_registration_responses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE resource_categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE resource_types ENABLE ROW LEVEL SECURITY;
-ALTER TABLE resources ENABLE ROW LEVEL SECURITY;
 ALTER TABLE resource_requests ENABLE ROW LEVEL SECURITY;
 
 -- Backend can manage all users
@@ -603,22 +582,6 @@ CREATE POLICY "Backend can delete resource_types" ON resource_types
   FOR DELETE
   USING (true);
 
--- Backend can manage all resources (legacy)
-CREATE POLICY "Backend can read all resources" ON resources
-  FOR SELECT
-  USING (true);
-
-CREATE POLICY "Backend can insert resources" ON resources
-  FOR INSERT
-  WITH CHECK (true);
-
-CREATE POLICY "Backend can update resources" ON resources
-  FOR UPDATE
-  USING (true);
-
-CREATE POLICY "Backend can delete resources" ON resources
-  FOR DELETE
-  USING (true);
 
 -- Backend can manage all resource_requests
 CREATE POLICY "Backend can read all resource_requests" ON resource_requests
@@ -1195,131 +1158,6 @@ SELECT
 WHERE EXISTS (SELECT 1 FROM resource_categories WHERE code = 'CATER');
 
 -- ========================================
--- Sample Resources Data (LEGACY - for backward compatibility)
--- ========================================
-INSERT INTO resources (name, category, description, total_quantity, available_quantity, unit, status, managed_by)
-SELECT 
-  'LCD Projector',
-  'audio_visual',
-  'Full HD projector with HDMI and VGA inputs',
-  10,
-  10,
-  'units',
-  'active',
-  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1)
-WHERE EXISTS (SELECT 1 FROM users WHERE email = 'admin@university.edu');
-
-INSERT INTO resources (name, category, description, total_quantity, available_quantity, unit, status, managed_by)
-SELECT 
-  'Wireless Microphone Set',
-  'audio_visual',
-  'Wireless microphone with receiver and batteries',
-  8,
-  8,
-  'sets',
-  'active',
-  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1)
-WHERE EXISTS (SELECT 1 FROM users WHERE email = 'admin@university.edu');
-
-INSERT INTO resources (name, category, description, total_quantity, available_quantity, unit, status, managed_by)
-SELECT 
-  'Folding Chairs',
-  'furniture',
-  'Portable folding chairs for events',
-  200,
-  200,
-  'pieces',
-  'active',
-  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1)
-WHERE EXISTS (SELECT 1 FROM users WHERE email = 'admin@university.edu');
-
-INSERT INTO resources (name, category, description, total_quantity, available_quantity, unit, status, managed_by)
-SELECT 
-  'Folding Tables (6ft)',
-  'furniture',
-  '6-foot folding tables',
-  50,
-  50,
-  'pieces',
-  'active',
-  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1)
-WHERE EXISTS (SELECT 1 FROM users WHERE email = 'admin@university.edu');
-
-INSERT INTO resources (name, category, description, total_quantity, available_quantity, unit, status, managed_by)
-SELECT 
-  'Laptop (Presentation)',
-  'it_equipment',
-  'Laptop pre-loaded with presentation software',
-  5,
-  5,
-  'units',
-  'active',
-  (SELECT id FROM users WHERE email = 'alice.wong@fci.edu' LIMIT 1)
-WHERE EXISTS (SELECT 1 FROM users WHERE email = 'alice.wong@fci.edu');
-
-INSERT INTO resources (name, category, description, total_quantity, available_quantity, unit, status, managed_by)
-SELECT 
-  'PA Sound System',
-  'audio_visual',
-  'Complete sound system with speakers and mixer',
-  4,
-  4,
-  'sets',
-  'active',
-  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1)
-WHERE EXISTS (SELECT 1 FROM users WHERE email = 'admin@university.edu');
-
-INSERT INTO resources (name, category, description, total_quantity, available_quantity, unit, status, managed_by, notes)
-SELECT 
-  'Catering Package (Snacks)',
-  'catering',
-  'Light refreshments package for events',
-  20,
-  20,
-  'packages',
-  'active',
-  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1),
-  'Requires 48 hours advance notice'
-WHERE EXISTS (SELECT 1 FROM users WHERE email = 'admin@university.edu');
-
-INSERT INTO resources (name, category, description, total_quantity, available_quantity, unit, status, managed_by)
-SELECT 
-  'Whiteboard (Mobile)',
-  'furniture',
-  'Large mobile whiteboard with markers',
-  15,
-  15,
-  'units',
-  'active',
-  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1)
-WHERE EXISTS (SELECT 1 FROM users WHERE email = 'admin@university.edu');
-
-INSERT INTO resources (name, category, description, total_quantity, available_quantity, unit, status, managed_by)
-SELECT 
-  'Portable LED Screen',
-  'audio_visual',
-  'Large LED display screen for outdoor events',
-  2,
-  2,
-  'units',
-  'active',
-  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1)
-WHERE EXISTS (SELECT 1 FROM users WHERE email = 'admin@university.edu');
-
-INSERT INTO resources (name, category, description, total_quantity, available_quantity, unit, status, managed_by, notes)
-SELECT 
-  'Video Camera Kit',
-  'audio_visual',
-  'Professional video camera with tripod',
-  3,
-  3,
-  'kits',
-  'active',
-  (SELECT id FROM users WHERE email = 'james.lee@fac.edu' LIMIT 1),
-  'FAC students only - requires training certification'
-WHERE EXISTS (SELECT 1 FROM users WHERE email = 'james.lee@fac.edu');
-
--- ========================================
 -- Useful Functions
 -- ========================================
 
@@ -1374,12 +1212,6 @@ BEFORE UPDATE ON event_participation
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();
 
--- Trigger to auto-update updated_at on resources table
-CREATE TRIGGER update_resources_updated_at
-BEFORE UPDATE ON resources
-FOR EACH ROW
-EXECUTE FUNCTION update_updated_at_column();
-
 -- Trigger to auto-update updated_at on resource_requests table
 CREATE TRIGGER update_resource_requests_updated_at
 BEFORE UPDATE ON resource_requests
@@ -1409,7 +1241,6 @@ COMMENT ON TABLE events IS 'Stores campus events information';
 COMMENT ON TABLE venue_bookings IS 'Stores venue booking requests for events';
 COMMENT ON TABLE event_invitations IS 'Stores user invitations for invite-only events';
 COMMENT ON TABLE event_participation IS 'Stores user participation/registration for events';
-COMMENT ON TABLE resources IS 'Stores available campus resources (equipment, furniture, etc.)';
 COMMENT ON TABLE resource_requests IS 'Stores resource requests for events';
 
 COMMENT ON COLUMN users.role IS 'User role: student (can create events), event_organizer (can create events with custom visibility), administrator (admin functions only, cannot create events), faculty_manager (can create events and manage venues)';
@@ -1426,10 +1257,6 @@ COMMENT ON COLUMN events.visibility IS 'Event visibility: campuswide (all users)
 COMMENT ON COLUMN events.event_type IS 'Event type: seminar, workshop, sports, cultural, career, orientation, networking, general, or custom value when Other is selected';
 COMMENT ON COLUMN events.status IS 'Event status: upcoming (before start), ongoing (currently happening, can still register), completed (finished), cancelled';
 COMMENT ON COLUMN venue_bookings.status IS 'Booking status: pending, approved, rejected, cancelled';
-COMMENT ON COLUMN resources.category IS 'Resource category: audio_visual, furniture, it_equipment, catering, other';
-COMMENT ON COLUMN resources.total_quantity IS 'Total number of this resource available';
-COMMENT ON COLUMN resources.available_quantity IS 'Currently available quantity (updated as requests are approved/returned)';
-COMMENT ON COLUMN resources.status IS 'Resource status: active, inactive, maintenance';
 COMMENT ON COLUMN resource_requests.status IS 'Request status: pending, approved, rejected, cancelled';
 COMMENT ON COLUMN venue_bookings.setup_time IS 'Minutes needed before event for setup';
 COMMENT ON COLUMN venue_bookings.teardown_time IS 'Minutes needed after event for cleanup';
@@ -1502,10 +1329,44 @@ COMMENT ON COLUMN event_feedbacks.comments IS 'Required feedback comments';
 COMMENT ON COLUMN event_feedbacks.suggestions IS 'Optional suggestions for improvement';
 
 -- ========================================
+-- Table: system_settings
+-- Stores system-wide configuration settings
+-- ========================================
+CREATE TABLE system_settings (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  setting_key VARCHAR(100) UNIQUE NOT NULL,
+  setting_value TEXT NOT NULL,
+  description TEXT,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_by UUID REFERENCES users(id)
+);
+
+-- Create index for faster lookups
+CREATE INDEX idx_system_settings_key ON system_settings(setting_key);
+
+-- Trigger to auto-update updated_at on system_settings table
+CREATE TRIGGER update_system_settings_updated_at
+BEFORE UPDATE ON system_settings
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();
+
+-- Comments
+COMMENT ON TABLE system_settings IS 'System-wide configuration settings';
+COMMENT ON COLUMN system_settings.setting_key IS 'Unique key for the setting';
+COMMENT ON COLUMN system_settings.setting_value IS 'Value of the setting (stored as text)';
+COMMENT ON COLUMN system_settings.updated_by IS 'User who last updated this setting';
+
+-- Insert initial system settings
+INSERT INTO system_settings (setting_key, setting_value, description) VALUES
+  ('min_advance_booking_days', '3', 'Minimum number of days in advance required to book a venue'),
+  ('max_advance_booking_days', '30', 'Maximum number of days in advance a venue can be booked');
+
+-- ========================================
 -- Row Level Security for venue_availability_blocks and event_feedbacks
 -- ========================================
 ALTER TABLE venue_availability_blocks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE event_feedbacks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE system_settings ENABLE ROW LEVEL SECURITY;
 
 -- Backend can manage all venue_availability_blocks
 CREATE POLICY "Backend can read all venue_availability_blocks" ON venue_availability_blocks
@@ -1541,6 +1402,24 @@ CREATE POLICY "Backend can delete event_feedbacks" ON event_feedbacks
   FOR DELETE
   USING (true);
 
+-- Backend can manage all system_settings
+CREATE POLICY "Backend can read all system_settings" ON system_settings
+  FOR SELECT
+  USING (true);
+
+CREATE POLICY "Backend can insert system_settings" ON system_settings
+  FOR INSERT
+  WITH CHECK (true);
+
+CREATE POLICY "Backend can update system_settings" ON system_settings
+  FOR UPDATE
+  USING (true)
+  WITH CHECK (true);
+
+CREATE POLICY "Backend can delete system_settings" ON system_settings
+  FOR DELETE
+  USING (true);
+
 -- ========================================
 -- TEST DATA
 -- This section adds sample data for testing
@@ -1561,9 +1440,9 @@ VALUES (
   'campuswide',
   'workshop',
   'completed',
-  '2025-11-15 09:00:00+00',
-  '2025-11-15 17:00:00+00',
-  '2025-11-01 10:00:00+00'
+  '2025-11-15 09:00:00+08',
+  '2025-11-15 17:00:00+08',
+  '2025-11-01 10:00:00+08'
 );
 
 -- COMPLETED EVENT 2 (December 2025 - within 3 months)
@@ -1576,9 +1455,9 @@ VALUES (
   'facultyonly',
   'seminar',
   'completed',
-  '2025-12-10 14:00:00+00',
-  '2025-12-10 16:30:00+00',
-  '2025-11-20 08:00:00+00'
+  '2025-12-10 14:00:00+08',
+  '2025-12-10 16:30:00+08',
+  '2025-11-20 08:00:00+08'
 );
 
 -- COMPLETED EVENT 3 (Late December 2025 - 2 day event)
@@ -1591,9 +1470,9 @@ VALUES (
   'campuswide',
   'competition',
   'completed',
-  '2025-12-20 08:00:00+00',
-  '2025-12-22 08:00:00+00',
-  '2025-12-01 10:00:00+00'
+  '2025-12-20 08:00:00+08',
+  '2025-12-22 08:00:00+08',
+  '2025-12-01 10:00:00+08'
 );
 
 -- COMPLETED EVENT 4 (Early January 2026 - just completed)
@@ -1606,9 +1485,9 @@ VALUES (
   'campuswide',
   'seminar',
   'completed',
-  '2026-01-03 10:00:00+00',
-  '2026-01-03 12:00:00+00',
-  '2025-12-15 09:00:00+00'
+  '2026-01-03 10:00:00+08',
+  '2026-01-03 12:00:00+08',
+  '2025-12-15 09:00:00+08'
 );
 
 -- ONGOING EVENT (Currently happening)
@@ -1621,9 +1500,9 @@ VALUES (
   'facultyonly',
   'workshop',
   'ongoing',
-  '2026-01-06 09:00:00+00',
-  '2026-01-10 18:00:00+00',
-  '2025-12-20 11:00:00+00'
+  '2026-01-06 09:00:00+08',
+  '2026-01-10 18:00:00+08',
+  '2025-12-20 11:00:00+08'
 );
 
 -- UPCOMING EVENTS
@@ -1636,9 +1515,9 @@ VALUES (
   'campuswide',
   'workshop',
   'upcoming',
-  '2026-01-20 13:00:00+00',
-  '2026-01-20 17:00:00+00',
-  '2026-01-02 14:00:00+00'
+  '2026-01-20 13:00:00+08',
+  '2026-01-20 17:00:00+08',
+  '2026-01-02 14:00:00+08'
 );
 
 INSERT INTO events (id, organizer_id, event_name, description, visibility, event_type, status, start_datetime, end_datetime, created_at)
@@ -1650,9 +1529,9 @@ VALUES (
   'campuswide',
   'workshop',
   'upcoming',
-  '2026-02-05 09:00:00+00',
-  '2026-02-07 17:00:00+00',
-  '2026-01-05 10:00:00+00'
+  '2026-02-05 09:00:00+08',
+  '2026-02-07 17:00:00+08',
+  '2026-01-05 10:00:00+08'
 );
 
 -- ========================================
@@ -1672,13 +1551,13 @@ VALUES (
   'a1111111-1111-1111-1111-111111111111',
   (SELECT id FROM venues WHERE code = 'LT-FCI-01' LIMIT 1),
   (SELECT id FROM users WHERE role = 'event_organizer' LIMIT 1),
-  '2025-11-15 09:00:00+00',
-  '2025-11-15 17:00:00+00',
-  '2025-11-15 08:30:00+00',
-  '2025-11-15 17:30:00+00',
+  '2025-11-15 09:00:00+08',
+  '2025-11-15 17:00:00+08',
+  '2025-11-15 08:30:00+08',
+  '2025-11-15 17:30:00+08',
   'approved',
   (SELECT id FROM users WHERE role = 'faculty_manager' LIMIT 1),
-  '2025-11-05 14:00:00+00',
+  '2025-11-05 14:00:00+08',
   'Approved with extra setup/teardown time',
   50
 );
@@ -1696,13 +1575,13 @@ VALUES (
   'a2222222-2222-2222-2222-222222222222',
   (SELECT id FROM venues WHERE code = 'LT-FCI-01' LIMIT 1),
   (SELECT id FROM users WHERE role = 'event_organizer' LIMIT 1),
-  '2025-12-10 14:00:00+00',
-  '2025-12-10 16:30:00+00',
-  '2025-12-10 14:00:00+00',
-  '2025-12-10 16:30:00+00',
+  '2025-12-10 14:00:00+08',
+  '2025-12-10 16:30:00+08',
+  '2025-12-10 14:00:00+08',
+  '2025-12-10 16:30:00+08',
   'approved',
   (SELECT id FROM users WHERE role = 'faculty_manager' LIMIT 1),
-  '2025-11-25 09:00:00+00',
+  '2025-11-25 09:00:00+08',
   30
 );
 
@@ -1719,13 +1598,13 @@ VALUES (
   'a3333333-3333-3333-3333-333333333333',
   (SELECT id FROM venues WHERE code = 'LAB-CS-01' LIMIT 1),
   (SELECT id FROM users WHERE role = 'event_organizer' LIMIT 1),
-  '2025-12-20 08:00:00+00',
-  '2025-12-22 08:00:00+00',
-  '2025-12-20 08:00:00+00',
-  '2025-12-22 08:00:00+00',
+  '2025-12-20 08:00:00+08',
+  '2025-12-22 08:00:00+08',
+  '2025-12-20 08:00:00+08',
+  '2025-12-22 08:00:00+08',
   'approved',
   (SELECT id FROM users WHERE role = 'faculty_manager' LIMIT 1),
-  '2025-12-05 16:00:00+00',
+  '2025-12-05 16:00:00+08',
   'Approved for full 48-hour access',
   100
 );
@@ -1743,13 +1622,13 @@ VALUES (
   'a4444444-4444-4444-4444-444444444444',
   (SELECT id FROM venues WHERE code = 'LT-FCI-01' LIMIT 1),
   (SELECT id FROM users WHERE role = 'event_organizer' LIMIT 1),
-  '2026-01-03 10:00:00+00',
-  '2026-01-03 12:00:00+00',
-  '2026-01-03 10:00:00+00',
-  '2026-01-03 12:00:00+00',
+  '2026-01-03 10:00:00+08',
+  '2026-01-03 12:00:00+08',
+  '2026-01-03 10:00:00+08',
+  '2026-01-03 12:00:00+08',
   'approved',
   (SELECT id FROM users WHERE role = 'faculty_manager' LIMIT 1),
-  '2025-12-18 11:00:00+00',
+  '2025-12-18 11:00:00+08',
   40
 );
 
@@ -1766,13 +1645,13 @@ VALUES (
   'a5555555-5555-5555-5555-555555555555',
   (SELECT id FROM venues WHERE code LIKE '%LAB%' LIMIT 1),
   (SELECT id FROM users WHERE role = 'event_organizer' LIMIT 1),
-  '2026-01-06 09:00:00+00',
-  '2026-01-10 18:00:00+00',
-  '2026-01-06 09:00:00+00',
-  '2026-01-10 18:00:00+00',
+  '2026-01-06 09:00:00+08',
+  '2026-01-10 18:00:00+08',
+  '2026-01-06 09:00:00+08',
+  '2026-01-10 18:00:00+08',
   'approved',
   (SELECT id FROM users WHERE role = 'faculty_manager' LIMIT 1),
-  '2025-12-22 15:00:00+00',
+  '2025-12-22 15:00:00+08',
   25
 );
 
@@ -1789,13 +1668,13 @@ VALUES (
   'a6666666-6666-6666-6666-666666666666',
   (SELECT id FROM venues WHERE code LIKE '%CR%' LIMIT 1),
   (SELECT id FROM users WHERE role = 'event_organizer' LIMIT 1),
-  '2026-01-20 13:00:00+00',
-  '2026-01-20 17:00:00+00',
-  '2026-01-20 13:00:00+00',
-  '2026-01-20 17:00:00+00',
+  '2026-01-20 13:00:00+08',
+  '2026-01-20 17:00:00+08',
+  '2026-01-20 13:00:00+08',
+  '2026-01-20 17:00:00+08',
   'approved',
   (SELECT id FROM users WHERE role = 'faculty_manager' LIMIT 1),
-  '2026-01-04 10:00:00+00',
+  '2026-01-04 10:00:00+08',
   30
 );
 
@@ -1810,8 +1689,8 @@ VALUES (
   'a7777777-7777-7777-7777-777777777777',
   (SELECT id FROM venues ORDER BY capacity DESC LIMIT 1),
   (SELECT id FROM users WHERE role = 'event_organizer' LIMIT 1),
-  '2026-02-05 09:00:00+00',
-  '2026-02-07 17:00:00+00',
+  '2026-02-05 09:00:00+08',
+  '2026-02-07 17:00:00+08',
   'pending',
   60
 );
@@ -1832,8 +1711,8 @@ VALUES (
   'a1111111-1111-1111-1111-111111111111',
   (SELECT id FROM venues WHERE code = 'LT-FCI-01' LIMIT 1),
   (SELECT id FROM users WHERE role = 'event_organizer' LIMIT 1),
-  '2026-01-15 14:00:00+00',
-  '2026-01-15 16:00:00+00',
+  '2026-01-15 14:00:00+08',
+  '2026-01-15 16:00:00+08',
   30,
   15,
   'pending',
@@ -1853,8 +1732,8 @@ VALUES (
   'a2222222-2222-2222-2222-222222222222',
   (SELECT id FROM venues WHERE code = 'LAB-CS-01' LIMIT 1),
   (SELECT id FROM users WHERE email = 'emily.tan@student.edu' LIMIT 1),
-  '2026-01-20 09:00:00+00',
-  '2026-01-20 12:00:00+00',
+  '2026-01-20 09:00:00+08',
+  '2026-01-20 12:00:00+08',
   15,
   10,
   'pending',
@@ -1874,8 +1753,8 @@ VALUES (
   'a3333333-3333-3333-3333-333333333333',
   (SELECT id FROM venues WHERE code = 'LT-FCI-01' LIMIT 1),
   (SELECT id FROM users WHERE role = 'event_organizer' LIMIT 1),
-  '2026-01-12 13:00:00+00',
-  '2026-01-12 17:00:00+00',
+  '2026-01-12 13:00:00+08',
+  '2026-01-12 17:00:00+08',
   45,
   'pending',
   'Annual CS Department networking event - high priority',
@@ -1896,15 +1775,15 @@ VALUES (
   'a4444444-4444-4444-4444-444444444444',
   (SELECT id FROM venues WHERE code = 'LAB-CS-01' LIMIT 1),
   (SELECT id FROM users WHERE email = 'michael.kumar@student.edu' LIMIT 1),
-  '2026-01-18 10:00:00+00',
-  '2026-01-18 12:00:00+00',
-  '2026-01-18 10:00:00+00',
-  '2026-01-18 12:00:00+00',
+  '2026-01-18 10:00:00+08',
+  '2026-01-18 12:00:00+08',
+  '2026-01-18 10:00:00+08',
+  '2026-01-18 12:00:00+08',
   20,
   10,
   'approved',
   (SELECT id FROM users WHERE role = 'faculty_manager' AND faculty_id = (SELECT id FROM faculties WHERE code = 'FCI' LIMIT 1) LIMIT 1),
-  '2026-01-05 09:30:00+00',
+  '2026-01-05 09:30:00+08',
   'Approved. Please ensure lab safety protocols are followed.',
   'Coding competition for students',
   25
@@ -1923,12 +1802,12 @@ VALUES (
   'a5555555-5555-5555-5555-555555555555',
   (SELECT id FROM venues WHERE code = 'LT-FCI-01' LIMIT 1),
   (SELECT id FROM users WHERE email = 'lisa.chong@student.edu' LIMIT 1),
-  '2026-01-11 14:00:00+00',
-  '2026-01-11 16:00:00+00',
+  '2026-01-11 14:00:00+08',
+  '2026-01-11 16:00:00+08',
   15,
   'rejected',
   (SELECT id FROM users WHERE role = 'faculty_manager' AND faculty_id = (SELECT id FROM faculties WHERE code = 'FCI' LIMIT 1) LIMIT 1),
-  '2026-01-04 14:20:00+00',
+  '2026-01-04 14:20:00+08',
   'The requested time slot conflicts with a scheduled faculty meeting. Please choose an alternative time or venue.',
   'Study group session',
   20
@@ -1944,7 +1823,7 @@ SELECT
   'a1111111-1111-1111-1111-111111111111',
   id,
   'attended',
-  ('2025-11-10 ' || (10 + (random() * 13)::int) || ':' || (random() * 59)::int || ':00+00')::TIMESTAMP WITH TIME ZONE
+  ('2025-11-10 ' || (10 + (random() * 13)::int) || ':' || (random() * 59)::int || ':00+08')::TIMESTAMP WITH TIME ZONE
 FROM users 
 WHERE role IN ('student', 'event_organizer')
 LIMIT 15;
@@ -1955,7 +1834,7 @@ SELECT
   'a2222222-2222-2222-2222-222222222222',
   id,
   'attended',
-  ('2025-12-05 ' || (9 + (random() * 11)::int) || ':' || (random() * 59)::int || ':00+00')::TIMESTAMP WITH TIME ZONE
+  ('2025-12-05 ' || (9 + (random() * 11)::int) || ':' || (random() * 59)::int || ':00+08')::TIMESTAMP WITH TIME ZONE
 FROM users 
 WHERE role IN ('student', 'event_organizer')
 LIMIT 10;
@@ -1966,7 +1845,7 @@ SELECT
   'a3333333-3333-3333-3333-333333333333',
   id,
   'attended',
-  ('2025-12-15 ' || (10 + (random() * 9)::int) || ':' || (random() * 59)::int || ':00+00')::TIMESTAMP WITH TIME ZONE
+  ('2025-12-15 ' || (10 + (random() * 9)::int) || ':' || (random() * 59)::int || ':00+08')::TIMESTAMP WITH TIME ZONE
 FROM users 
 WHERE role IN ('student', 'event_organizer')
 LIMIT 25;
@@ -1977,7 +1856,7 @@ SELECT
   'a4444444-4444-4444-4444-444444444444',
   id,
   'attended',
-  ('2025-12-28 ' || (11 + (random() * 9)::int) || ':' || (random() * 59)::int || ':00+00')::TIMESTAMP WITH TIME ZONE
+  ('2025-12-28 ' || (11 + (random() * 9)::int) || ':' || (random() * 59)::int || ':00+08')::TIMESTAMP WITH TIME ZONE
 FROM users 
 WHERE role IN ('student', 'event_organizer')
 LIMIT 12;
@@ -1999,7 +1878,7 @@ VALUES (
   5, 4, 5, 5,
   'Excellent workshop! The venue was in perfect condition and the event was well-organized. Students were very engaged throughout the session.',
   'Consider providing more power outlets for students to charge their laptops.',
-  '2025-11-16 10:30:00+00'
+  '2025-11-16 10:30:00+08'
 );
 
 -- Feedback 2 for AI Seminar (different faculty manager)
@@ -2015,7 +1894,7 @@ VALUES (
   4, 5, 4, 4,
   'Great seminar with excellent speakers. The venue audio system worked perfectly. A few minor issues with temperature control but overall very good.',
   'Would recommend scheduling similar events in the afternoon - better attendance.',
-  '2025-12-11 09:00:00+00'
+  '2025-12-11 09:00:00+08'
 );
 
 -- Feedback 3 for Hackathon
@@ -2031,7 +1910,7 @@ VALUES (
   3, 4, 3, 4,
   'The 48-hour event was challenging to manage. Venue held up well but cleanliness became an issue by day 2. Organizers did a good job managing the large crowd.',
   'For future multi-day events, schedule cleaning breaks. Also need better waste management.',
-  '2025-12-23 14:00:00+00'
+  '2025-12-23 14:00:00+08'
 );
 
 -- Feedback 4 for Tech Talk (recent - within 24hr edit window)
@@ -2047,7 +1926,7 @@ VALUES (
   5, 5, 5, 5,
   'Perfect way to start the new year! Everything was excellent - venue was spotless, AV equipment worked flawlessly, and the event ran right on schedule.',
   'No suggestions - this was a model event!',
-  '2026-01-06 08:00:00+00'
+  '2026-01-06 08:00:00+08'
 );
 
 -- ========================================
@@ -2061,8 +1940,8 @@ INSERT INTO venue_availability_blocks (
 )
 VALUES (
   (SELECT id FROM venues WHERE code = 'LT-FCI-01' LIMIT 1),
-  '2026-01-25 00:00:00+00',
-  '2026-01-27 23:59:00+00',
+  '2026-01-25 00:00:00+08',
+  '2026-01-27 23:59:00+08',
   'Annual maintenance and equipment upgrade',
   (SELECT id FROM users WHERE role = 'faculty_manager' LIMIT 1)
 );
@@ -2117,8 +1996,8 @@ INSERT INTO venue_availability_blocks (
 )
 VALUES (
   (SELECT id FROM venues WHERE code = 'LAB-CS-01' LIMIT 1),
-  '2026-02-10 08:00:00+00',
-  '2026-02-12 18:00:00+00',
+  '2026-02-10 08:00:00+08',
+  '2026-02-12 18:00:00+08',
   'Faculty retreat and planning session',
   (SELECT id FROM users WHERE role = 'faculty_manager' LIMIT 1)
 );

@@ -127,6 +127,13 @@ function HomePage() {
         color: '#16a085'
       },
       {
+        title: 'System Configuration',
+        description: 'Configure system-wide booking rules',
+        icon: '⚙️',
+        path: '/admin/system-configuration',
+        color: '#95a5a6'
+      },
+      {
         title: 'Venue Availability',
         description: 'Manage venue availability',
         icon: '🔒',

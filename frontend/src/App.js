@@ -24,6 +24,7 @@ import CustomRegistrationFormPage from './pages/CustomRegistrationFormPage';
 import UserManagementPage from './pages/UserManagementPage';
 import FacultyVenueManagementPage from './pages/FacultyVenueManagementPage';
 import ResourceCataloguePage from './pages/ResourceCataloguePage';
+import SystemConfigurationPage from './pages/SystemConfigurationPage';
 
 function App() {
   return (
@@ -53,6 +54,7 @@ function App() {
         <Route path="/admin/users" element={<UserManagementPage />} />
         <Route path="/admin/faculties" element={<FacultyVenueManagementPage />} />
         <Route path="/admin/resources" element={<ResourceCataloguePage />} />
+        <Route path="/admin/system-configuration" element={<SystemConfigurationPage />} />
         <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>
     </Router>
