@@ -19,6 +19,8 @@ import FacultyBookingRequestsPage from './pages/FacultyBookingRequestsPage';
 import FacultyBookingRequestDetailPage from './pages/FacultyBookingRequestDetailPage';
 import VenueAvailabilityPage from './pages/VenueAvailabilityPage';
 import RecordAttendancePage from './pages/RecordAttendancePage';
+import CustomizeRegistrationFormPage from './pages/CustomizeRegistrationFormPage';
+import CustomRegistrationFormPage from './pages/CustomRegistrationFormPage';
 
 function App() {
   return (
@@ -31,6 +33,8 @@ function App() {
         <Route path="/events/:id/edit" element={<EditEventPage />} />
         <Route path="/my-events" element={<MyEventsPage />} />
         <Route path="/my-events/:eventId/attendance" element={<RecordAttendancePage />} />
+        <Route path="/my-events/:eventId/customize-form" element={<CustomizeRegistrationFormPage />} />
+        <Route path="/events/:eventId/register-form" element={<CustomRegistrationFormPage />} />
         <Route path="/my-venue-requests" element={<MyVenueRequestsPage />} />
         <Route path="/my-resource-requests" element={<MyResourceRequestsPage />} />
         <Route path="/create-event" element={<CreateEventPage />} />

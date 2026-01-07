@@ -289,6 +289,13 @@ function MyEventsPage() {
                         📋
                       </button>
                       <button 
+                        onClick={() => navigate(`/my-events/${event.id}/customize-form`)}
+                        className="action-button customize-form-button"
+                        title="Customize Registration Form"
+                      >
+                        📝
+                      </button>
+                      <button 
                         onClick={() => handleEditEvent(event.id)}
                         className="action-button edit-button"
                         title="Edit Event"

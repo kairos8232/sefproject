@@ -332,6 +332,14 @@
   cursor: not-allowed;
 }
 
+.my-events-container .customize-form-button {
+  background-color: #e3f2fd;
+}
+
+.my-events-container .customize-form-button:hover:not(:disabled) {
+  background-color: #bbdefb;
+}
+
 .my-events-container .edit-button {
   background-color: #fff3cd;
 }

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import eventService from '../services/eventService';
 import participationService from '../services/participationService';
+import registrationFieldService from '../services/registrationFieldService';
 import { formatDateTime } from '../utils/dateUtils';
 import './EventDetailsPage.css';
 
@@ -50,11 +51,23 @@ function EventDetailsPage() {
     try {
       setActionLoading(true);
       setActionMessage('');
-      await participationService.register(id);
-      setActionMessage('Successfully registered for event!');
-      // Reload participation status
-      const statusData = await participationService.getEventStatus(id);
-      setParticipationStatus(statusData);
+      const result = await participationService.register(id);
+      
+      // Check if there are custom registration fields
+      const fieldsData = await registrationFieldService.getPublicEventFields(id);
+      
+      if (fieldsData.fields && fieldsData.fields.length > 0) {
+        // Redirect to custom registration form
+        navigate(`/events/${id}/register-form`, {
+          state: { participationId: result.participation?.id }
+        });
+      } else {
+        // No custom fields, just show success message
+        setActionMessage('Successfully registered for event!');
+        // Reload participation status
+        const statusData = await participationService.getEventStatus(id);
+        setParticipationStatus(statusData);
+      }
     } catch (err) {
       setActionMessage(err);
     } finally {

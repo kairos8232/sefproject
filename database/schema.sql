@@ -10,10 +10,12 @@
 -- 6. venue_bookings - Venue booking requests
 -- 7. event_invitations - Event invitation management
 -- 8. event_participation - Event participation/registration tracking
--- 9. resources - Campus resources (equipment, furniture, etc.)
--- 10. resource_requests - Resource requests for events
--- 11. venue_availability_blocks - Venue blocked time slots
--- 12. event_feedbacks - Feedback from faculty staff on completed events
+-- 9. event_registration_fields - Custom registration form fields for events
+-- 10. event_registration_responses - Participant responses to custom fields
+-- 11. resources - Campus resources (equipment, furniture, etc.)
+-- 12. resource_requests - Resource requests for events
+-- 13. venue_availability_blocks - Venue blocked time slots
+-- 14. event_feedbacks - Feedback from faculty staff on completed events
 -- ========================================
 
 -- Enable UUID extension (if not already enabled)
@@ -26,6 +28,8 @@ DROP TABLE IF EXISTS event_feedbacks CASCADE;
 DROP TABLE IF EXISTS venue_availability_blocks CASCADE;
 DROP TABLE IF EXISTS resource_requests CASCADE;
 DROP TABLE IF EXISTS resources CASCADE;
+DROP TABLE IF EXISTS event_registration_responses CASCADE;
+DROP TABLE IF EXISTS event_registration_fields CASCADE;
 DROP TABLE IF EXISTS event_participation CASCADE;
 DROP TABLE IF EXISTS event_invitations CASCADE;
 DROP TABLE IF EXISTS venue_bookings CASCADE;
@@ -240,6 +244,47 @@ CREATE INDEX idx_event_participation_status ON event_participation(status);
 CREATE INDEX idx_event_participation_registered_at ON event_participation(registered_at);
 
 -- ========================================
+-- Table: event_registration_fields
+-- Stores custom registration form fields for events
+-- ========================================
+CREATE TABLE event_registration_fields (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+  field_type VARCHAR(50) NOT NULL, -- 'text', 'textarea', 'number', 'email', 'phone', 'dropdown', 'radio', 'checkbox', 'date'
+  label VARCHAR(255) NOT NULL,
+  help_text TEXT,
+  is_required BOOLEAN NOT NULL DEFAULT false,
+  options JSONB, -- For dropdown, radio, checkbox - array of option strings
+  validation_rules JSONB, -- e.g., {"min_length": 5, "max_length": 100, "min": 1, "max": 10}
+  order_index INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Indexes for faster queries
+CREATE INDEX idx_registration_fields_event_id ON event_registration_fields(event_id);
+CREATE INDEX idx_registration_fields_order ON event_registration_fields(event_id, order_index);
+
+-- ========================================
+-- Table: event_registration_responses
+-- Stores participant responses to custom registration fields
+-- ========================================
+CREATE TABLE event_registration_responses (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  participation_id UUID NOT NULL REFERENCES event_participation(id) ON DELETE CASCADE,
+  field_id UUID NOT NULL REFERENCES event_registration_fields(id) ON DELETE CASCADE,
+  response_value TEXT, -- For text, textarea, number, email, phone, date - stored as text
+  response_values JSONB, -- For checkbox (multiple selections) - array of strings
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(participation_id, field_id) -- One response per field per participation
+);
+
+-- Indexes for faster queries
+CREATE INDEX idx_registration_responses_participation_id ON event_registration_responses(participation_id);
+CREATE INDEX idx_registration_responses_field_id ON event_registration_responses(field_id);
+
+-- ========================================
 -- Table: resources
 -- Stores available campus resources (equipment, furniture, etc.)
 -- ========================================
@@ -309,6 +354,8 @@ ALTER TABLE events ENABLE ROW LEVEL SECURITY;
 ALTER TABLE venue_bookings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE event_invitations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE event_participation ENABLE ROW LEVEL SECURITY;
+ALTER TABLE event_registration_fields ENABLE ROW LEVEL SECURITY;
+ALTER TABLE event_registration_responses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE resources ENABLE ROW LEVEL SECURITY;
 ALTER TABLE resource_requests ENABLE ROW LEVEL SECURITY;
 
@@ -420,6 +467,40 @@ CREATE POLICY "Backend can update event_participation" ON event_participation
   USING (true);
 
 CREATE POLICY "Backend can delete event_participation" ON event_participation
+  FOR DELETE
+  USING (true);
+
+-- Backend can manage all event_registration_fields
+CREATE POLICY "Backend can read all event_registration_fields" ON event_registration_fields
+  FOR SELECT
+  USING (true);
+
+CREATE POLICY "Backend can insert event_registration_fields" ON event_registration_fields
+  FOR INSERT
+  WITH CHECK (true);
+
+CREATE POLICY "Backend can update event_registration_fields" ON event_registration_fields
+  FOR UPDATE
+  USING (true);
+
+CREATE POLICY "Backend can delete event_registration_fields" ON event_registration_fields
+  FOR DELETE
+  USING (true);
+
+-- Backend can manage all event_registration_responses
+CREATE POLICY "Backend can read all event_registration_responses" ON event_registration_responses
+  FOR SELECT
+  USING (true);
+
+CREATE POLICY "Backend can insert event_registration_responses" ON event_registration_responses
+  FOR INSERT
+  WITH CHECK (true);
+
+CREATE POLICY "Backend can update event_registration_responses" ON event_registration_responses
+  FOR UPDATE
+  USING (true);
+
+CREATE POLICY "Backend can delete event_registration_responses" ON event_registration_responses
   FOR DELETE
   USING (true);
 
@@ -1814,3 +1895,55 @@ VALUES (
   'Faculty retreat and planning session',
   (SELECT id FROM users WHERE role = 'faculty_manager' LIMIT 1)
 );
+-- ========================================
+-- Sample Custom Registration Fields for Testing
+-- ========================================
+
+-- Add custom fields to "Annual Sports Day" event
+INSERT INTO event_registration_fields (event_id, field_type, label, help_text, is_required, options, order_index)
+VALUES 
+  (
+    (SELECT id FROM events WHERE event_name = 'Annual Sports Day' LIMIT 1),
+    'dropdown',
+    'T-Shirt Size',
+    'Select your preferred T-shirt size for the event',
+    true,
+    '["XS", "S", "M", "L", "XL", "XXL"]'::jsonb,
+    0
+  ),
+  (
+    (SELECT id FROM events WHERE event_name = 'Annual Sports Day' LIMIT 1),
+    'checkbox',
+    'Sports Interested In',
+    'Select all sports you would like to participate in',
+    true,
+    '["Basketball", "Football", "Badminton", "Table Tennis", "Volleyball"]'::jsonb,
+    1
+  ),
+  (
+    (SELECT id FROM events WHERE event_name = 'Annual Sports Day' LIMIT 1),
+    'text',
+    'Emergency Contact Name',
+    'Full name of emergency contact person',
+    true,
+    null,
+    2
+  ),
+  (
+    (SELECT id FROM events WHERE event_name = 'Annual Sports Day' LIMIT 1),
+    'phone',
+    'Emergency Contact Number',
+    'Phone number of emergency contact person',
+    true,
+    null,
+    3
+  ),
+  (
+    (SELECT id FROM events WHERE event_name = 'Annual Sports Day' LIMIT 1),
+    'textarea',
+    'Medical Conditions',
+    'Please list any medical conditions we should be aware of (or write "None")',
+    false,
+    null,
+    4
+  );
