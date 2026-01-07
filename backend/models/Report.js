@@ -3,7 +3,6 @@ const supabase = require('../config/supabase');
 class Report {
   // Event Summary Report
   static async getEventSummary(filters = {}) {
-    console.log('Report.getEventSummary called with filters:', filters);
     const { startDate, endDate, facultyId, eventType } = filters;
     
     let query = supabase
@@ -33,17 +32,9 @@ class Report {
     // Filter by faculty_id client-side (events don't have faculty_id, need to check organizer's faculty)
     let filteredEvents = events;
     if (facultyId) {
-      console.log('Events before filtering:', events.map(e => ({
-        id: e.id,
-        name: e.event_name,
-        organizer: e.organizer,
-        organizer_faculty_id: e.organizer?.faculty_id
-      })));
       filteredEvents = events.filter(event => event.organizer?.faculty_id === facultyId);
-      console.log(`Filtered events by faculty ${facultyId}: ${filteredEvents.length}/${events.length}`);
     }
     
-    console.log('getEventSummary returning', filteredEvents?.length || 0, 'events');
     return filteredEvents || [];
   }
   

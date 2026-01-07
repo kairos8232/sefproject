@@ -54,71 +54,96 @@
   margin-bottom: 30px;
 }
 
-.filter-section h3 {
-  font-size: 1.3rem;
+.report-filter-section h3 {
+  font-size: 1.4rem;
   color: #667eea;
-  margin-bottom: 20px;
-  padding-bottom: 10px;
-  border-bottom: 2px solid #f0f0f0;
+  margin-bottom: 25px;
+  padding-bottom: 12px;
+  border-bottom: 3px solid #f0f0f0;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.report-filter-section h3::before {
+  content: '⚙️';
+  font-size: 1.5rem;
 }
 
 .filter-row {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 1rem;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  margin-bottom: 20px;
 }
 
 .filter-group {
-  flex: 1;
-  min-width: 200px;
   display: flex;
   flex-direction: column;
 }
 
 .filter-group label {
   font-weight: 600;
-  color: #555;
-  margin-bottom: 0.5rem;
-  font-size: 0.9rem;
+  color: #333;
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .filter-group select,
 .filter-group input {
-  padding: 0.7rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  padding: 12px 14px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
   font-size: 1rem;
-  transition: border-color 0.2s;
+  transition: all 0.2s;
+  background-color: #fafafa;
+}
+
+.filter-group select:hover,
+.filter-group input:hover {
+  border-color: #667eea;
+  background-color: white;
 }
 
 .filter-group select:focus,
 .filter-group input:focus {
   outline: none;
   border-color: #667eea;
+  background-color: white;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
 .filter-actions {
-  margin-top: 20px;
+  margin-top: 30px;
+  padding-top: 25px;
+  border-top: 2px solid #f0f0f0;
   display: flex;
+  justify-content: center;
   gap: 1rem;
 }
 
 .btn-generate-report {
-  padding: 12px 30px;
+  padding: 14px 40px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .btn-generate-report:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
 }
 
 .btn-generate-report:disabled {

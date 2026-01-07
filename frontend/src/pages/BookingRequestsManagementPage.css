@@ -12,7 +12,7 @@
   min-width: 0;
 }
 
-.page-header {
+.booking-mgmt-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -23,12 +23,12 @@
   color: white;
 }
 
-.page-header h1 {
+.booking-mgmt-header h1 {
   font-size: 28px;
   margin: 0 0 8px 0;
 }
 
-.page-header p {
+.booking-mgmt-header p {
   margin: 0;
   opacity: 0.9;
   font-size: 14px;

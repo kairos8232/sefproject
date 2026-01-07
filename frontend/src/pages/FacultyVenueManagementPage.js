@@ -71,9 +71,6 @@ const FacultyVenueManagementPage = () => {
 
   // Filter venues client-side when faculty selected
   useEffect(() => {
-    console.log('Filtering venues - selectedFacultyId:', selectedFacultyId);
-    console.log('All venues:', allVenues.length, allVenues);
-    
     if (selectedFacultyId) {
       const filtered = allVenues.filter(venue => 
         venue.faculty_id === selectedFacultyId &&
@@ -82,7 +79,6 @@ const FacultyVenueManagementPage = () => {
           venue.name.toLowerCase().includes(venueFilters.search.toLowerCase()) ||
           venue.code.toLowerCase().includes(venueFilters.search.toLowerCase()))
       );
-      console.log('Filtered venues for faculty', selectedFacultyId, ':', filtered.length, filtered);
       setVenues(filtered);
     } else {
       const filtered = allVenues.filter(venue => 
@@ -91,7 +87,6 @@ const FacultyVenueManagementPage = () => {
           venue.name.toLowerCase().includes(venueFilters.search.toLowerCase()) ||
           venue.code.toLowerCase().includes(venueFilters.search.toLowerCase()))
       );
-      console.log('Showing all venues (no faculty filter):', filtered.length);
       setVenues(filtered);
     }
   }, [selectedFacultyId, allVenues, venueFilters]);
@@ -122,9 +117,6 @@ const FacultyVenueManagementPage = () => {
       
       const facultiesData = facultiesResponse.faculties || [];
       const venuesData = venuesResponse.venues || [];
-      
-      console.log('Loaded faculties:', facultiesData.length, facultiesData);
-      console.log('Loaded venues:', venuesData.length, venuesData);
       
       setAllFaculties(facultiesData);
       setAllVenues(venuesData);

@@ -123,11 +123,9 @@ const SystemConfigurationPage = () => {
           <h1>⚙️ System Configuration</h1>
           <p>Configure system-wide booking rules and settings</p>
         </div>
-        <div className="header-actions">
-          <button className="back-button" onClick={() => navigate('/home')}>
-            Back to Home
-          </button>
-        </div>
+        <button className="back-button" onClick={() => navigate('/home')}>
+          Back to Home
+        </button>
       </div>
 
       {error && <div className="error-message">{error}</div>}

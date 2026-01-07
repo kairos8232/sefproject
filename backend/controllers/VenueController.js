@@ -19,7 +19,7 @@ class VenueController {
       };
 
       const venues = await Venue.getAll(filters);
-      res.json(venues);
+      res.json({ success: true, venues });
     } catch (error) {
       console.error('Error getting all venues:', error);
       res.status(500).json({ message: 'Failed to get venues' });

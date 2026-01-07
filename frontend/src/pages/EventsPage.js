@@ -71,7 +71,7 @@ function EventsPage() {
     <div className="events-container">
       <div className="events-header">
         <div>
-          <h1>Browse Events</h1>
+          <h1>🎯 Browse Events</h1>
           <p>Explore all campus events and activities</p>
         </div>
         <button onClick={handleBackToHome} className="back-button">

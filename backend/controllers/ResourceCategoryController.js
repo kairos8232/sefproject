@@ -25,7 +25,7 @@ class ResourceCategoryController {
         })
       );
 
-      res.status(200).json(categoriesWithCounts);
+      res.status(200).json({ success: true, categories: categoriesWithCounts });
     } catch (error) {
       console.error('Error getting resource categories:', error);
       res.status(500).json({ error: 'Failed to fetch resource categories' });

@@ -41,17 +41,12 @@ function ReportsAnalyticsPage() {
   const loadFaculties = async () => {
     try {
       const token = localStorage.getItem('token');
-      console.log('Loading faculties...');
       const response = await fetch('http://localhost:5001/api/faculties', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
-      console.log('Faculties response:', data);
       if (data.success) {
         setFaculties(data.faculties || []);
-        console.log('Faculties loaded:', data.faculties?.length);
-      } else {
-        console.error('Failed to load faculties:', data);
       }
     } catch (err) {
       console.error('Error loading faculties:', err);
@@ -61,17 +56,12 @@ function ReportsAnalyticsPage() {
   const loadVenues = async () => {
     try {
       const token = localStorage.getItem('token');
-      console.log('Loading venues...');
       const response = await fetch('http://localhost:5001/api/venues', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
-      console.log('Venues response:', data);
       if (data.success) {
         setVenues(data.venues || []);
-        console.log('Venues loaded:', data.venues?.length);
-      } else {
-        console.error('Failed to load venues:', data);
       }
     } catch (err) {
       console.error('Error loading venues:', err);
@@ -81,17 +71,12 @@ function ReportsAnalyticsPage() {
   const loadResourceTypes = async () => {
     try {
       const token = localStorage.getItem('token');
-      console.log('Loading resource types...');
       const response = await fetch('http://localhost:5001/api/resource-types', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
-      console.log('Resource types response:', data);
       if (data.success) {
         setResourceTypes(data.resourceTypes || []);
-        console.log('Resource types loaded:', data.resourceTypes?.length);
-      } else {
-        console.error('Failed to load resource types:', data);
       }
     } catch (err) {
       console.error('Error loading resource types:', err);
@@ -142,17 +127,11 @@ function ReportsAnalyticsPage() {
   };
   
   const generateReport = async () => {
-    console.log('=== GENERATING REPORT ===');
-    console.log('Report Type:', reportType);
-    console.log('Chart Type:', chartType);
-    console.log('Date Range:', dateRange);
-    
     setLoading(true);
     setError('');
     
     try {
       const dateValues = getDateRangeValues();
-      console.log('Date Values:', dateValues);
       if (!dateValues) {
         setError('Please select a valid date range');
         setLoading(false);
@@ -192,15 +171,12 @@ function ReportsAnalyticsPage() {
       }
       
       const apiUrl = `http://localhost:5001/api/reports/${endpoint}?${params.toString()}`;
-      console.log('API Request URL:', apiUrl);
-      console.log('Filters:', { selectedFaculty, selectedVenue, selectedEventType, selectedResourceType });
       
       const response = await fetch(apiUrl, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
       const data = await response.json();
-      console.log('API Response:', data);
       
       if (!response.ok) {
         throw new Error(data.error || 'Failed to generate report');
@@ -208,7 +184,6 @@ function ReportsAnalyticsPage() {
       
       setReportData(data);
       processReportData(data);
-      console.log('Report data processed successfully');
       
     } catch (err) {
       console.error('Error generating report:', err);
@@ -219,11 +194,8 @@ function ReportsAnalyticsPage() {
   };
   
   const processReportData = (data) => {
-    console.log('Processing report data for type:', reportType);
-    console.log('Current state - faculties:', faculties.length, 'venues:', venues.length, 'resourceTypes:', resourceTypes.length);
     switch (reportType) {
       case 'event-summary':
-        console.log('Events data:', data.events);
         processEventSummary(data.events || [], faculties);
         break;
       case 'venue-utilization':
@@ -244,9 +216,6 @@ function ReportsAnalyticsPage() {
   };
   
   const processEventSummary = (events, facultiesData) => {
-    console.log('Processing Event Summary with', events.length, 'events');
-    console.log('Available faculties:', facultiesData.length, facultiesData);
-    console.log('First event structure:', events[0]);
     // Summary stats
     const totalEvents = events.length;
     const eventsByType = {};
@@ -290,15 +259,10 @@ function ReportsAnalyticsPage() {
       }));
     }
     
-    console.log('Event Summary - Chart Data:', chartData);
-    console.log('Event Summary - Summary Stats:', summaryStats);
     setChartData(chartData);
   };
   
   const processVenueUtilization = (data, venuesData) => {
-    console.log('Processing Venue Utilization');
-    console.log('Bookings:', data.bookings?.length, 'Blocks:', data.blocks?.length);
-    console.log('Available venues:', venuesData.length);
     const bookings = data.bookings || [];
     const blocks = data.blocks || [];
     
@@ -348,13 +312,10 @@ function ReportsAnalyticsPage() {
       hours: Math.round(stats.hours * 10) / 10
     }));
     
-    console.log('Venue Utilization - Chart Data:', chartData);
-    console.log('Venue Utilization - Summary Stats:', stats);
     setChartData(chartData);
   };
   
   const processBookingStatistics = (bookings) => {
-    console.log('Processing Booking Statistics with', bookings.length, 'bookings');
     const total = bookings.length;
     const approved = bookings.filter(b => b.status === 'approved').length;
     const pending = bookings.filter(b => b.status === 'pending').length;
@@ -394,14 +355,10 @@ function ReportsAnalyticsPage() {
       { name: 'Cancelled', value: cancelled }
     ].filter(item => item.value > 0);
     
-    console.log('Booking Statistics - Chart Data:', chartData);
-    console.log('Booking Statistics - Summary Stats:', summaryStats);
     setChartData(chartData);
   };
   
   const processResourceUsage = (requests, resourceTypesData) => {
-    console.log('Processing Resource Usage with', requests.length, 'requests');
-    console.log('Available resource types:', resourceTypesData.length);
     const total = requests.length;
     const approved = requests.filter(r => r.status === 'approved').length;
     const pending = requests.filter(r => r.status === 'pending').length;
@@ -446,13 +403,10 @@ function ReportsAnalyticsPage() {
       }));
     }
     
-    console.log('Resource Usage - Chart Data:', chartData);
-    console.log('Resource Usage - Summary Stats:', summaryStats);
     setChartData(chartData);
   };
   
   const processParticipationTrends = (participations) => {
-    console.log('Processing Participation Trends with', participations.length, 'participations');
     const total = participations.length;
     const attended = participations.filter(p => p.attendance_status === 'present').length;
     const registered = participations.filter(p => p.registration_status === 'registered').length;
@@ -503,8 +457,6 @@ function ReportsAnalyticsPage() {
         }));
     }
     
-    console.log('Participation Trends - Chart Data:', chartData);
-    console.log('Participation Trends - Summary Stats:', summaryStats);
     setChartData(chartData);
   };
   
@@ -605,7 +557,7 @@ function ReportsAnalyticsPage() {
     <div className="reports-analytics-page">
       <div className="reports-header">
         <div>
-          <h1>Reports & Analytics</h1>
+          <h1>📊 Reports & Analytics</h1>
           <p>Generate comprehensive reports on events, venues, bookings, and resources</p>
         </div>
         <button onClick={() => navigate('/home')} className="back-button">
@@ -614,7 +566,7 @@ function ReportsAnalyticsPage() {
       </div>
       
       <div className="report-filters">
-        <div className="filter-section">
+        <div className="report-filter-section">
           <h3>Report Configuration</h3>
           
           <div className="filter-row">

@@ -107,10 +107,13 @@ const ResourceCataloguePage = () => {
       }
 
       // Load all categories and types for client-side filtering
-      const [categoriesData, typesData] = await Promise.all([
+      const [categoriesResponse, typesResponse] = await Promise.all([
         resourceCategoryService.getAllCategories({}),
         resourceTypeService.getAllTypes({})
       ]);
+
+      const categoriesData = categoriesResponse.categories || [];
+      const typesData = typesResponse.resourceTypes || [];
 
       setAllCategories(categoriesData);
       setAllTypes(typesData);

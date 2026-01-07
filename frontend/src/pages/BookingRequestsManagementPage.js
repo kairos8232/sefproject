@@ -267,7 +267,7 @@ const BookingRequestsManagementPage = () => {
 
   return (
     <div className="booking-mgmt-container">
-      <div className="page-header">
+      <div className="booking-mgmt-header">
         <div>
           <h1>📋 Booking & Requests Management</h1>
           <p>Review and override venue bookings and resource requests</p>
