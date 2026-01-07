@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import eventService from '../services/eventService';
 import authService from '../services/authService';
 import { toDateTimeLocalInput, fromDateTimeLocalInput } from '../utils/dateUtils';
-import './CreateEventPage.css'; // Reuse CreateEventPage styles
+import './EditEventPage.css';
 
 const eventTypes = [
   { value: 'seminar', label: 'Seminar' },
@@ -185,8 +185,8 @@ function EditEventPage() {
   }
 
   return (
-    <div className="create-event-container">
-      <div className="create-event-header">
+    <div className="edit-event-container">
+      <div className="edit-event-header">
         <div>
           <h1>Edit Event</h1>
           <p>Update event details</p>
@@ -196,13 +196,13 @@ function EditEventPage() {
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="event-form">
-        <div className="form-section">
+      <form onSubmit={handleSubmit} className="ee-event-form">
+        <div className="ee-form-section">
           <h2>Basic Information</h2>
           
-          <div className="form-group">
+          <div className="ee-form-group">
             <label htmlFor="event_name">
-              Event Name <span className="required">*</span>
+              Event Name <span className="ee-required">*</span>
             </label>
             <input
               type="text"
@@ -210,22 +210,22 @@ function EditEventPage() {
               name="event_name"
               value={formData.event_name}
               onChange={handleChange}
-              className={errors.event_name ? 'error' : ''}
+              className={errors.event_name ? 'ee-error' : ''}
               placeholder="Enter event name"
             />
-            {errors.event_name && <span className="error-message">{errors.event_name}</span>}
+            {errors.event_name && <span className="ee-error-message">{errors.event_name}</span>}
           </div>
 
-          <div className="form-group">
+          <div className="ee-form-group">
             <label htmlFor="event_type">
-              Event Type <span className="required">*</span>
+              Event Type <span className="ee-required">*</span>
             </label>
             <select
               id="event_type"
               name="event_type"
               value={formData.event_type}
               onChange={handleChange}
-              className={errors.event_type ? 'error' : ''}
+              className={errors.event_type ? 'ee-error' : ''}
             >
               {eventTypes.map(type => (
                 <option key={type.value} value={type.value}>
@@ -233,27 +233,27 @@ function EditEventPage() {
                 </option>
               ))}
             </select>
-            {errors.event_type && <span className="error-message">{errors.event_type}</span>}
+            {errors.event_type && <span className="ee-error-message">{errors.event_type}</span>}
           </div>
 
           {formData.event_type === 'other' && (
-            <div className="form-group">
+            <div className="ee-form-group">
               <label htmlFor="custom_event_type">
-                Specify Event Type <span className="required">*</span>
+                Specify Event Type <span className="ee-required">*</span>
               </label>
               <input
                 type="text"
                 id="custom_event_type"
                 value={customEventType}
                 onChange={(e) => setCustomEventType(e.target.value)}
-                className={errors.custom_event_type ? 'error' : ''}
+                className={errors.custom_event_type ? 'ee-error' : ''}
                 placeholder="Enter custom event type"
               />
-              {errors.custom_event_type && <span className="error-message">{errors.custom_event_type}</span>}
+              {errors.custom_event_type && <span className="ee-error-message">{errors.custom_event_type}</span>}
             </div>
           )}
 
-          <div className="form-group">
+          <div className="ee-form-group">
             <label htmlFor="description">Description</label>
             <textarea
               id="description"
@@ -266,13 +266,13 @@ function EditEventPage() {
           </div>
         </div>
 
-        <div className="form-section">
+        <div className="ee-form-section">
           <h2>Date & Time</h2>
           
-          <div className="form-row">
-            <div className="form-group">
+          <div className="ee-form-row">
+            <div className="ee-form-group">
               <label htmlFor="start_datetime">
-                Start Date & Time <span className="required">*</span>
+                Start Date & Time <span className="ee-required">*</span>
               </label>
               <input
                 type="datetime-local"
@@ -280,14 +280,14 @@ function EditEventPage() {
                 name="start_datetime"
                 value={formData.start_datetime}
                 onChange={handleChange}
-                className={errors.start_datetime ? 'error' : ''}
+                className={errors.start_datetime ? 'ee-error' : ''}
               />
-              {errors.start_datetime && <span className="error-message">{errors.start_datetime}</span>}
+              {errors.start_datetime && <span className="ee-error-message">{errors.start_datetime}</span>}
             </div>
 
-            <div className="form-group">
+            <div className="ee-form-group">
               <label htmlFor="end_datetime">
-                End Date & Time <span className="required">*</span>
+                End Date & Time <span className="ee-required">*</span>
               </label>
               <input
                 type="datetime-local"
@@ -295,20 +295,20 @@ function EditEventPage() {
                 name="end_datetime"
                 value={formData.end_datetime}
                 onChange={handleChange}
-                className={errors.end_datetime ? 'error' : ''}
+                className={errors.end_datetime ? 'ee-error' : ''}
               />
-              {errors.end_datetime && <span className="error-message">{errors.end_datetime}</span>}
+              {errors.end_datetime && <span className="ee-error-message">{errors.end_datetime}</span>}
             </div>
           </div>
         </div>
 
-        <div className="form-section">
+        <div className="ee-form-section">
           <h2>Visibility Settings</h2>
           
           {canChangeVisibility ? (
-            <div className="form-group">
+            <div className="ee-form-group">
               <label htmlFor="visibility">
-                Event Visibility <span className="required">*</span>
+                Event Visibility <span className="ee-required">*</span>
               </label>
               <select
                 id="visibility"
@@ -322,14 +322,14 @@ function EditEventPage() {
                   </option>
                 ))}
               </select>
-              <p className="field-help">
+              <span className="ee-helper-text">
                 Choose who can see and register for this event
-              </p>
+              </span>
             </div>
           ) : (
-            <div className="visibility-locked">
-              <div className="locked-info">
-                <span className="lock-icon">🔒</span>
+            <div className="ee-visibility-locked">
+              <div className="ee-locked-info">
+                <span className="ee-lock-icon">🔒</span>
                 <div>
                   <strong>Campus Wide</strong>
                   <p>Your events are visible to all logged-in users on campus.</p>
@@ -339,18 +339,18 @@ function EditEventPage() {
           )}
         </div>
 
-        <div className="form-actions">
+        <div className="ee-form-actions">
           <button
             type="button"
             onClick={handleCancel}
-            className="cancel-button"
+            className="ee-cancel-button"
             disabled={submitting}
           >
             Cancel
           </button>
           <button
             type="submit"
-            className="submit-button"
+            className="ee-submit-button"
             disabled={submitting}
           >
             {submitting ? 'Updating...' : 'Update Event'}

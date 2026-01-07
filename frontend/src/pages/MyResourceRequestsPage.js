@@ -91,7 +91,7 @@ function MyResourceRequestsPage() {
 
   return (
     <div className="my-resource-requests-page">
-      <div className="resource-requests-header">
+      <div className="mrr-header">
         <div>
           <h1>My Resource Requests</h1>
           <p>View and manage your resource requests</p>
@@ -182,7 +182,7 @@ function MyResourceRequestsPage() {
                         </div>
                       )}
                       {request.status === 'rejected' && request.rejection_reason && (
-                        <div className="rejection-reason">
+                        <div className="mrr-rejection-reason">
                           {request.rejection_reason}
                         </div>
                       )}
