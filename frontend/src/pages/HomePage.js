@@ -100,23 +100,23 @@ function HomePage() {
     const adminFeatures = [
       {
         title: 'Manage Users',
-        description: 'User administration',
+        description: 'Create and manage user accounts',
         icon: '👥',
         path: '/admin/users',
         color: '#e67e22'
       },
       {
-        title: 'All Events',
-        description: 'Manage all events',
+        title: 'Browse Events',
+        description: 'View all campus events',
         icon: '🗂️',
-        path: '/admin/events',
+        path: '/events',
         color: '#9b59b6'
       },
       {
-        title: 'Venue Bookings',
-        description: 'Review booking requests',
-        icon: '✅',
-        path: '/admin/bookings',
+        title: 'Venue Availability',
+        description: 'Manage venue availability',
+        icon: '🔒',
+        path: '/venue-availability',
         color: '#3498db'
       }
     ];

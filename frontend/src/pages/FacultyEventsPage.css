@@ -152,12 +152,12 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.events-table {
+.faculty-events-page .events-table {
   width: 100%;
   border-collapse: collapse;
 }
 
-.events-table th {
+.faculty-events-page .events-table th {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding: 15px;
   text-align: left;
@@ -167,13 +167,13 @@
   white-space: nowrap;
 }
 
-.events-table td {
+.faculty-events-page .events-table td {
   padding: 15px;
   border-bottom: 1px solid #eee;
   vertical-align: top;
 }
 
-.events-table tbody tr:hover {
+.faculty-events-page .events-table tbody tr:hover {
   background-color: #f9f9f9;
 }
 

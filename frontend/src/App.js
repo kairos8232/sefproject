@@ -21,6 +21,7 @@ import VenueAvailabilityPage from './pages/VenueAvailabilityPage';
 import RecordAttendancePage from './pages/RecordAttendancePage';
 import CustomizeRegistrationFormPage from './pages/CustomizeRegistrationFormPage';
 import CustomRegistrationFormPage from './pages/CustomRegistrationFormPage';
+import UserManagementPage from './pages/UserManagementPage';
 
 function App() {
   return (
@@ -47,6 +48,7 @@ function App() {
         <Route path="/faculty/bookings" element={<FacultyBookingRequestsPage />} />
         <Route path="/faculty/bookings/:id" element={<FacultyBookingRequestDetailPage />} />
         <Route path="/venue-availability" element={<VenueAvailabilityPage />} />
+        <Route path="/admin/users" element={<UserManagementPage />} />
         <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>
     </Router>

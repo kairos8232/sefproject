@@ -1,0 +1,491 @@
+/* User Management Page Container */
+.user-management-container {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Header */
+.user-management-container .page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.user-management-container .page-header h1 {
+  margin: 0 0 5px 0;
+  font-size: 28px;
+}
+
+.user-management-container .page-header p {
+  margin: 0;
+  opacity: 0.9;
+}
+
+.user-management-container .header-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.user-management-container .back-button {
+  padding: 10px 20px;
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s;
+  white-space: nowrap;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-management-container .back-button:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.user-management-container .create-user-button {
+  padding: 10px 20px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s;
+  white-space: nowrap;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-management-container .create-user-button:hover {
+  background-color: #218838;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+/* Messages */
+.user-management-container .error-message {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  padding: 15px 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-management-container .success-message {
+  background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+  color: white;
+  padding: 15px 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.user-management-container .loading {
+  text-align: center;
+  padding: 60px 20px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  font-size: 18px;
+  color: #666;
+}
+
+/* Filters */
+.user-management-container .filters-section {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+  padding: 15px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  flex-wrap: wrap;
+}
+
+.user-management-container .search-input {
+  flex: 1;
+  min-width: 250px;
+  padding: 8px 12px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.user-management-container .search-input:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.user-management-container .filter-select {
+  padding: 8px 12px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  background-color: white;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.user-management-container .filter-select:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+/* Users Table */
+.user-management-container .users-table-container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow-x: auto;
+}
+
+.user-management-container .users-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.user-management-container .users-table thead {
+  background-color: #f8f9fa;
+}
+
+.user-management-container .users-table th {
+  padding: 15px;
+  text-align: left;
+  font-weight: 600;
+  color: #333;
+  border-bottom: 2px solid #dee2e6;
+  white-space: nowrap;
+}
+
+.user-management-container .users-table tbody tr {
+  border-bottom: 1px solid #dee2e6;
+  transition: background-color 0.2s ease;
+}
+
+.user-management-container .users-table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.user-management-container .users-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.user-management-container .users-table td {
+  padding: 15px;
+  vertical-align: middle;
+  color: #333;
+}
+
+.user-management-container .users-table .no-data {
+  text-align: center;
+  padding: 60px 20px;
+  color: #666;
+  font-size: 18px;
+}
+
+/* Badges */
+.user-management-container .role-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.85em;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.user-management-container .role-badge.admin {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.user-management-container .role-badge.organizer {
+  background-color: #e0e7ff;
+  color: #3730a3;
+}
+
+.user-management-container .role-badge.faculty {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.user-management-container .role-badge.student {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.user-management-container .status-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.85em;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.user-management-container .status-badge.active {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.user-management-container .status-badge.inactive {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+/* Action Buttons */
+.user-management-container .action-buttons {
+  display: flex;
+  gap: 5px;
+}
+
+.user-management-container .action-buttons button {
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.user-management-container .action-buttons button:hover:not(:disabled) {
+  transform: scale(1.1);
+}
+
+.user-management-container .action-buttons button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.user-management-container .btn-edit {
+  background-color: #fff3cd;
+}
+
+.user-management-container .btn-edit:hover:not(:disabled) {
+  background-color: #ffe69c;
+}
+
+.user-management-container .btn-password {
+  background-color: #e0f2f1;
+}
+
+.user-management-container .btn-password:hover:not(:disabled) {
+  background-color: #b2dfdb;
+}
+
+.user-management-container .btn-status.activate {
+  background-color: #d4edda;
+}
+
+.user-management-container .btn-status.activate:hover:not(:disabled) {
+  background-color: #c3e6cb;
+}
+
+.user-management-container .btn-status.deactivate {
+  background-color: #f8d7da;
+}
+
+.user-management-container .btn-status.deactivate:hover:not(:disabled) {
+  background-color: #f5c6cb;
+}
+
+/* Modal */
+.user-management-container .modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.user-management-container .modal {
+  background-color: white;
+  padding: 30px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.user-management-container .modal h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #667eea;
+  font-size: 24px;
+}
+
+.user-management-container .form-group {
+  margin-bottom: 20px;
+}
+
+.user-management-container .form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+}
+
+.user-management-container .form-group input,
+.user-management-container .form-group select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.user-management-container .form-group input:focus,
+.user-management-container .form-group select:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.user-management-container .form-hint {
+  display: block;
+  margin-top: 5px;
+  font-size: 13px;
+  color: #666;
+  font-style: italic;
+}
+
+.user-management-container .modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 30px;
+}
+
+.user-management-container .btn-cancel {
+  padding: 10px 20px;
+  background-color: #f8f9fa;
+  color: #666;
+  border: 2px solid #dee2e6;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.user-management-container .btn-cancel:hover {
+  background-color: #e9ecef;
+  border-color: #adb5bd;
+}
+
+.user-management-container .btn-submit {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.user-management-container .btn-submit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .user-management-container .page-header {
+    flex-direction: column;
+    gap: 20px;
+    text-align: left;
+  }
+
+  .user-management-container .header-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .user-management-container .back-button,
+  .user-management-container .create-user-button {
+    width: 100%;
+  }
+
+  .user-management-container .filters-section {
+    flex-direction: column;
+  }
+
+  .user-management-container .search-input {
+    min-width: 100%;
+  }
+
+  .user-management-container .users-table-container {
+    overflow-x: auto;
+  }
+
+  .user-management-container .users-table {
+    min-width: 800px;
+  }
+}

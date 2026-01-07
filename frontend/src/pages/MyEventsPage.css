@@ -181,16 +181,16 @@
 }
 
 /* Events Table */
-.events-table {
+.my-events-container .events-table {
   width: 100%;
   border-collapse: collapse;
 }
 
-.events-table thead {
+.my-events-container .events-table thead {
   background-color: #f8f9fa;
 }
 
-.events-table th {
+.my-events-container .events-table th {
   padding: 15px;
   text-align: left;
   font-weight: 600;
@@ -199,17 +199,17 @@
   white-space: nowrap;
 }
 
-.events-table td {
+.my-events-container .events-table td {
   padding: 15px;
   border-bottom: 1px solid #dee2e6;
   vertical-align: top;
 }
 
-.events-table tbody tr {
+.my-events-container .events-table tbody tr {
   transition: background-color 0.2s;
 }
 
-.events-table tbody tr:hover {
+.my-events-container .events-table tbody tr:hover {
   background-color: #f8f9fa;
 }
 
