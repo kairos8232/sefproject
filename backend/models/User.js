@@ -142,7 +142,7 @@ class User {
         .from('event_participation')
         .select(`
           id,
-          event:events(id, status, event_end_datetime)
+          event:events(id, status, end_datetime)
         `)
         .eq('user_id', userId)
         .eq('status', 'registered');
@@ -161,7 +161,7 @@ class User {
         }
         
         // Also check if event end date is in the future
-        const eventEnd = new Date(event.event_end_datetime);
+        const eventEnd = new Date(event.end_datetime);
         return eventEnd > new Date();
       });
 

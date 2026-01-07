@@ -44,6 +44,7 @@ function UserManagementPage() {
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters]);
 
   const loadData = async () => {
@@ -413,30 +414,13 @@ function UserManagementPage() {
 
               {(formData.role === 'student' || formData.role === 'faculty_manager') && (
                 <div className="form-group">
-                  <label>Faculty * (required for students and faculty managers)</label>
+                  <label>Faculty</label>
                   <select
                     value={formData.faculty_id}
                     onChange={(e) => setFormData({ ...formData, faculty_id: e.target.value })}
                     required
                   >
                     <option value="">Select Faculty</option>
-                    {faculties.map(faculty => (
-                      <option key={faculty.id} value={faculty.id}>
-                        {faculty.name} ({faculty.code})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {(formData.role === 'event_organizer' || formData.role === 'administrator') && (
-                <div className="form-group">
-                  <label>Faculty (optional)</label>
-                  <select
-                    value={formData.faculty_id}
-                    onChange={(e) => setFormData({ ...formData, faculty_id: e.target.value })}
-                  >
-                    <option value="">None</option>
                     {faculties.map(faculty => (
                       <option key={faculty.id} value={faculty.id}>
                         {faculty.name} ({faculty.code})
