@@ -17,7 +17,7 @@ class FacultyController {
       };
 
       const faculties = await Faculty.getAll(filters);
-      res.json(faculties);
+      res.json({ success: true, faculties });
     } catch (error) {
       console.error('Error getting all faculties:', error);
       res.status(500).json({ message: 'Failed to get faculties' });

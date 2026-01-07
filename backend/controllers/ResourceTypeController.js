@@ -16,7 +16,7 @@ class ResourceTypeController {
 
       const types = await ResourceType.getAll(filters);
 
-      res.status(200).json(types);
+      res.status(200).json({ success: true, resourceTypes: types });
     } catch (error) {
       console.error('Error getting resource types:', error);
       res.status(500).json({ error: 'Failed to fetch resource types' });

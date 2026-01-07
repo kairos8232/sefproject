@@ -15,6 +15,7 @@ const facultyRoutes = require('./routes/facultyRoutes');
 const resourceCategoryRoutes = require('./routes/resourceCategoryRoutes');
 const resourceTypeRoutes = require('./routes/resourceTypeRoutes');
 const systemSettingRoutes = require('./routes/systemSettingRoutes');
+const reportRoutes = require('./routes/reportRoutes');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -47,6 +48,7 @@ app.use('/api/faculties', facultyRoutes);
 app.use('/api/resource-categories', resourceCategoryRoutes);
 app.use('/api/resource-types', resourceTypeRoutes);
 app.use('/api/system-settings', systemSettingRoutes);
+app.use('/api/reports', reportRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

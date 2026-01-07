@@ -139,6 +139,13 @@ function HomePage() {
         icon: '📋',
         path: '/admin/booking-requests',
         color: '#e74c3c'
+      },
+      {
+        title: 'Reports & Analytics',
+        description: 'Generate comprehensive reports on events, venues, and resources',
+        icon: '📊',
+        path: '/admin/reports',
+        color: '#9b59b6'
       }
     ];
 

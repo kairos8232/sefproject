@@ -26,6 +26,7 @@ import FacultyVenueManagementPage from './pages/FacultyVenueManagementPage';
 import ResourceCataloguePage from './pages/ResourceCataloguePage';
 import SystemConfigurationPage from './pages/SystemConfigurationPage';
 import BookingRequestsManagementPage from './pages/BookingRequestsManagementPage';
+import ReportsAnalyticsPage from './pages/ReportsAnalyticsPage';
 
 function App() {
   return (
@@ -57,6 +58,7 @@ function App() {
         <Route path="/admin/resources" element={<ResourceCataloguePage />} />
         <Route path="/admin/system-configuration" element={<SystemConfigurationPage />} />
         <Route path="/admin/booking-requests" element={<BookingRequestsManagementPage />} />
+        <Route path="/admin/reports" element={<ReportsAnalyticsPage />} />
         <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>
     </Router>
