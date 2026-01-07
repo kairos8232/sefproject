@@ -28,7 +28,7 @@
   font-size: 14px;
 }
 
-.back-button {
+.ce-back-button {
   padding: 10px 20px;
   background-color: rgba(255, 255, 255, 0.2);
   color: white;
@@ -41,7 +41,7 @@
   white-space: nowrap;
 }
 
-.back-button:hover {
+.ce-back-button:hover {
   background-color: rgba(255, 255, 255, 0.3);
 }
 
@@ -53,28 +53,28 @@
   padding: 30px;
 }
 
-.form-section {
+.ce-form-section {
   margin-bottom: 35px;
   padding-bottom: 35px;
   border-bottom: 1px solid #e0e0e0;
 }
 
-.form-section:last-of-type {
+.ce-form-section:last-of-type {
   border-bottom: none;
 }
 
-.form-section h2 {
+.ce-form-section h2 {
   margin: 0 0 20px 0;
   font-size: 20px;
   color: #333;
 }
 
 /* Form Groups */
-.form-group {
+.ce-form-group {
   margin-bottom: 20px;
 }
 
-.form-group label {
+.ce-form-group label {
   display: block;
   margin-bottom: 8px;
   font-weight: 600;
@@ -82,15 +82,15 @@
   font-size: 14px;
 }
 
-.required {
+.ce-required {
   color: #dc3545;
   margin-left: 3px;
 }
 
-.form-group input[type="text"],
-.form-group input[type="datetime-local"],
-.form-group select,
-.form-group textarea {
+.ce-form-group input[type="text"],
+.ce-form-group input[type="datetime-local"],
+.ce-form-group select,
+.ce-form-group textarea {
   width: 100%;
   padding: 12px;
   border: 2px solid #ddd;
@@ -101,41 +101,41 @@
   box-sizing: border-box;
 }
 
-.form-group input[type="text"]:focus,
-.form-group input[type="datetime-local"]:focus,
-.form-group select:focus,
-.form-group textarea:focus {
+.ce-form-group input[type="text"]:focus,
+.ce-form-group input[type="datetime-local"]:focus,
+.ce-form-group select:focus,
+.ce-form-group textarea:focus {
   outline: none;
   border-color: #667eea;
 }
 
-.form-group input.error,
-.form-group select.error,
-.form-group textarea.error {
+.ce-form-group input.error,
+.ce-form-group select.error,
+.ce-form-group textarea.error {
   border-color: #dc3545;
 }
 
-.form-group textarea {
+.ce-form-group textarea {
   resize: vertical;
   min-height: 100px;
 }
 
 /* Form Row (for side-by-side fields) */
-.form-row {
+.ce-form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;
 }
 
 /* Helper Text */
-.helper-text {
+.ce-helper-text {
   display: block;
   margin-top: 6px;
   font-size: 12px;
   color: #666;
 }
 
-.error-message {
+.ce-error-message {
   display: block;
   margin-top: 6px;
   font-size: 12px;
@@ -144,7 +144,7 @@
 }
 
 /* Form Actions */
-.form-actions {
+.ce-form-actions {
   display: flex;
   gap: 15px;
   justify-content: flex-end;
@@ -154,8 +154,8 @@
   border-top: 1px solid #e0e0e0;
 }
 
-.cancel-button,
-.submit-button {
+.ce-cancel-button,
+.ce-submit-button {
   padding: 12px 30px;
   border: none;
   border-radius: 8px;
@@ -169,61 +169,61 @@
   display: inline-block;
 }
 
-.cancel-button {
+.ce-cancel-button {
   background-color: #f5f5f5;
   color: #333;
 }
 
-.cancel-button:hover {
+.ce-cancel-button:hover {
   background-color: #e0e0e0;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.submit-button {
+.ce-submit-button {
   background-color: #28a745;
   color: white;
 }
 
-.submit-button:hover {
+.ce-submit-button:hover {
   background-color: #218838;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
 }
 
-.cancel-button:disabled,
-.submit-button:disabled {
+.ce-cancel-button:disabled,
+.ce-submit-button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
 }
 
 /* Visibility Locked */
-.visibility-locked {
+.ce-visibility-locked {
   background-color: #f8f9fa;
   border: 2px dashed #dee2e6;
   border-radius: 8px;
   padding: 20px;
 }
 
-.locked-info {
+.ce-locked-info {
   display: flex;
   align-items: center;
   gap: 15px;
 }
 
-.lock-icon {
+.ce-lock-icon {
   font-size: 32px;
 }
 
-.locked-info strong {
+.ce-locked-info strong {
   display: block;
   font-size: 16px;
   color: #333;
   margin-bottom: 5px;
 }
 
-.locked-info p {
+.ce-locked-info p {
   margin: 0;
   font-size: 14px;
   color: #666;
@@ -237,11 +237,11 @@
     text-align: center;
   }
 
-  .back-button {
+  .ce-back-button {
     width: 100%;
   }
 
-  .form-row {
+  .ce-form-row {
     grid-template-columns: 1fr;
   }
 
@@ -249,12 +249,12 @@
     padding: 20px;
   }
 
-  .form-actions {
+  .ce-form-actions {
     flex-direction: column;
   }
 
-  .cancel-button,
-  .submit-button {
+  .ce-cancel-button,
+  .ce-submit-button {
     width: 100%;
   }
 }

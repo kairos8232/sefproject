@@ -167,22 +167,22 @@ function MyEventsPage() {
           <p>Manage events you've created</p>
         </div>
         <div className="header-actions">
-          <button onClick={handleCreateEvent} className="create-button">
+          <button onClick={handleCreateEvent} className="me-create-button">
             ➕ Create New Event
           </button>
-          <button onClick={() => navigate('/home')} className="back-button">
+          <button onClick={() => navigate('/home')} className="me-back-button">
             Back to Home
           </button>
         </div>
       </div>
 
       {successMessage && (
-        <div className="success-notification">
+        <div className="me-success-notification">
           ✅ {successMessage}
         </div>
       )}
 
-      <div className="filter-section">
+      <div className="me-filter-section">
         <label>Filter by status: </label>
         <select value={filter} onChange={(e) => setFilter(e.target.value)}>
           <option value="all">All Events</option>
@@ -193,16 +193,16 @@ function MyEventsPage() {
         </select>
       </div>
 
-      {error && <div className="error-message">{error}</div>}
+      {error && <div className="me-error-message">{error}</div>}
 
       {loading ? (
-        <div className="loading">Loading your events...</div>
+        <div className="me-loading">Loading your events...</div>
       ) : events.length === 0 ? (
-        <div className="no-events">
+        <div className="me-no-events">
           {totalEvents === 0 ? (
             <>
               <p>You haven't created any events yet.</p>
-              <button onClick={handleCreateEvent} className="create-button-large">
+              <button onClick={handleCreateEvent} className="me-create-button-large">
                 Create Your First Event
               </button>
             </>
@@ -212,10 +212,10 @@ function MyEventsPage() {
         </div>
       ) : (
         <>
-          <div className="events-count">
+          <div className="me-events-count">
             Showing {events.length} event{events.length !== 1 ? 's' : ''}
           </div>
-          <div className="events-table-container">
+          <div className="me-events-table-container">
             <table className="events-table">
               <thead>
                 <tr>

@@ -207,7 +207,7 @@ function UserManagementPage() {
       name: user.name,
       email: user.email,
       role: user.role,
-      faculty_id: user.faculty_id || ''
+      faculty_id: user.faculty?.id || user.faculty_id || ''
     });
     setShowEditModal(true);
   };
@@ -429,7 +429,7 @@ function UserManagementPage() {
                 <div className="form-group">
                   <label>Faculty *</label>
                   <select
-                    value={formData.faculty_id}
+                    value={typeof formData.faculty_id === 'object' ? formData.faculty_id?.id || '' : formData.faculty_id || ''}
                     onChange={(e) => setFormData({ ...formData, faculty_id: e.target.value })}
                     required
                   >
@@ -504,7 +504,7 @@ function UserManagementPage() {
                 <div className="form-group">
                   <label>Faculty *</label>
                   <select
-                    value={formData.faculty_id}
+                    value={typeof formData.faculty_id === 'object' ? formData.faculty_id?.id || '' : formData.faculty_id || ''}
                     onChange={(e) => setFormData({ ...formData, faculty_id: e.target.value })}
                     required
                   >

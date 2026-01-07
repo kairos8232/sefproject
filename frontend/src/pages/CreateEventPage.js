@@ -152,19 +152,19 @@ function CreateEventPage() {
             const fromPage = location.state?.from;
             navigate(fromPage === 'home' ? '/home' : '/my-events');
           }} 
-          className="back-button"
+          className="ce-back-button"
         >
           {location.state?.from === 'home' ? 'Back to Home' : 'Back to My Events'}
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="event-form">
-        <div className="form-section">
+      <form onSubmit={handleSubmit} className="ce-event-form">
+        <div className="ce-form-section">
           <h2>Basic Information</h2>
           
-          <div className="form-group">
+          <div className="ce-form-group">
             <label htmlFor="event_name">
-              Event Name <span className="required">*</span>
+              Event Name <span className="ce-required">*</span>
             </label>
             <input
               type="text"
@@ -172,15 +172,15 @@ function CreateEventPage() {
               name="event_name"
               value={formData.event_name}
               onChange={handleChange}
-              className={errors.event_name ? 'error' : ''}
+              className={errors.event_name ? 'ce-error' : ''}
               placeholder="Enter event name"
             />
             {errors.event_name && (
-              <span className="error-message">{errors.event_name}</span>
+              <span className="ce-error-message">{errors.event_name}</span>
             )}
           </div>
 
-          <div className="form-group">
+          <div className="ce-form-group">
             <label htmlFor="event_type">Event Type</label>
             <select
               id="event_type"
@@ -197,25 +197,25 @@ function CreateEventPage() {
           </div>
 
           {formData.event_type === 'other' && (
-            <div className="form-group">
+            <div className="ce-form-group">
               <label htmlFor="custom_event_type">
-                Specify Event Type <span className="required">*</span>
+                Specify Event Type <span className="ce-required">*</span>
               </label>
               <input
                 type="text"
                 id="custom_event_type"
                 value={customEventType}
                 onChange={(e) => setCustomEventType(e.target.value)}
-                className={errors.custom_event_type ? 'error' : ''}
+                className={errors.custom_event_type ? 'ce-error' : ''}
                 placeholder="e.g., Hackathon, Blood Donation, Charity Drive"
               />
               {errors.custom_event_type && (
-                <span className="error-message">{errors.custom_event_type}</span>
+                <span className="ce-error-message">{errors.custom_event_type}</span>
               )}
             </div>
           )}
 
-          <div className="form-group">
+          <div className="ce-form-group">
             <label htmlFor="description">Description</label>
             <textarea
               id="description"
@@ -225,19 +225,19 @@ function CreateEventPage() {
               rows="5"
               placeholder="Describe your event, what participants can expect, agenda, etc."
             />
-            <span className="helper-text">
+            <span className="ce-helper-text">
               {formData.description.length} characters
             </span>
           </div>
         </div>
 
-        <div className="form-section">
+        <div className="ce-form-section">
           <h2>Date & Time</h2>
           
-          <div className="form-row">
-            <div className="form-group">
+          <div className="ce-form-row">
+            <div className="ce-form-group">
               <label htmlFor="start_datetime">
-                Start Date & Time <span className="required">*</span>
+                Start Date & Time <span className="ce-required">*</span>
               </label>
               <input
                 type="datetime-local"
@@ -245,16 +245,16 @@ function CreateEventPage() {
                 name="start_datetime"
                 value={formData.start_datetime}
                 onChange={handleChange}
-                className={errors.start_datetime ? 'error' : ''}
+                className={errors.start_datetime ? 'ce-error' : ''}
               />
               {errors.start_datetime && (
-                <span className="error-message">{errors.start_datetime}</span>
+                <span className="ce-error-message">{errors.start_datetime}</span>
               )}
             </div>
 
-            <div className="form-group">
+            <div className="ce-form-group">
               <label htmlFor="end_datetime">
-                End Date & Time <span className="required">*</span>
+                End Date & Time <span className="ce-required">*</span>
               </label>
               <input
                 type="datetime-local"
@@ -262,20 +262,20 @@ function CreateEventPage() {
                 name="end_datetime"
                 value={formData.end_datetime}
                 onChange={handleChange}
-                className={errors.end_datetime ? 'error' : ''}
+                className={errors.end_datetime ? 'ce-error' : ''}
               />
               {errors.end_datetime && (
-                <span className="error-message">{errors.end_datetime}</span>
+                <span className="ce-error-message">{errors.end_datetime}</span>
               )}
             </div>
           </div>
         </div>
 
-        <div className="form-section">
+        <div className="ce-form-section">
           <h2>Visibility Settings</h2>
           
           {canChangeVisibility ? (
-            <div className="form-group">
+            <div className="ce-form-group">
               <label htmlFor="visibility">Who can see this event?</label>
               <select
                 id="visibility"
@@ -289,16 +289,16 @@ function CreateEventPage() {
                   </option>
                 ))}
               </select>
-              <span className="helper-text">
+              <span className="ce-helper-text">
                 {formData.visibility === 'campuswide' && 'All logged-in users will see this event'}
                 {formData.visibility === 'facultyonly' && 'Only members of your faculty can see this event'}
                 {formData.visibility === 'inviteonly' && 'Only users you invite will see this event'}
               </span>
             </div>
           ) : (
-            <div className="visibility-locked">
-              <div className="locked-info">
-                <span className="lock-icon">🔒</span>
+            <div className="ce-visibility-locked">
+              <div className="ce-locked-info">
+                <span className="ce-lock-icon">🔒</span>
                 <div>
                   <strong>Campus Wide</strong>
                   <p>Your events are visible to all logged-in users on campus.</p>
@@ -308,18 +308,18 @@ function CreateEventPage() {
           )}
         </div>
 
-        <div className="form-actions">
+        <div className="ce-form-actions">
           <button
             type="button"
             onClick={handleCancel}
-            className="cancel-button"
+            className="ce-cancel-button"
             disabled={submitting}
           >
             Cancel
           </button>
           <button
             type="submit"
-            className="submit-button"
+            className="ce-submit-button"
             disabled={submitting}
           >
             {submitting ? 'Creating Event...' : 'Create Event'}

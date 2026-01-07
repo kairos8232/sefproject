@@ -27,7 +27,7 @@
   font-size: 14px;
 }
 
-.back-button {
+.ep-back-button {
   padding: 10px 20px;
   background-color: rgba(255, 255, 255, 0.2);
   color: white;
@@ -40,11 +40,11 @@
   white-space: nowrap;
 }
 
-.back-button:hover {
+.ep-back-button:hover {
   background-color: rgba(255, 255, 255, 0.3);
 }
 
-.filter-section {
+.ep-filter-section {
   margin-bottom: 20px;
   padding: 15px;
   background: white;
@@ -52,12 +52,12 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.filter-section label {
+.ep-filter-section label {
   margin-right: 10px;
   font-weight: 600;
 }
 
-.filter-section select {
+.ep-filter-section select {
   padding: 8px 12px;
   border: 2px solid #ddd;
   border-radius: 6px;
@@ -66,19 +66,19 @@
   transition: border-color 0.2s;
 }
 
-.filter-section select:focus {
+.ep-filter-section select:focus {
   outline: none;
   border-color: #667eea;
 }
 
-.events-grid {
+.ep-events-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 20px;
   margin-bottom: 20px;
 }
 
-.event-card {
+.ep-event-card {
   position: relative;
   padding: 20px;
   border: 1px solid #ddd;
@@ -88,12 +88,12 @@
   transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.event-card:hover {
+.ep-event-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.event-status-badge {
+.ep-event-status-badge {
   position: absolute;
   top: 10px;
   right: 10px;
@@ -105,50 +105,50 @@
   text-transform: capitalize;
 }
 
-.event-card h3 {
+.ep-event-card h3 {
   margin: 0 0 10px 0;
   color: #333;
 }
 
-.event-type {
+.ep-event-type {
   margin: 0 0 10px 0;
   color: #666;
   font-size: 14px;
   text-transform: capitalize;
 }
 
-.event-description {
+.ep-event-description {
   margin: 0 0 15px 0;
   color: #666;
   line-height: 1.5;
 }
 
-.event-details {
+.ep-event-details {
   border-top: 1px solid #eee;
   padding-top: 10px;
   font-size: 14px;
 }
 
-.event-details p {
+.ep-event-details p {
   margin: 5px 0;
   color: #555;
 }
 
-.loading {
+.ep-loading {
   text-align: center;
   padding: 40px;
   color: #666;
   font-size: 18px;
 }
 
-.no-events {
+.ep-no-events {
   text-align: center;
   padding: 40px;
   color: #666;
   font-size: 16px;
 }
 
-.error-message {
+.ep-error-message {
   padding: 15px;
   background-color: #fee;
   color: #c33;
@@ -157,7 +157,7 @@
   margin-bottom: 20px;
 }
 
-.events-count {
+.ep-events-count {
   text-align: center;
   color: #666;
   font-size: 14px;

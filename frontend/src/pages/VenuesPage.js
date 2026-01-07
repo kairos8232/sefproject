@@ -95,7 +95,7 @@ const VenuesPage = () => {
   const handleEditClick = (venue) => {
     setSelectedVenue(venue);
     setFormData({
-      faculty_id: venue.faculty_id,
+      faculty_id: venue.faculty?.id || venue.faculty_id,
       code: venue.code,
       name: venue.name,
       location: venue.location || '',
@@ -352,7 +352,7 @@ const VenuesPage = () => {
               <div className="form-group">
                 <label>Faculty *</label>
                 <select
-                  value={formData.faculty_id}
+                  value={typeof formData.faculty_id === 'object' ? formData.faculty_id?.id || '' : formData.faculty_id || ''}
                   onChange={(e) => setFormData({ ...formData, faculty_id: e.target.value })}
                   required
                 >

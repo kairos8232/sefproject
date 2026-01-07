@@ -224,99 +224,227 @@ function HomePage() {
 
   const features = getRoleBasedFeatures();
 
+  // Group features by category
+  const categorizeFeatures = () => {
+    const categories = {
+      events: [],
+      booking: [],
+      management: [],
+      configuration: []
+    };
+
+    features.forEach(feature => {
+      if (feature.title.includes('Event') || feature.title.includes('event')) {
+        categories.events.push(feature);
+      } else if (feature.title.includes('Booking') || feature.title.includes('Venue') || feature.title.includes('Resource')) {
+        categories.booking.push(feature);
+      } else if (feature.title.includes('User') || feature.title.includes('Faculties') || feature.title.includes('Catalogue') || feature.title.includes('Report')) {
+        categories.management.push(feature);
+      } else if (feature.title.includes('Configuration') || feature.title.includes('System')) {
+        categories.configuration.push(feature);
+      } else {
+        categories.events.push(feature); // Default to events
+      }
+    });
+
+    return categories;
+  };
+
+  const categorizedFeatures = categorizeFeatures();
+
   return (
     <div className="home-container">
-      {/* Header */}
-      <div className="home-header">
-        <div>
-          <h1>Welcome back, {user.name}! 👋</h1>
-          <p className="role-badge">{user.role.replace('_', ' ').toUpperCase()}</p>
-        </div>
-        <button onClick={handleLogout} className="logout-button">
-          Logout
-        </button>
-      </div>
-
       {message && (
         <div className="info-message">
           {message}
         </div>
       )}
 
-      {/* Quick Stats */}
-      {!loading && (
-        <div className="stats-section">
-          {user.role !== 'administrator' && (
-            <div className="stat-card">
-              <div className="stat-icon">📊</div>
-              <div className="stat-content">
-                <div className="stat-value">{stats.registeredEvents}</div>
-                <div className="stat-label">Registered Events</div>
-              </div>
+      <div className="home-layout">
+        {/* Left Side - User Profile Panel */}
+        <div className="user-panel">
+          <div className="user-card">
+            <div className="user-avatar">
+              {user.name.charAt(0).toUpperCase()}
             </div>
-          )}
-          {(user.role === 'student' || user.role === 'faculty_manager' || user.role === 'event_organizer') && (
-            <div className="stat-card">
-              <div className="stat-icon">🎪</div>
-              <div className="stat-content">
-                <div className="stat-value">{stats.myEvents}</div>
-                <div className="stat-label">My Events</div>
-              </div>
+            <div className="user-info">
+              <h2>{user.name}</h2>
+              <p className="user-role">{user.role.replace('_', ' ').toUpperCase()}</p>
+              <p className="user-email">{user.email}</p>
             </div>
-          )}
-        </div>
-      )}
-
-      {/* Upcoming Events Preview */}
-      {!loading && stats.upcomingRegistrations.length > 0 && user.role !== 'administrator' && (
-        <div className="upcoming-section">
-          <h2>Your Upcoming Events</h2>
-          <div className="upcoming-list">
-            {stats.upcomingRegistrations.map((participation) => (
-              <div 
-                key={participation.event.id} 
-                className="upcoming-item"
-                onClick={() => navigate(`/events/${participation.event.id}`)}
-              >
-                <div className="upcoming-date">
-                  {formatDateTime(participation.event.start_datetime)}
-                </div>
-                <div className="upcoming-details">
-                  <h4>{participation.event.event_name}</h4>
-                  <span className="event-type-badge">{participation.event.event_type}</span>
-                </div>
-              </div>
-            ))}
           </div>
-        </div>
-      )}
 
-      {/* Feature Cards */}
-      <div className="features-section">
-        <h2>Quick Actions</h2>
-        <div className="features-grid">
-          {features.map((feature, index) => (
-            <div 
-              key={index}
-              className="feature-card"
-              onClick={() => {
-                if (feature.path) {
-                  if (feature.path === '/create-event') {
-                    navigate(feature.path, { state: { from: 'home' } });
-                  } else {
-                    navigate(feature.path);
-                  }
-                } else {
-                  feature.action();
-                }
-              }}
-              style={{ borderLeft: `4px solid ${feature.color}` }}
-            >
-              <div className="feature-icon">{feature.icon}</div>
-              <h3>{feature.title}</h3>
-              <p>{feature.description}</p>
+          {/* Quick Stats */}
+          {!loading && user.role !== 'administrator' && (
+            <div className="user-stats">
+              <h3>My Statistics</h3>
+              <div className="stat-item">
+                <div className="stat-icon">📊</div>
+                <div className="stat-details">
+                  <div className="stat-value">{stats.registeredEvents}</div>
+                  <div className="stat-label">Registered Events</div>
+                </div>
+              </div>
+              {(user.role === 'student' || user.role === 'faculty_manager' || user.role === 'event_organizer') && (
+                <div className="stat-item">
+                  <div className="stat-icon">🎪</div>
+                  <div className="stat-details">
+                    <div className="stat-value">{stats.myEvents}</div>
+                    <div className="stat-label">My Events</div>
+                  </div>
+                </div>
+              )}
             </div>
-          ))}
+          )}
+
+          {/* User Actions */}
+          <div className="user-actions">
+            <button className="btn-edit-profile" onClick={() => navigate('/profile')}>
+              ✏️ Edit Profile
+            </button>
+            <button className="btn-logout" onClick={handleLogout}>
+              🚪 Logout
+            </button>
+          </div>
+
+          {/* Upcoming Events Preview */}
+          {!loading && stats.upcomingRegistrations.length > 0 && user.role !== 'administrator' && (
+            <div className="upcoming-preview">
+              <h3>Upcoming Events</h3>
+              <div className="upcoming-list">
+                {stats.upcomingRegistrations.slice(0, 3).map((participation) => (
+                  <div 
+                    key={participation.event.id} 
+                    className="upcoming-item"
+                    onClick={() => navigate(`/events/${participation.event.id}`)}
+                  >
+                    <div className="upcoming-date">
+                      {new Date(participation.event.start_datetime).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </div>
+                    <div className="upcoming-details">
+                      <h4>{participation.event.event_name}</h4>
+                      <span className="event-type-badge">{participation.event.event_type}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Right Side - Quick Actions by Category */}
+        <div className="actions-panel">
+          {/* Events Section */}
+          {categorizedFeatures.events.length > 0 && (
+            <div className="home-action-section">
+              <h2 className="home-section-title">🎯 Events</h2>
+              <div className="home-features-grid">
+                {categorizedFeatures.events.map((feature, index) => (
+                  <div 
+                    key={index}
+                    className="home-feature-card"
+                    onClick={() => {
+                      if (feature.path) {
+                        if (feature.path === '/create-event') {
+                          navigate(feature.path, { state: { from: 'home' } });
+                        } else {
+                          navigate(feature.path);
+                        }
+                      } else {
+                        feature.action();
+                      }
+                    }}
+                    style={{ borderLeft: `4px solid ${feature.color}` }}
+                  >
+                    <div className="home-feature-icon">{feature.icon}</div>
+                    <h3>{feature.title}</h3>
+                    <p>{feature.description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Booking Section */}
+          {categorizedFeatures.booking.length > 0 && (
+            <div className="home-action-section">
+              <h2 className="home-section-title">📅 Booking & Resources</h2>
+              <div className="home-features-grid">
+                {categorizedFeatures.booking.map((feature, index) => (
+                  <div 
+                    key={index}
+                    className="home-feature-card"
+                    onClick={() => {
+                      if (feature.path) {
+                        navigate(feature.path);
+                      } else {
+                        feature.action();
+                      }
+                    }}
+                    style={{ borderLeft: `4px solid ${feature.color}` }}
+                  >
+                    <div className="home-feature-icon">{feature.icon}</div>
+                    <h3>{feature.title}</h3>
+                    <p>{feature.description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Management Section */}
+          {categorizedFeatures.management.length > 0 && (
+            <div className="home-action-section">
+              <h2 className="home-section-title">⚙️ Management</h2>
+              <div className="home-features-grid">
+                {categorizedFeatures.management.map((feature, index) => (
+                  <div 
+                    key={index}
+                    className="home-feature-card"
+                    onClick={() => {
+                      if (feature.path) {
+                        navigate(feature.path);
+                      } else {
+                        feature.action();
+                      }
+                    }}
+                    style={{ borderLeft: `4px solid ${feature.color}` }}
+                  >
+                    <div className="home-feature-icon">{feature.icon}</div>
+                    <h3>{feature.title}</h3>
+                    <p>{feature.description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Configuration Section */}
+          {categorizedFeatures.configuration.length > 0 && (
+            <div className="home-action-section">
+              <h2 className="home-section-title">🔧 Configuration</h2>
+              <div className="home-features-grid">
+                {categorizedFeatures.configuration.map((feature, index) => (
+                  <div 
+                    key={index}
+                    className="home-feature-card"
+                    onClick={() => {
+                      if (feature.path) {
+                        navigate(feature.path);
+                      } else {
+                        feature.action();
+                      }
+                    }}
+                    style={{ borderLeft: `4px solid ${feature.color}` }}
+                  >
+                    <div className="home-feature-icon">{feature.icon}</div>
+                    <h3>{feature.title}</h3>
+                    <p>{feature.description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

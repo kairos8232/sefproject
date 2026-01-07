@@ -64,13 +64,13 @@ function MyResourceRequestsPage() {
   const getStatusBadgeClass = (status) => {
     switch (status) {
       case 'pending':
-        return 'status-pending';
+        return 'mrr-status-pending';
       case 'approved':
-        return 'status-approved';
+        return 'mrr-status-approved';
       case 'rejected':
-        return 'status-rejected';
+        return 'mrr-status-rejected';
       case 'cancelled':
-        return 'status-cancelled';
+        return 'mrr-status-cancelled';
       default:
         return '';
     }
@@ -84,7 +84,9 @@ function MyResourceRequestsPage() {
       catering: 'Catering',
       other: 'Other'
     };
-    return labels[category] || category;
+    // Handle category as object or string
+    const categoryValue = typeof category === 'object' ? category?.code || category?.name : category;
+    return labels[categoryValue] || categoryValue || 'Unknown';
   };
 
   return (
@@ -94,18 +96,18 @@ function MyResourceRequestsPage() {
           <h1>My Resource Requests</h1>
           <p>View and manage your resource requests</p>
         </div>
-        <button onClick={() => navigate('/my-events')} className="back-button">
+        <button onClick={() => navigate('/my-events')} className="mrr-back-button">
           Back to My Events
         </button>
       </div>
 
       {successMessage && (
-        <div className="success-notification">
+        <div className="mrr-success-notification">
           ✅ {successMessage}
         </div>
       )}
 
-      <div className="filter-section">
+      <div className="mrr-filter-section">
         <label>Filter by status:</label>
         <select value={filter} onChange={(e) => setFilter(e.target.value)}>
           <option value="all">All Requests</option>
@@ -116,12 +118,12 @@ function MyResourceRequestsPage() {
         </select>
       </div>
 
-      {error && <div className="error-message">{error}</div>}
+      {error && <div className="mrr-error-message">{error}</div>}
 
       {loading ? (
-        <div className="loading">Loading your resource requests...</div>
+        <div className="mrr-loading">Loading your resource requests...</div>
       ) : requests.length === 0 ? (
-        <div className="no-requests">
+        <div className="mrr-no-requests">
           {filter === 'all' ? (
             <p>You haven't made any resource requests yet.</p>
           ) : (
@@ -130,11 +132,11 @@ function MyResourceRequestsPage() {
         </div>
       ) : (
         <>
-          <div className="requests-count">
+          <div className="mrr-requests-count">
             Showing {requests.length} request{requests.length !== 1 ? 's' : ''}
           </div>
-          <div className="requests-table-container">
-            <table className="requests-table">
+          <div className="mrr-requests-table-container">
+            <table className="mrr-requests-table">
               <thead>
                 <tr>
                   <th>Event</th>
@@ -148,33 +150,35 @@ function MyResourceRequestsPage() {
               <tbody>
                 {requests.map((request) => (
                   <tr key={request.id}>
-                    <td className="event-cell">
-                      <div className="event-name">{request.event?.event_name}</div>
-                      <div className="venue-info">
-                        {request.venue_booking?.venue?.name} ({request.venue_booking?.venue?.code})
+                    <td className="mrr-event-cell">
+                      <div className="mrr-event-name">{request.event?.event_name || 'Unknown Event'}</div>
+                      <div className="mrr-venue-info">
+                        {typeof request.venue_booking?.venue === 'object' 
+                          ? `${request.venue_booking?.venue?.name || 'Unknown'} (${request.venue_booking?.venue?.code || 'N/A'})` 
+                          : request.venue_booking?.venue || 'Unknown Venue'}
                       </div>
                     </td>
-                    <td className="resource-cell">
-                      <div className="resource-name">{request.resource?.name}</div>
-                      <span className="resource-category">
+                    <td className="mrr-resource-cell">
+                      <div className="mrr-resource-name">{request.resource?.name}</div>
+                      <span className="mrr-resource-category">
                         {getCategoryLabel(request.resource?.category)}
                       </span>
                     </td>
                     <td>
-                      <strong>{request.requested_quantity}</strong> {request.resource?.unit}
+                      <strong>{request.requested_quantity}</strong> {typeof request.resource?.unit === 'object' ? request.resource?.unit?.name || 'units' : request.resource?.unit || 'units'}
                     </td>
-                    <td className="datetime-cell">
+                    <td className="mrr-datetime-cell">
                       <div>{formatDateTime(request.usage_start_datetime)}</div>
-                      <div className="datetime-to">to</div>
+                      <div className="mrr-datetime-to">to</div>
                       <div>{formatDateTime(request.usage_end_datetime)}</div>
                     </td>
                     <td>
-                      <span className={`status-badge ${getStatusBadgeClass(request.status)}`}>
+                      <span className={`mrr-status-badge ${getStatusBadgeClass(request.status)}`}>
                         {request.status}
                       </span>
                       {request.status === 'approved' && request.approver && (
-                        <div className="approver-info">
-                          By: {request.approver.name}
+                        <div className="mrr-approver-info">
+                          By: {typeof request.approver === 'object' ? request.approver?.name || 'Unknown' : request.approver}
                         </div>
                       )}
                       {request.status === 'rejected' && request.rejection_reason && (
@@ -183,11 +187,11 @@ function MyResourceRequestsPage() {
                         </div>
                       )}
                     </td>
-                    <td className="actions-cell">
+                    <td className="mrr-actions-cell">
                       {(request.status === 'pending' || request.status === 'approved') && (
                         <button
                           onClick={() => handleCancelRequest(request.id, request.resource?.name)}
-                          className="action-button cancel-button"
+                          className="mrr-action-button mrr-cancel-button"
                           title="Cancel Request"
                         >
                           ✖️

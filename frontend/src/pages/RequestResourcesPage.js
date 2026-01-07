@@ -109,7 +109,9 @@ function RequestResourcesPage() {
       catering: 'Catering',
       other: 'Other'
     };
-    return labels[category] || category;
+    // Handle category as object or string
+    const categoryValue = typeof category === 'object' ? category?.code || category?.name : category;
+    return labels[categoryValue] || categoryValue || 'Unknown';
   };
 
   if (!event || !venueBooking) {
@@ -126,7 +128,9 @@ function RequestResourcesPage() {
             <strong>Event:</strong> {event.event_name}
           </div>
           <div className="event-info">
-            <strong>Venue:</strong> {venueBooking.venue?.name} ({venueBooking.venue?.code})
+            <strong>Venue:</strong> {typeof venueBooking.venue === 'object' 
+              ? `${venueBooking.venue?.name || 'Unknown'} (${venueBooking.venue?.code || 'N/A'})` 
+              : venueBooking.venue || 'Unknown Venue'}
           </div>
           <div className="event-info">
             <strong>Time:</strong> {formatDateTime(venueBooking.approved_start_datetime || venueBooking.requested_start_datetime)} - {formatDateTime(venueBooking.approved_end_datetime || venueBooking.requested_end_datetime)}
@@ -177,11 +181,11 @@ function RequestResourcesPage() {
                   <div className="resource-details">
                     {resource.description && <p>{resource.description}</p>}
                     <p>
-                      <strong>Available:</strong> {resource.availableQuantity} / {resource.total_quantity} {resource.unit}
+                      <strong>Available:</strong> {resource.availableQuantity} / {resource.total_quantity} {typeof resource.unit === 'object' ? resource.unit?.name || resource.unit?.code || 'units' : resource.unit || 'units'}
                     </p>
                     {resource.availableQuantity < resource.total_quantity && (
                       <p className="allocated-info">
-                        ({resource.allocatedQuantity} {resource.unit} already allocated)
+                        ({resource.allocatedQuantity} {typeof resource.unit === 'object' ? resource.unit?.name || resource.unit?.code || 'units' : resource.unit || 'units'} already allocated)
                       </p>
                     )}
                     {resource.notes && (
@@ -227,7 +231,7 @@ function RequestResourcesPage() {
                   onChange={(e) => setQuantity(e.target.value)}
                   required
                 />
-                <small>Maximum available: {selectedResource.availableQuantity} {selectedResource.unit}</small>
+                <small>Maximum available: {selectedResource.availableQuantity} {typeof selectedResource.unit === 'object' ? selectedResource.unit?.name || selectedResource.unit?.code || 'units' : selectedResource.unit || 'units'}</small>
               </div>
 
               <div className="form-group">

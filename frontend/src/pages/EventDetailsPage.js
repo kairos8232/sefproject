@@ -149,7 +149,7 @@ function EventDetailsPage() {
   if (loading) {
     return (
       <div className="event-details-container">
-        <div className="loading">Loading event details...</div>
+        <div className="ed-loading">Loading event details...</div>
       </div>
     );
   }
@@ -157,8 +157,8 @@ function EventDetailsPage() {
   if (error) {
     return (
       <div className="event-details-container">
-        <div className="error-message">{error}</div>
-        <button onClick={handleBackToEvents} className="back-button">
+        <div className="ed-error-message">{error}</div>
+        <button onClick={handleBackToEvents} className="ed-back-button">
           {isManagementView ? 'Back to My Events' : 'Back to Events'}
         </button>
       </div>
@@ -168,8 +168,8 @@ function EventDetailsPage() {
   if (!event) {
     return (
       <div className="event-details-container">
-        <div className="error-message">Event not found</div>
-        <button onClick={handleBackToEvents} className="back-button">
+        <div className="ed-error-message">Event not found</div>
+        <button onClick={handleBackToEvents} className="ed-back-button">
           {isManagementView ? 'Back to My Events' : 'Back to Events'}
         </button>
       </div>
@@ -183,76 +183,76 @@ function EventDetailsPage() {
           <h1>Event Details</h1>
           <p>View event information and manage your registration</p>
         </div>
-        <button onClick={handleBackToEvents} className="back-button">
+        <button onClick={handleBackToEvents} className="ed-back-button">
           {isManagementView ? 'Back to My Events' : 'Back to Events'}
         </button>
       </div>
 
       <div className="event-details-content">
-        <div className="event-header">
+        <div className="ed-event-header">
           <h1>{event.event_name}</h1>
-          <div className="event-header-badges">
-            <span className={`status-badge status-${event.status}`}>
+          <div className="ed-event-header-badges">
+            <span className={`ed-status-badge ed-status-${event.status}`}>
               {event.status}
             </span>
             {participationStatus?.isRegistered && (
-              <span className="status-badge status-registered">
+              <span className="ed-status-badge ed-status-registered">
                 ✓ Registered
               </span>
             )}
           </div>
         </div>
 
-        <div className="event-info-grid">
-          <div className="info-section">
+        <div className="ed-event-info-grid">
+          <div className="ed-info-section">
             <h3>Event Type</h3>
-            <p className="capitalize">{event.event_type || 'General Event'}</p>
+            <p className="ed-capitalize">{event.event_type || 'General Event'}</p>
           </div>
 
-          <div className="info-section">
+          <div className="ed-info-section">
             <h3>Visibility</h3>
-            <p className="capitalize">{formatVisibility(event.visibility, event.organizer?.faculty)}</p>
+            <p className="ed-capitalize">{formatVisibility(event.visibility, event.organizer?.faculty)}</p>
           </div>
 
-          <div className="info-section">
+          <div className="ed-info-section">
             <h3>Duration</h3>
             <p>{calculateDuration(event.start_datetime, event.end_datetime)}</p>
           </div>
 
-          <div className="info-section">
+          <div className="ed-info-section">
             <h3>Organizer</h3>
             <p>{event.organizer?.name || event.organizer?.email || 'Unknown'}</p>
-            <p className="role-badge">{formatRole(event.organizer?.role, event.organizer?.faculty)}</p>
+            <p className="ed-role-badge">{formatRole(event.organizer?.role, event.organizer?.faculty)}</p>
           </div>
         </div>
 
-        <div className="event-description-section">
+        <div className="ed-event-description-section">
           <h3>Description</h3>
           <p>{event.description || 'No description provided.'}</p>
         </div>
 
-        <div className="event-schedule">
+        <div className="ed-event-schedule">
           <h3>Schedule</h3>
-          <div className="schedule-item">
+          <div className="ed-schedule-item">
             <strong>Start:</strong>
             <span>{formatDateTime(event.start_datetime)}</span>
           </div>
-          <div className="schedule-item">
+          <div className="ed-schedule-item">
             <strong>End:</strong>
             <span>{formatDateTime(event.end_datetime)}</span>
           </div>
         </div>
 
-        <div className="event-meta">
+        <div className="ed-event-meta">
           <p><strong>Event ID:</strong> {event.id}</p>
           <p><strong>Created:</strong> {formatDateTime(event.created_at)}</p>
         </div>
 
         {/* Participation Actions - Only show if NOT in management view */}
         {!isManagementView && (event.status === 'upcoming' || event.status === 'ongoing') && (
-          <div className="participation-actions">
+          <div className="ed-participation-actions">
             {actionMessage && (
-              <div className={`action-message ${actionMessage.includes('Success') || actionMessage.includes('cancel') ? 'success' : 'error'}`}>
+              <div className={`ed-action-message ${actionMessage.includes('Success') || actionMessage.includes('cancel') ? 'ed-success' : 'ed-error'}`}>
                 {actionMessage}
               </div>
             )}
@@ -261,7 +261,7 @@ function EventDetailsPage() {
               <button 
                 onClick={handleCancel} 
                 disabled={actionLoading}
-                className="cancel-button"
+                className="ed-cancel-button"
               >
                 {actionLoading ? 'Processing...' : 'Cancel Registration'}
               </button>
@@ -269,7 +269,7 @@ function EventDetailsPage() {
               <button 
                 onClick={handleRegister} 
                 disabled={actionLoading}
-                className="register-button"
+                className="ed-register-button"
               >
                 {actionLoading ? 'Processing...' : 'Register for Event'}
               </button>

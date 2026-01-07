@@ -170,7 +170,7 @@ const RecordAttendancePage = () => {
   if (loading) {
     return (
       <div className="record-attendance-page">
-        <div className="loading">Loading...</div>
+        <div className="ra-loading">Loading...</div>
       </div>
     );
   }
@@ -178,40 +178,40 @@ const RecordAttendancePage = () => {
   if (error && !event) {
     return (
       <div className="record-attendance-page">
-        <div className="page-header">
+        <div className="ra-page-header">
           <div>
             <h1>Record Attendance</h1>
             <p>Mark participant attendance for your event</p>
           </div>
-          <button onClick={() => navigate('/my-events')} className="back-button">
+          <button onClick={() => navigate('/my-events')} className="ra-back-button">
             ← Back to My Events
           </button>
         </div>
-        <div className="error-message">{error}</div>
+        <div className="ra-error-message">{error}</div>
       </div>
     );
   }
 
   return (
     <div className="record-attendance-page">
-      <div className="page-header">
+      <div className="ra-page-header">
         <div>
           <h1>📋 Record Attendance</h1>
           <p>Mark participant attendance for your event</p>
         </div>
-        <button onClick={() => navigate('/my-events')} className="back-button">
+        <button onClick={() => navigate('/my-events')} className="ra-back-button">
           ← Back to My Events
         </button>
       </div>
 
-      {success && <div className="success-message">{success}</div>}
-      {error && <div className="error-message">{error}</div>}
+      {success && <div className="ra-success-message">{success}</div>}
+      {error && <div className="ra-error-message">{error}</div>}
 
       {/* Event Information */}
       {event && (
-        <div className="event-info-section">
+        <div className="ra-event-info-section">
           <h2>{event.event_name}</h2>
-          <div className="event-meta">
+          <div className="ra-event-meta">
             <span>📅 {new Date(event.start_datetime).toLocaleDateString('en-US', {
               month: 'short',
               day: 'numeric',
@@ -219,30 +219,30 @@ const RecordAttendancePage = () => {
               hour: '2-digit',
               minute: '2-digit'
             })}</span>
-            <span className={`status-badge status-${event.status}`}>{event.status}</span>
+            <span className={`ra-status-badge status-${event.status}`}>{event.status}</span>
           </div>
         </div>
       )}
 
       {/* Attendance Summary */}
-      <div className="attendance-summary">
-        <div className="summary-item">
-          <div className="summary-label">Total Registered</div>
-          <div className="summary-value">{totalCount}</div>
+      <div className="ra-attendance-summary">
+        <div className="ra-summary-item">
+          <div className="ra-summary-label">Total Registered</div>
+          <div className="ra-summary-value">{totalCount}</div>
         </div>
-        <div className="summary-item">
-          <div className="summary-label">Marked Present</div>
-          <div className="summary-value present">{attendedCount}</div>
+        <div className="ra-summary-item">
+          <div className="ra-summary-label">Marked Present</div>
+          <div className="ra-summary-value ra-present">{attendedCount}</div>
         </div>
-        <div className="summary-item">
-          <div className="summary-label">Absent</div>
-          <div className="summary-value absent">{totalCount - attendedCount}</div>
+        <div className="ra-summary-item">
+          <div className="ra-summary-label">Absent</div>
+          <div className="ra-summary-value ra-absent">{totalCount - attendedCount}</div>
         </div>
       </div>
 
       {/* Controls */}
-      <div className="controls-section">
-        <div className="search-box">
+      <div className="ra-controls-section">
+        <div className="ra-search-box">
           <input
             type="text"
             placeholder="Search by name, email, or role..."
@@ -250,24 +250,24 @@ const RecordAttendancePage = () => {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <div className="bulk-actions">
-          <button onClick={handleSelectAll} className="btn-select-all">
+        <div className="ra-bulk-actions">
+          <button onClick={handleSelectAll} className="ra-btn-select-all">
             ✓ Select All
           </button>
-          <button onClick={handleDeselectAll} className="btn-deselect-all">
+          <button onClick={handleDeselectAll} className="ra-btn-deselect-all">
             ✗ Deselect All
           </button>
         </div>
       </div>
 
       {/* Participants List */}
-      <div className="participants-section">
+      <div className="ra-participants-section">
         {filteredParticipants.length === 0 ? (
-          <div className="no-participants">
+          <div className="ra-no-participants">
             {searchQuery ? 'No participants match your search' : 'No participants registered yet'}
           </div>
         ) : (
-          <div className="participants-table">
+          <div className="ra-participants-table">
             <table>
               <thead>
                 <tr>
@@ -282,19 +282,19 @@ const RecordAttendancePage = () => {
               <tbody>
                 {filteredParticipants.map(participant => (
                   <tr key={participant.id}>
-                    <td className="checkbox-cell">
+                    <td className="ra-checkbox-cell">
                       <input
                         type="checkbox"
                         checked={attendanceMap[participant.id] || false}
                         onChange={() => handleCheckboxChange(participant.id)}
                       />
                     </td>
-                    <td className="participant-name">{participant.user?.name || 'N/A'}</td>
-                    <td className="participant-email">{participant.user?.email || 'N/A'}</td>
+                    <td className="ra-participant-name">{participant.user?.name || 'N/A'}</td>
+                    <td className="ra-participant-email">{participant.user?.email || 'N/A'}</td>
                     <td>
-                      <span className="role-badge">{participant.user?.role || 'N/A'}</span>
+                      <span className="ra-role-badge">{participant.user?.role || 'N/A'}</span>
                     </td>
-                    <td className="date-time">
+                    <td className="ra-date-time">
                       {new Date(participant.registered_at).toLocaleString('en-US', {
                         month: 'short',
                         day: 'numeric',
@@ -304,7 +304,7 @@ const RecordAttendancePage = () => {
                       })}
                     </td>
                     <td>
-                      <span className={`status-badge status-${participant.status}`}>
+                      <span className={`ra-status-badge status-${participant.status}`}>
                         {participant.status === 'attended' ? '✓ Attended' : 
                          participant.status === 'cancelled' ? '✗ Cancelled' : 
                          '○ Registered'}
@@ -320,10 +320,10 @@ const RecordAttendancePage = () => {
 
       {/* Save Button */}
       {filteredParticipants.length > 0 && (
-        <div className="save-section">
+        <div className="ra-save-section">
           <button 
             onClick={handleSaveAttendance} 
-            className="btn-save"
+            className="ra-btn-save"
             disabled={saving}
           >
             {saving ? 'Saving...' : '💾 Save Attendance'}
