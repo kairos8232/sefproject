@@ -2053,3 +2053,758 @@ VALUES
     null,
     4
   );
+
+-- ========================================
+-- ADDITIONAL TEST DATA FOR CALENDAR VIEW
+-- Testing venue bookings and resource requests with various statuses
+-- Date reference: January 8, 2026
+-- ========================================
+
+-- ========================================
+-- More Test Events for Calendar
+-- ========================================
+
+-- Event for January 2026 (this month)
+INSERT INTO events (id, organizer_id, event_name, description, visibility, event_type, status, start_datetime, end_datetime, created_at)
+VALUES (
+  'c1111111-1111-1111-1111-111111111111',
+  (SELECT id FROM users WHERE email = 'sarah.organizer@university.edu' LIMIT 1),
+  'Python Programming Workshop',
+  'Introduction to Python for beginners',
+  'campuswide',
+  'workshop',
+  'upcoming',
+  '2026-01-22 09:00:00+08',
+  '2026-01-22 17:00:00+08',
+  '2026-01-02 10:00:00+08'
+);
+
+INSERT INTO events (id, organizer_id, event_name, description, visibility, event_type, status, start_datetime, end_datetime, created_at)
+VALUES (
+  'c2222222-2222-2222-2222-222222222222',
+  (SELECT id FROM users WHERE email = 'emily.tan@student.edu' LIMIT 1),
+  'Cloud Computing Seminar',
+  'AWS and Azure platform overview',
+  'facultyonly',
+  'seminar',
+  'upcoming',
+  '2026-01-28 14:00:00+08',
+  '2026-01-28 17:00:00+08',
+  '2026-01-03 11:00:00+08'
+);
+
+INSERT INTO events (id, organizer_id, event_name, description, visibility, event_type, status, start_datetime, end_datetime, created_at)
+VALUES (
+  'c3333333-3333-3333-3333-333333333333',
+  (SELECT id FROM users WHERE email = 'sarah.organizer@university.edu' LIMIT 1),
+  'Student Orientation 2026',
+  'Welcome new semester students',
+  'campuswide',
+  'orientation',
+  'upcoming',
+  '2026-02-01 08:00:00+08',
+  '2026-02-03 18:00:00+08',
+  '2026-01-05 09:00:00+08'
+);
+
+-- Multi-day event
+INSERT INTO events (id, organizer_id, event_name, description, visibility, event_type, status, start_datetime, end_datetime, created_at)
+VALUES (
+  'c4444444-4444-4444-4444-444444444444',
+  (SELECT id FROM users WHERE email = 'alice.wong@fci.edu' LIMIT 1),
+  'Data Science Conference 2026',
+  '3-day conference on data science and analytics',
+  'campuswide',
+  'seminar',
+  'upcoming',
+  '2026-02-15 08:00:00+08',
+  '2026-02-17 18:00:00+08',
+  '2026-01-05 14:00:00+08'
+);
+
+INSERT INTO events (id, organizer_id, event_name, description, visibility, event_type, status, start_datetime, end_datetime, created_at)
+VALUES (
+  'c5555555-5555-5555-5555-555555555555',
+  (SELECT id FROM users WHERE email = 'michael.kumar@student.edu' LIMIT 1),
+  'Game Development Workshop',
+  'Unity and Unreal Engine basics',
+  'campuswide',
+  'workshop',
+  'upcoming',
+  '2026-01-30 13:00:00+08',
+  '2026-01-30 17:00:00+08',
+  '2026-01-06 10:00:00+08'
+);
+
+-- ========================================
+-- Venue Bookings with Different Statuses (January - February 2026)
+-- ========================================
+
+-- APPROVED: Python Workshop at Media Production Studio (FCI venue)
+INSERT INTO venue_bookings (
+  id, event_id, venue_id, requester_user_id,
+  requested_start_datetime, requested_end_datetime,
+  approved_start_datetime, approved_end_datetime,
+  setup_time, teardown_time,
+  status, approved_user_id, approved_at,
+  approval_notes, remarks, expected_attendees
+)
+VALUES (
+  '1b111111-1111-1111-1111-111111111111',
+  'c1111111-1111-1111-1111-111111111111',
+  (SELECT id FROM venues WHERE code = 'STUDIO-FAC-01' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'sarah.organizer@university.edu' LIMIT 1),
+  '2026-01-22 09:00:00+08',
+  '2026-01-22 17:00:00+08',
+  '2026-01-22 08:30:00+08',
+  '2026-01-22 17:30:00+08',
+  30,
+  30,
+  'approved',
+  (SELECT id FROM users WHERE email = 'james.lee@fac.edu' LIMIT 1),
+  '2026-01-04 15:00:00+08',
+  'Approved with extended setup time for equipment',
+  'Full-day programming workshop with hands-on coding',
+  50
+);
+
+-- PENDING: Cloud Computing Seminar at Computer Lab 1 (FCI venue)
+INSERT INTO venue_bookings (
+  id, event_id, venue_id, requester_user_id,
+  requested_start_datetime, requested_end_datetime,
+  setup_time, teardown_time,
+  status, remarks, expected_attendees
+)
+VALUES (
+  '1b222222-2222-2222-2222-222222222222',
+  'c2222222-2222-2222-2222-222222222222',
+  (SELECT id FROM venues WHERE code = 'LAB-CS-01' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'emily.tan@student.edu' LIMIT 1),
+  '2026-01-28 14:00:00+08',
+  '2026-01-28 17:00:00+08',
+  15,
+  10,
+  'pending',
+  'Need all computers updated with latest cloud SDKs',
+  35
+);
+
+-- APPROVED: Student Orientation (Multi-day) at Lecture Theatre 1
+INSERT INTO venue_bookings (
+  id, event_id, venue_id, requester_user_id,
+  requested_start_datetime, requested_end_datetime,
+  approved_start_datetime, approved_end_datetime,
+  setup_time, teardown_time,
+  status, approved_user_id, approved_at,
+  approval_notes, remarks, expected_attendees
+)
+VALUES (
+  '1b333333-3333-3333-3333-333333333333',
+  'c3333333-3333-3333-3333-333333333333',
+  (SELECT id FROM venues WHERE code = 'LT-FCI-01' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'sarah.organizer@university.edu' LIMIT 1),
+  '2026-02-01 08:00:00+08',
+  '2026-02-03 18:00:00+08',
+  '2026-02-01 07:00:00+08',
+  '2026-02-03 19:00:00+08',
+  60,
+  60,
+  'approved',
+  (SELECT id FROM users WHERE email = 'alice.wong@fci.edu' LIMIT 1),
+  '2026-01-06 10:00:00+08',
+  'Approved for 3-day orientation. Ensure AV equipment is ready.',
+  'New student orientation program with presentations and activities',
+  200
+);
+
+-- REJECTED: Game Dev Workshop at Business Case Room (wrong faculty)
+INSERT INTO venue_bookings (
+  id, event_id, venue_id, requester_user_id,
+  requested_start_datetime, requested_end_datetime,
+  setup_time, teardown_time,
+  status, approved_user_id, approved_at,
+  rejection_reason, remarks, expected_attendees
+)
+VALUES (
+  '1b444444-4444-4444-4444-444444444444',
+  'c5555555-5555-5555-5555-555555555555',
+  (SELECT id FROM venues WHERE code = 'CR-FOB-01' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'michael.kumar@student.edu' LIMIT 1),
+  '2026-01-30 13:00:00+08',
+  '2026-01-30 17:00:00+08',
+  20,
+  15,
+  'rejected',
+  (SELECT id FROM users WHERE email = 'maria.garcia@fob.edu' LIMIT 1),
+  '2026-01-07 09:00:00+08',
+  'This venue is not suitable for technical workshops. Please book a computer lab instead.',
+  'Game development hands-on workshop',
+  30
+);
+
+-- PENDING: Game Dev Workshop (resubmitted) at Computer Lab 1
+INSERT INTO venue_bookings (
+  id, event_id, venue_id, requester_user_id,
+  requested_start_datetime, requested_end_datetime,
+  setup_time, teardown_time,
+  status, remarks, expected_attendees
+)
+VALUES (
+  '1b445555-5555-5555-5555-555555555555',
+  'c5555555-5555-5555-5555-555555555555',
+  (SELECT id FROM venues WHERE code = 'LAB-CS-01' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'michael.kumar@student.edu' LIMIT 1),
+  '2026-01-30 13:00:00+08',
+  '2026-01-30 17:00:00+08',
+  20,
+  15,
+  'pending',
+  'Resubmitted with correct venue - game development workshop with Unity',
+  30
+);
+
+-- APPROVED: Data Science Conference Day 1 at Lecture Theatre 1
+INSERT INTO venue_bookings (
+  id, event_id, venue_id, requester_user_id,
+  requested_start_datetime, requested_end_datetime,
+  approved_start_datetime, approved_end_datetime,
+  setup_time, teardown_time,
+  status, approved_user_id, approved_at,
+  approval_notes, remarks, expected_attendees
+)
+VALUES (
+  '1b555555-5555-5555-5555-555555555555',
+  'c4444444-4444-4444-4444-444444444444',
+  (SELECT id FROM venues WHERE code = 'LT-FCI-01' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'alice.wong@fci.edu' LIMIT 1),
+  '2026-02-15 08:00:00+08',
+  '2026-02-15 18:00:00+08',
+  '2026-02-15 07:00:00+08',
+  '2026-02-15 19:00:00+08',
+  60,
+  60,
+  'approved',
+  (SELECT id FROM users WHERE email = 'david.tan@fci.edu' LIMIT 1),
+  '2026-01-07 11:00:00+08',
+  'Approved. Conference will need dedicated IT support staff.',
+  'Day 1: Opening keynote and morning sessions',
+  150
+);
+
+-- CANCELLED: Data Science Conference Day 2 (moved to virtual)
+INSERT INTO venue_bookings (
+  id, event_id, venue_id, requester_user_id,
+  requested_start_datetime, requested_end_datetime,
+  approved_start_datetime, approved_end_datetime,
+  setup_time, teardown_time,
+  status, approved_user_id, approved_at,
+  cancellation_reason, remarks, expected_attendees
+)
+VALUES (
+  '1b666666-6666-6666-6666-666666666666',
+  'c4444444-4444-4444-4444-444444444444',
+  (SELECT id FROM venues WHERE code = 'LT-FCI-01' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'alice.wong@fci.edu' LIMIT 1),
+  '2026-02-16 08:00:00+08',
+  '2026-02-16 18:00:00+08',
+  '2026-02-16 07:00:00+08',
+  '2026-02-16 19:00:00+08',
+  60,
+  60,
+  'cancelled',
+  (SELECT id FROM users WHERE email = 'alice.wong@fci.edu' LIMIT 1),
+  '2026-01-07 11:00:00+08',
+  'Day 2 sessions moved to online format due to speaker availability',
+  'Day 2: Technical workshops (now virtual)',
+  120
+);
+
+-- PENDING: Additional workshop at Seminar Room 1 (FOM venue)
+INSERT INTO venue_bookings (
+  id, event_id, venue_id, requester_user_id,
+  requested_start_datetime, requested_end_datetime,
+  setup_time, teardown_time,
+  status, remarks, expected_attendees
+)
+VALUES (
+  '1b777777-7777-7777-7777-777777777777',
+  'a6666666-6666-6666-6666-666666666666',
+  (SELECT id FROM venues WHERE code = 'SR-FOM-01' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'sarah.organizer@university.edu' LIMIT 1),
+  '2026-02-20 09:00:00+08',
+  '2026-02-20 12:00:00+08',
+  15,
+  10,
+  'pending',
+  'Cross-faculty collaboration workshop',
+  40
+);
+
+-- APPROVED: Quick meeting at Computer Lab 2
+INSERT INTO venue_bookings (
+  id, event_id, venue_id, requester_user_id,
+  requested_start_datetime, requested_end_datetime,
+  approved_start_datetime, approved_end_datetime,
+  setup_time, teardown_time,
+  status, approved_user_id, approved_at,
+  remarks, expected_attendees
+)
+VALUES (
+  '1b888888-8888-8888-8888-888888888888',
+  'a1111111-1111-1111-1111-111111111111',
+  (SELECT id FROM venues WHERE code = 'LAB-CS-02' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'john.student@student.edu' LIMIT 1),
+  '2026-01-16 10:00:00+08',
+  '2026-01-16 12:00:00+08',
+  '2026-01-16 10:00:00+08',
+  '2026-01-16 12:00:00+08',
+  10,
+  5,
+  'approved',
+  (SELECT id FROM users WHERE email = 'alice.wong@fci.edu' LIMIT 1),
+  '2026-01-08 08:00:00+08',
+  'Quick project team meeting',
+  15
+);
+
+-- ========================================
+-- Resource Requests (linked to venue bookings above)
+-- ========================================
+
+-- Resource request for Python Workshop (APPROVED venue)
+INSERT INTO resource_requests (
+  id, event_id, venue_booking_id, resource_id, requester_user_id,
+  requested_quantity, usage_start_datetime, usage_end_datetime,
+  status, approved_by, approved_at, approval_notes, setup_instructions
+)
+VALUES (
+  '12111111-1111-1111-1111-111111111111',
+  'c1111111-1111-1111-1111-111111111111',
+  '1b111111-1111-1111-1111-111111111111',
+  (SELECT id FROM resource_types WHERE code = 'PROJ-LCD' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'sarah.organizer@university.edu' LIMIT 1),
+  2,
+  '2026-01-22 08:30:00+08',
+  '2026-01-22 17:30:00+08',
+  'approved',
+  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1),
+  '2026-01-05 10:00:00+08',
+  'Approved. Projectors will be set up before event.',
+  'Need projectors for dual-screen coding demonstrations'
+);
+
+INSERT INTO resource_requests (
+  id, event_id, venue_booking_id, resource_id, requester_user_id,
+  requested_quantity, usage_start_datetime, usage_end_datetime,
+  status, approved_by, approved_at, setup_instructions
+)
+VALUES (
+  '12112222-2222-2222-2222-222222222222',
+  'c1111111-1111-1111-1111-111111111111',
+  '1b111111-1111-1111-1111-111111111111',
+  (SELECT id FROM resource_types WHERE code = 'MIC-WL' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'sarah.organizer@university.edu' LIMIT 1),
+  1,
+  '2026-01-22 08:30:00+08',
+  '2026-01-22 17:30:00+08',
+  'approved',
+  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1),
+  '2026-01-05 10:00:00+08',
+  'Wireless microphone for instructor'
+);
+
+INSERT INTO resource_requests (
+  id, event_id, venue_booking_id, resource_id, requester_user_id,
+  requested_quantity, usage_start_datetime, usage_end_datetime,
+  status, setup_instructions
+)
+VALUES (
+  '12113333-3333-3333-3333-333333333333',
+  'c1111111-1111-1111-1111-111111111111',
+  '1b111111-1111-1111-1111-111111111111',
+  (SELECT id FROM resource_types WHERE code = 'SNACK-PKG' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'sarah.organizer@university.edu' LIMIT 1),
+  2,
+  '2026-01-22 10:00:00+08',
+  '2026-01-22 15:00:00+08',
+  'pending',
+  'Morning and afternoon break refreshments for 50 people'
+);
+
+-- Resource requests for Cloud Computing Seminar (PENDING venue)
+INSERT INTO resource_requests (
+  id, event_id, venue_booking_id, resource_id, requester_user_id,
+  requested_quantity, usage_start_datetime, usage_end_datetime,
+  status, setup_instructions
+)
+VALUES (
+  '12221111-1111-1111-1111-111111111111',
+  'c2222222-2222-2222-2222-222222222222',
+  '1b222222-2222-2222-2222-222222222222',
+  (SELECT id FROM resource_types WHERE code = 'PROJ-LCD' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'emily.tan@student.edu' LIMIT 1),
+  1,
+  '2026-01-28 14:00:00+08',
+  '2026-01-28 17:00:00+08',
+  'pending',
+  'Projector for presentation slides'
+);
+
+INSERT INTO resource_requests (
+  id, event_id, venue_booking_id, resource_id, requester_user_id,
+  requested_quantity, usage_start_datetime, usage_end_datetime,
+  status, setup_instructions
+)
+VALUES (
+  '12222222-2222-2222-2222-222222222222',
+  'c2222222-2222-2222-2222-222222222222',
+  '1b222222-2222-2222-2222-222222222222',
+  (SELECT id FROM resource_types WHERE code = 'WB-MOBILE' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'emily.tan@student.edu' LIMIT 1),
+  1,
+  '2026-01-28 14:00:00+08',
+  '2026-01-28 17:00:00+08',
+  'pending',
+  'Whiteboard for architecture diagrams'
+);
+
+-- Resource requests for Student Orientation (Multi-day, APPROVED venue)
+INSERT INTO resource_requests (
+  id, event_id, venue_booking_id, resource_id, requester_user_id,
+  requested_quantity, usage_start_datetime, usage_end_datetime,
+  status, approved_by, approved_at, approval_notes, setup_instructions
+)
+VALUES (
+  '12331111-1111-1111-1111-111111111111',
+  'c3333333-3333-3333-3333-333333333333',
+  '1b333333-3333-3333-3333-333333333333',
+  (SELECT id FROM resource_types WHERE code = 'SOUND-PA' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'sarah.organizer@university.edu' LIMIT 1),
+  1,
+  '2026-02-01 07:00:00+08',
+  '2026-02-03 19:00:00+08',
+  'approved',
+  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1),
+  '2026-01-06 14:00:00+08',
+  'PA system approved for entire 3-day event',
+  'Full PA system for large audience presentations'
+);
+
+INSERT INTO resource_requests (
+  id, event_id, venue_booking_id, resource_id, requester_user_id,
+  requested_quantity, usage_start_datetime, usage_end_datetime,
+  status, approved_by, approved_at, setup_instructions
+)
+VALUES (
+  '12332222-2222-2222-2222-222222222222',
+  'c3333333-3333-3333-3333-333333333333',
+  '1b333333-3333-3333-3333-333333333333',
+  (SELECT id FROM resource_types WHERE code = 'PROJ-LCD' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'sarah.organizer@university.edu' LIMIT 1),
+  2,
+  '2026-02-01 07:00:00+08',
+  '2026-02-03 19:00:00+08',
+  'approved',
+  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1),
+  '2026-01-06 14:00:00+08',
+  'Two projectors for dual screen presentation'
+);
+
+INSERT INTO resource_requests (
+  id, event_id, venue_booking_id, resource_id, requester_user_id,
+  requested_quantity, usage_start_datetime, usage_end_datetime,
+  status, approved_by, approved_at, setup_instructions
+)
+VALUES (
+  '12333333-3333-3333-3333-333333333333',
+  'c3333333-3333-3333-3333-333333333333',
+  '1b333333-3333-3333-3333-333333333333',
+  (SELECT id FROM resource_types WHERE code = 'CHAIR-FOLD' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'sarah.organizer@university.edu' LIMIT 1),
+  50,
+  '2026-02-01 07:00:00+08',
+  '2026-02-03 19:00:00+08',
+  'approved',
+  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1),
+  '2026-01-06 14:00:00+08',
+  'Extra seating for overflow crowd'
+);
+
+-- Resource request for Game Dev Workshop resubmitted (PENDING venue)
+INSERT INTO resource_requests (
+  id, event_id, venue_booking_id, resource_id, requester_user_id,
+  requested_quantity, usage_start_datetime, usage_end_datetime,
+  status, setup_instructions
+)
+VALUES (
+  '12551111-1111-1111-1111-111111111111',
+  'c5555555-5555-5555-5555-555555555555',
+  '1b445555-5555-5555-5555-555555555555',
+  (SELECT id FROM resource_types WHERE code = 'PROJ-LCD' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'michael.kumar@student.edu' LIMIT 1),
+  1,
+  '2026-01-30 13:00:00+08',
+  '2026-01-30 17:00:00+08',
+  'pending',
+  'Projector for Unity demo and tutorials'
+);
+
+INSERT INTO resource_requests (
+  id, event_id, venue_booking_id, resource_id, requester_user_id,
+  requested_quantity, usage_start_datetime, usage_end_datetime,
+  status, setup_instructions
+)
+VALUES (
+  '12552222-2222-2222-2222-222222222222',
+  'c5555555-5555-5555-5555-555555555555',
+  '1b445555-5555-5555-5555-555555555555',
+  (SELECT id FROM resource_types WHERE code = 'MIC-WL' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'michael.kumar@student.edu' LIMIT 1),
+  1,
+  '2026-01-30 13:00:00+08',
+  '2026-01-30 17:00:00+08',
+  'pending',
+  'Wireless mic for presenter'
+);
+
+-- Resource requests for Data Science Conference Day 1 (APPROVED venue)
+INSERT INTO resource_requests (
+  id, event_id, venue_booking_id, resource_id, requester_user_id,
+  requested_quantity, usage_start_datetime, usage_end_datetime,
+  status, approved_by, approved_at, approval_notes, setup_instructions
+)
+VALUES (
+  '12661111-1111-1111-1111-111111111111',
+  'c4444444-4444-4444-4444-444444444444',
+  '1b555555-5555-5555-5555-555555555555',
+  (SELECT id FROM resource_types WHERE code = 'SOUND-PA' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'alice.wong@fci.edu' LIMIT 1),
+  1,
+  '2026-02-15 07:00:00+08',
+  '2026-02-15 19:00:00+08',
+  'approved',
+  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1),
+  '2026-01-07 13:00:00+08',
+  'Premium PA system reserved for conference',
+  'High-quality sound system for keynote speakers'
+);
+
+INSERT INTO resource_requests (
+  id, event_id, venue_booking_id, resource_id, requester_user_id,
+  requested_quantity, usage_start_datetime, usage_end_datetime,
+  status, approved_by, approved_at, setup_instructions
+)
+VALUES (
+  '12662222-2222-2222-2222-222222222222',
+  'c4444444-4444-4444-4444-444444444444',
+  '1b555555-5555-5555-5555-555555555555',
+  (SELECT id FROM resource_types WHERE code = 'LAPTOP-PRES' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'alice.wong@fci.edu' LIMIT 1),
+  2,
+  '2026-02-15 07:00:00+08',
+  '2026-02-15 19:00:00+08',
+  'approved',
+  (SELECT id FROM users WHERE email = 'alice.wong@fci.edu' LIMIT 1),
+  '2026-01-07 13:00:00+08',
+  'Backup laptops for speakers'
+);
+
+-- REJECTED resource request (excessive quantity)
+INSERT INTO resource_requests (
+  id, event_id, venue_booking_id, resource_id, requester_user_id,
+  requested_quantity, usage_start_datetime, usage_end_datetime,
+  status, approved_by, approved_at, rejection_reason, setup_instructions
+)
+VALUES (
+  '12663333-3333-3333-3333-333333333333',
+  'c4444444-4444-4444-4444-444444444444',
+  '1b555555-5555-5555-5555-555555555555',
+  (SELECT id FROM resource_types WHERE code = 'CHAIR-FOLD' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'alice.wong@fci.edu' LIMIT 1),
+  150,
+  '2026-02-15 07:00:00+08',
+  '2026-02-15 19:00:00+08',
+  'rejected',
+  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1),
+  '2026-01-07 13:00:00+08',
+  'Venue capacity is only 120 people. Requested quantity exceeds safety limits. Please reduce to maximum 20 extra chairs.',
+  'Extra chairs for overflow seating'
+);
+
+-- CANCELLED resource request
+INSERT INTO resource_requests (
+  id, event_id, venue_booking_id, resource_id, requester_user_id,
+  requested_quantity, usage_start_datetime, usage_end_datetime,
+  status, cancellation_reason, setup_instructions
+)
+VALUES (
+  '12771111-1111-1111-1111-111111111111',
+  'c3333333-3333-3333-3333-333333333333',
+  '1b333333-3333-3333-3333-333333333333',
+  (SELECT id FROM resource_types WHERE code = 'LED-SCREEN' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'sarah.organizer@university.edu' LIMIT 1),
+  1,
+  '2026-02-01 07:00:00+08',
+  '2026-02-03 19:00:00+08',
+  'cancelled',
+  'Changed to use venue''s built-in screens instead',
+  'LED screen for outdoor signage'
+);
+
+-- Additional pending requests
+INSERT INTO resource_requests (
+  id, event_id, venue_booking_id, resource_id, requester_user_id,
+  requested_quantity, usage_start_datetime, usage_end_datetime,
+  status, setup_instructions
+)
+VALUES (
+  '12881111-1111-1111-1111-111111111111',
+  'c1111111-1111-1111-1111-111111111111',
+  '1b111111-1111-1111-1111-111111111111',
+  (SELECT id FROM resource_types WHERE code = 'TABLE-6FT' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'sarah.organizer@university.edu' LIMIT 1),
+  10,
+  '2026-01-22 08:30:00+08',
+  '2026-01-22 17:30:00+08',
+  'pending',
+  'Tables for hands-on coding stations'
+);
+
+INSERT INTO resource_requests (
+  id, event_id, venue_booking_id, resource_id, requester_user_id,
+  requested_quantity, usage_start_datetime, usage_end_datetime,
+  status, setup_instructions
+)
+VALUES (
+  '12882222-2222-2222-2222-222222222222',
+  'a6666666-6666-6666-6666-666666666666',
+  '1b888888-8888-8888-8888-888888888888',
+  (SELECT id FROM resource_types WHERE code = 'WB-MOBILE' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'john.student@student.edu' LIMIT 1),
+  1,
+  '2026-01-16 10:00:00+08',
+  '2026-01-16 12:00:00+08',
+  'pending',
+  'Whiteboard for brainstorming session'
+);
+
+-- ========================================
+-- More Venue Availability Blocks for Calendar Testing
+-- ========================================
+
+-- Block during January (current month)
+INSERT INTO venue_availability_blocks (
+  venue_id, blocked_start_datetime, blocked_end_datetime,
+  reason, created_by
+)
+VALUES (
+  (SELECT id FROM venues WHERE code = 'LT-FCI-01' LIMIT 1),
+  '2026-01-18 08:00:00+08',
+  '2026-01-18 12:00:00+08',
+  'Emergency AV equipment upgrade',
+  (SELECT id FROM users WHERE email = 'alice.wong@fci.edu' LIMIT 1)
+);
+
+-- Block for cleaning
+INSERT INTO venue_availability_blocks (
+  venue_id, blocked_start_datetime, blocked_end_datetime,
+  reason, created_by
+)
+VALUES (
+  (SELECT id FROM venues WHERE code = 'LAB-CS-02' LIMIT 1),
+  '2026-01-24 18:00:00+08',
+  '2026-01-25 08:00:00+08',
+  'Deep cleaning and maintenance',
+  (SELECT id FROM users WHERE email = 'alice.wong@fci.edu' LIMIT 1)
+);
+
+-- Multi-day block
+INSERT INTO venue_availability_blocks (
+  venue_id, blocked_start_datetime, blocked_end_datetime,
+  reason, created_by
+)
+VALUES (
+  (SELECT id FROM venues WHERE code = 'CR-FOB-01' LIMIT 1),
+  '2026-02-08 00:00:00+08',
+  '2026-02-10 23:59:00+08',
+  'Faculty strategic planning retreat',
+  (SELECT id FROM users WHERE email = 'maria.garcia@fob.edu' LIMIT 1)
+);
+
+-- Block for different venue
+INSERT INTO venue_availability_blocks (
+  venue_id, blocked_start_datetime, blocked_end_datetime,
+  reason, created_by
+)
+VALUES (
+  (SELECT id FROM venues WHERE code = 'SR-FOM-01' LIMIT 1),
+  '2026-02-14 00:00:00+08',
+  '2026-02-14 23:59:00+08',
+  'Valentine''s Day staff event',
+  (SELECT id FROM users WHERE email = 'robert.chen@fom.edu' LIMIT 1)
+);
+
+-- Block for renovation
+INSERT INTO venue_availability_blocks (
+  venue_id, blocked_start_datetime, blocked_end_datetime,
+  reason, created_by
+)
+VALUES (
+  (SELECT id FROM venues WHERE code = 'STUDIO-FAC-01' LIMIT 1),
+  '2026-01-20 14:00:00+08',
+  '2026-01-20 18:00:00+08',
+  'Studio equipment upgrade',
+  (SELECT id FROM users WHERE email = 'alice.wong@fci.edu' LIMIT 1)
+);
+
+-- Block for exam preparation
+INSERT INTO venue_availability_blocks (
+  venue_id, blocked_start_datetime, blocked_end_datetime,
+  reason, created_by
+)
+VALUES (
+  (SELECT id FROM venues WHERE code = 'LT-FCI-01' LIMIT 1),
+  '2026-01-27 00:00:00+08',
+  '2026-01-27 23:59:00+08',
+  'Exam materials setup',
+  (SELECT id FROM users WHERE email = 'alice.wong@fci.edu' LIMIT 1)
+);
+
+-- Multi-day conference block
+INSERT INTO venue_availability_blocks (
+  venue_id, blocked_start_datetime, blocked_end_datetime,
+  reason, created_by
+)
+VALUES (
+  (SELECT id FROM venues WHERE code = 'CR-FOB-01' LIMIT 1),
+  '2026-02-20 08:00:00+08',
+  '2026-02-22 18:00:00+08',
+  'International business summit',
+  (SELECT id FROM users WHERE email = 'maria.garcia@fob.edu' LIMIT 1)
+);
+
+-- Block for maintenance
+INSERT INTO venue_availability_blocks (
+  venue_id, blocked_start_datetime, blocked_end_datetime,
+  reason, created_by
+)
+VALUES (
+  (SELECT id FROM venues WHERE code = 'LAB-CS-02' LIMIT 1),
+  '2026-02-05 12:00:00+08',
+  '2026-02-05 15:00:00+08',
+  'Network infrastructure upgrade',
+  (SELECT id FROM users WHERE email = 'alice.wong@fci.edu' LIMIT 1)
+);
+
+-- Block for special event
+INSERT INTO venue_availability_blocks (
+  venue_id, blocked_start_datetime, blocked_end_datetime,
+  reason, created_by
+)
+VALUES (
+  (SELECT id FROM venues WHERE code = 'SR-FOM-01' LIMIT 1),
+  '2026-01-15 10:00:00+08',
+  '2026-01-15 16:00:00+08',
+  'Dean''s meeting with department heads',
+  (SELECT id FROM users WHERE email = 'robert.chen@fom.edu' LIMIT 1)
+);

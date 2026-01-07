@@ -86,4 +86,12 @@ router.post('/:id/reject', AuthController.verifyToken, VenueBookingController.re
 // POST /api/venue-bookings/:id/reject-request
 router.post('/:id/reject-request', AuthController.verifyToken, VenueBookingController.rejectBookingRequest);
 
+// UC-18: Admin - Get all booking requests (all faculties)
+// GET /api/venue-bookings/admin/all-requests
+router.get('/admin/all-requests', AuthController.verifyToken, VenueBookingController.getAllBookingRequests);
+
+// UC-18: Admin - Override booking request (approve/reject/modify)
+// POST /api/venue-bookings/admin/:id/override
+router.post('/admin/:id/override', AuthController.verifyToken, VenueBookingController.adminOverrideBooking);
+
 module.exports = router;

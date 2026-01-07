@@ -3,6 +3,9 @@ const router = express.Router();
 const VenueAvailabilityController = require('../controllers/VenueAvailabilityController');
 const AuthController = require('../controllers/AuthController');
 
+// Get all blocked time slots (admin only) - MUST BE BEFORE '/' route
+router.get('/blocks', AuthController.verifyToken, VenueAvailabilityController.getAllBlocks);
+
 // Get all blocked time slots for faculty's venues
 router.get('/', AuthController.verifyToken, VenueAvailabilityController.getBlockedSlots);
 

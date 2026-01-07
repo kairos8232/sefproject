@@ -134,11 +134,11 @@ function HomePage() {
         color: '#95a5a6'
       },
       {
-        title: 'Venue Availability',
-        description: 'Manage venue availability',
-        icon: '🔒',
-        path: '/venue-availability',
-        color: '#d35400'
+        title: 'Booking & Requests Management',
+        description: 'Review and override all bookings and resource requests',
+        icon: '📋',
+        path: '/admin/booking-requests',
+        color: '#e74c3c'
       }
     ];
 

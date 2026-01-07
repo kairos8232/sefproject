@@ -352,6 +352,41 @@ class VenueBooking {
       if (error) throw error;
       return data;
     } catch (error) {
+      console.error('Error approving booking:', error);
+      throw error;
+    }
+  }
+
+  // Admin approve - can override any status (except cancelled)
+  static async adminApproveWithAdjustments(id, approverId, adjustments = {}) {
+    try {
+      const booking = await this.getById(id);
+      
+      // Only check if not cancelled
+      if (booking.status === 'cancelled') {
+        throw new Error('Cannot approve a cancelled booking');
+      }
+
+      const updateData = {
+        status: 'approved',
+        approved_user_id: approverId,
+        approved_at: new Date().toISOString(),
+        approval_notes: adjustments.approval_notes || null,
+        approved_start_datetime: adjustments.approved_start_datetime || booking.requested_start_datetime,
+        approved_end_datetime: adjustments.approved_end_datetime || booking.requested_end_datetime,
+        updated_at: new Date().toISOString()
+      };
+
+      const { data, error } = await supabase
+        .from('venue_bookings')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
       console.error('Error approving venue booking:', error);
       throw error;
     }
@@ -388,6 +423,49 @@ class VenueBooking {
       return data;
     } catch (error) {
       console.error('Error rejecting venue booking:', error);
+      throw error;
+    }
+  }
+
+  // Get all bookings with filters (for admin)
+  static async getAllWithFilters(filters = {}) {
+    try {
+      let query = supabase
+        .from('venue_bookings')
+        .select(`
+          *,
+          event:events(id, event_name, start_datetime, end_datetime, organizer:users(id, name, email)),
+          venue:venues(id, code, name, capacity, location, faculty_id, faculty:faculties(id, code, name)),
+          requester:users!requester_user_id(id, name, email),
+          approver:users!approved_user_id(id, name, email)
+        `);
+
+      // Apply status filter
+      if (filters.status) {
+        query = query.eq('status', filters.status);
+      }
+
+      // Apply venue filter
+      if (filters.venue_id) {
+        query = query.eq('venue_id', filters.venue_id);
+      }
+
+      // Apply faculty filter
+      if (filters.faculty_id) {
+        query = query.eq('venue.faculty_id', filters.faculty_id);
+      }
+
+      // Apply sorting
+      const sortBy = filters.sort_by || 'created_at';
+      const sortOrder = filters.sort_order === 'asc';
+      query = query.order(sortBy, { ascending: sortOrder });
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error getting venue bookings with filters:', error);
       throw error;
     }
   }

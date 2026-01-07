@@ -39,4 +39,10 @@ router.post('/:id/cancel', resourceRequestController.cancelResourceRequest);
 // Delete resource request
 router.delete('/:id', resourceRequestController.deleteResourceRequest);
 
+// UC-18: Admin - Get all resource requests
+router.get('/admin/all-requests', resourceRequestController.getAllResourceRequests);
+
+// UC-18: Admin - Override resource request (approve/reject/modify)
+router.post('/admin/:id/override', resourceRequestController.adminOverrideRequest);
+
 module.exports = router;

@@ -1,6 +1,40 @@
 const supabase = require('../config/supabase');
 
 class VenueAvailability {
+  // Get all blocked slots across all faculties (admin only)
+  static async getAllBlocks() {
+    try {
+      const { data, error } = await supabase
+        .from('venue_availability_blocks')
+        .select(`
+          *,
+          venue:venue_id (
+            id,
+            code,
+            name,
+            faculty_id,
+            faculty:faculty_id (
+              id,
+              name,
+              code
+            )
+          ),
+          creator:created_by (
+            id,
+            name,
+            email
+          )
+        `)
+        .order('blocked_start_datetime', { ascending: true });
+
+      if (error) throw error;
+      return data || [];
+    } catch (error) {
+      console.error('Error getting all blocked slots:', error);
+      throw error;
+    }
+  }
+
   // Get all blocked time slots for a venue
   static async getBlockedSlots(venueId) {
     try {

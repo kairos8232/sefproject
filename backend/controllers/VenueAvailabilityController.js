@@ -47,6 +47,32 @@ class VenueAvailabilityController {
     }
   };
 
+  // Get all blocked slots across all faculties (admin only)
+  getAllBlocks = async (req, res) => {
+    try {
+      const { role } = req.user;
+
+      // Only admins can access all blocks
+      if (role !== 'admin' && role !== 'administrator') {
+        return res.status(403).json({
+          error: 'Only admins can view all venue availability blocks'
+        });
+      }
+
+      const blocks = await VenueAvailability.getAllBlocks();
+
+      res.json({
+        success: true,
+        blocks
+      });
+    } catch (error) {
+      console.error('Get all blocked slots error:', error);
+      res.status(500).json({
+        error: 'Failed to fetch blocked time slots'
+      });
+    }
+  };
+
   // Create a new blocked time slot
   createBlock = async (req, res) => {
     try {

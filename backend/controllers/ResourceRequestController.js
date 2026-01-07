@@ -473,6 +473,160 @@ class ResourceRequestController {
       res.status(500).json({ error: 'Failed to delete resource request' });
     }
   }
+
+  // UC-18: Admin get all resource requests (across all resources)
+  getAllResourceRequests = async (req, res) => {
+    try {
+      const userRole = req.user.role;
+
+      // Only administrators can access this
+      if (userRole !== 'administrator') {
+        return res.status(403).json({ error: 'Only administrators can access all resource requests' });
+      }
+
+      // Get filters from query params
+      const filters = {
+        status: req.query.status,
+        resource_id: req.query.resource_id,
+        event_id: req.query.event_id,
+        search: req.query.search,
+        sort_by: req.query.sort_by || 'created_at',
+        sort_order: req.query.sort_order || 'desc'
+      };
+
+      const requests = await ResourceRequest.getAllWithFilters(filters);
+
+      res.json({
+        success: true,
+        count: requests.length,
+        requests
+      });
+    } catch (error) {
+      console.error('Get all resource requests error:', error);
+      res.status(500).json({ error: 'Failed to get resource requests' });
+    }
+  }
+
+  // UC-18: Admin override resource request (approve, reject, or modify)
+  adminOverrideRequest = async (req, res) => {
+    try {
+      const requestId = req.params.id;
+      const userId = req.user.userId;
+      const userRole = req.user.role;
+
+      // Only administrators can override
+      if (userRole !== 'administrator') {
+        return res.status(403).json({ error: 'Only administrators can override resource requests' });
+      }
+
+      const {
+        action, // 'approve', 'reject', 'modify'
+        status, // new status if modifying
+        approval_notes,
+        rejection_reason,
+        requested_quantity,
+        usage_start_datetime,
+        usage_end_datetime
+      } = req.body;
+
+      // Get current request
+      const request = await ResourceRequest.getById(requestId);
+
+      if (!request) {
+        return res.status(404).json({ error: 'Resource request not found' });
+      }
+
+      // Check if request was cancelled by requester
+      if (request.status === 'cancelled') {
+        return res.status(400).json({ error: 'Cannot override a cancelled request' });
+      }
+
+      let result;
+
+      if (action === 'approve') {
+        // Admin can approve even if already approved/rejected (override)
+        const finalQuantity = requested_quantity || request.requested_quantity;
+        const finalStartTime = usage_start_datetime || request.usage_start_datetime;
+        const finalEndTime = usage_end_datetime || request.usage_end_datetime;
+
+        // Check resource availability (required rule)
+        const availability = await Resource.checkAvailableQuantity(
+          request.resource_id,
+          finalStartTime,
+          finalEndTime,
+          requestId
+        );
+
+        if (availability.available < finalQuantity) {
+          return res.status(409).json({ 
+            error: 'Insufficient resource quantity available',
+            available: availability.available,
+            requested: finalQuantity
+          });
+        }
+
+        result = await ResourceRequest.approve(requestId, userId, approval_notes);
+
+      } else if (action === 'reject') {
+        // Admin can reject even if already approved (override)
+        if (!rejection_reason) {
+          return res.status(400).json({ error: 'Rejection reason is required' });
+        }
+
+        result = await ResourceRequest.reject(requestId, userId, rejection_reason);
+
+      } else if (action === 'modify') {
+        // Admin can modify request details
+        const updateData = {};
+
+        if (status) updateData.status = status;
+        if (approval_notes) updateData.approval_notes = approval_notes;
+        if (rejection_reason) updateData.rejection_reason = rejection_reason;
+        if (requested_quantity !== undefined) updateData.requested_quantity = requested_quantity;
+        if (usage_start_datetime) updateData.usage_start_datetime = usage_start_datetime;
+        if (usage_end_datetime) updateData.usage_end_datetime = usage_end_datetime;
+
+        // Validate resource availability if quantity or time changed
+        if (requested_quantity || usage_start_datetime || usage_end_datetime) {
+          const finalQuantity = requested_quantity || request.requested_quantity;
+          const finalStartTime = usage_start_datetime || request.usage_start_datetime;
+          const finalEndTime = usage_end_datetime || request.usage_end_datetime;
+
+          const availability = await Resource.checkAvailableQuantity(
+            request.resource_id,
+            finalStartTime,
+            finalEndTime,
+            requestId
+          );
+
+          if (availability.available < finalQuantity) {
+            return res.status(409).json({ 
+              error: 'Insufficient resource quantity available',
+              available: availability.available,
+              requested: finalQuantity
+            });
+          }
+        }
+
+        updateData.approved_by = userId;
+        updateData.approved_at = new Date().toISOString();
+
+        result = await ResourceRequest.update(requestId, updateData);
+
+      } else {
+        return res.status(400).json({ error: 'Invalid action. Must be approve, reject, or modify' });
+      }
+
+      res.json({
+        success: true,
+        message: `Resource request ${action}d successfully by administrator`,
+        request: result
+      });
+    } catch (error) {
+      console.error('Admin override resource request error:', error);
+      res.status(500).json({ error: 'Failed to override resource request' });
+    }
+  }
 }
 
 module.exports = new ResourceRequestController();

@@ -623,6 +623,196 @@ class VenueBookingController {
       res.status(500).json({ error: 'Failed to reject booking request' });
     }
   }
+
+  // UC-18: Admin get all booking requests (across all faculties)
+  getAllBookingRequests = async (req, res) => {
+    try {
+      const userRole = req.user.role;
+
+      // Only administrators can access this
+      if (userRole !== 'administrator') {
+        return res.status(403).json({ error: 'Only administrators can access all booking requests' });
+      }
+
+      // Get filters from query params
+      const filters = {
+        status: req.query.status,
+        venue_id: req.query.venue_id,
+        faculty_id: req.query.faculty_id,
+        search: req.query.search,
+        sort_by: req.query.sort_by || 'created_at',
+        sort_order: req.query.sort_order || 'desc'
+      };
+
+      const bookings = await VenueBooking.getAllWithFilters(filters);
+
+      res.json({
+        success: true,
+        count: bookings.length,
+        bookings
+      });
+    } catch (error) {
+      console.error('Get all booking requests error:', error);
+      res.status(500).json({ error: 'Failed to get booking requests' });
+    }
+  }
+
+  // UC-18: Admin override booking request (approve, reject, or modify)
+  adminOverrideBooking = async (req, res) => {
+    try {
+      const bookingId = req.params.id;
+      const userId = req.user.userId;
+      const userRole = req.user.role;
+
+      // Only administrators can override
+      if (userRole !== 'administrator') {
+        return res.status(403).json({ error: 'Only administrators can override bookings' });
+      }
+
+      const { 
+        action, // 'approve', 'reject', 'modify'
+        status, // new status if modifying
+        approval_notes,
+        rejection_reason,
+        approved_start_datetime,
+        approved_end_datetime,
+        venue_id,
+        setup_time,
+        teardown_time,
+        expected_attendees
+      } = req.body;
+
+      // Get current booking
+      const booking = await VenueBooking.getById(bookingId);
+
+      if (!booking) {
+        return res.status(404).json({ error: 'Booking not found' });
+      }
+
+      // Check if booking was cancelled by requester
+      if (booking.status === 'cancelled') {
+        return res.status(400).json({ error: 'Cannot override a cancelled booking' });
+      }
+
+      let result;
+
+      if (action === 'approve') {
+        // Admin can approve even if already approved/rejected (override)
+        const adjustments = {
+          approval_notes,
+          approved_start_datetime: approved_start_datetime || booking.requested_start_datetime,
+          approved_end_datetime: approved_end_datetime || booking.requested_end_datetime
+        };
+
+        // Check venue availability (required rule)
+        const finalVenueId = venue_id || booking.venue_id;
+        const finalStartTime = approved_start_datetime || booking.requested_start_datetime;
+        const finalEndTime = approved_end_datetime || booking.requested_end_datetime;
+
+        const isAvailable = await Venue.checkAvailability(
+          finalVenueId,
+          finalStartTime,
+          finalEndTime,
+          bookingId
+        );
+
+        if (!isAvailable) {
+          return res.status(409).json({ error: 'Venue is not available for the selected time' });
+        }
+
+        // Check venue capacity if expected_attendees provided (required rule)
+        if (expected_attendees) {
+          const venue = await Venue.getById(finalVenueId);
+          if (venue && venue.capacity < expected_attendees) {
+            return res.status(400).json({ 
+              error: `Venue capacity (${venue.capacity}) is insufficient for expected attendees (${expected_attendees})` 
+            });
+          }
+        }
+
+        result = await VenueBooking.adminApproveWithAdjustments(bookingId, userId, adjustments);
+        
+      } else if (action === 'reject') {
+        // Admin can reject even if already approved (override)
+        if (!rejection_reason) {
+          return res.status(400).json({ error: 'Rejection reason is required' });
+        }
+
+        result = await VenueBooking.rejectWithReason(bookingId, userId, rejection_reason);
+        
+      } else if (action === 'modify') {
+        // Admin can modify booking details
+        const updateData = {};
+
+        if (status) updateData.status = status;
+        if (approval_notes) updateData.approval_notes = approval_notes;
+        if (rejection_reason) updateData.rejection_reason = rejection_reason;
+        if (approved_start_datetime) updateData.approved_start_datetime = approved_start_datetime;
+        if (approved_end_datetime) updateData.approved_end_datetime = approved_end_datetime;
+        if (venue_id) updateData.venue_id = venue_id;
+        if (setup_time !== undefined) updateData.setup_time = setup_time;
+        if (teardown_time !== undefined) updateData.teardown_time = teardown_time;
+        if (expected_attendees !== undefined) updateData.expected_attendees = expected_attendees;
+
+        // Validate venue availability if venue or time changed
+        if (venue_id || approved_start_datetime || approved_end_datetime) {
+          const finalVenueId = venue_id || booking.venue_id;
+          const finalStartTime = approved_start_datetime || booking.approved_start_datetime || booking.requested_start_datetime;
+          const finalEndTime = approved_end_datetime || booking.approved_end_datetime || booking.requested_end_datetime;
+
+          // Only check if venue or time actually changed
+          const venueChanged = venue_id && venue_id !== booking.venue_id;
+          const startChanged = approved_start_datetime && approved_start_datetime !== (booking.approved_start_datetime || booking.requested_start_datetime);
+          const endChanged = approved_end_datetime && approved_end_datetime !== (booking.approved_end_datetime || booking.requested_end_datetime);
+
+          if (venueChanged || startChanged || endChanged) {
+            const isAvailable = await Venue.checkAvailability(
+              finalVenueId,
+              finalStartTime,
+              finalEndTime,
+              bookingId
+            );
+
+            if (!isAvailable) {
+              return res.status(409).json({ error: 'Venue is not available for the selected time' });
+            }
+          }
+        }
+
+        // Check capacity if attendees or venue changed
+        if (expected_attendees || venue_id) {
+          const finalVenueId = venue_id || booking.venue_id;
+          const finalAttendees = expected_attendees || booking.expected_attendees;
+          
+          if (finalAttendees) {
+            const venue = await Venue.getById(finalVenueId);
+            if (venue && venue.capacity < finalAttendees) {
+              return res.status(400).json({ 
+                error: `Venue capacity (${venue.capacity}) is insufficient for expected attendees (${finalAttendees})` 
+              });
+            }
+          }
+        }
+
+        updateData.approved_user_id = userId;
+        updateData.approved_at = new Date().toISOString();
+
+        result = await VenueBooking.update(bookingId, updateData);
+        
+      } else {
+        return res.status(400).json({ error: 'Invalid action. Must be approve, reject, or modify' });
+      }
+
+      res.json({
+        success: true,
+        message: `Booking ${action}d successfully by administrator`,
+        booking: result
+      });
+    } catch (error) {
+      console.error('Admin override booking error:', error);
+      res.status(500).json({ error: 'Failed to override booking' });
+    }
+  }
 }
 
 module.exports = new VenueBookingController();

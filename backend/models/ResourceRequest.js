@@ -213,6 +213,55 @@ class ResourceRequest {
       throw error;
     }
   }
+
+  // Get all resource requests with filters (for admin)
+  static async getAllWithFilters(filters = {}) {
+    try {
+      let query = supabase
+        .from('resource_requests')
+        .select(`
+          *,
+          event:events(id, event_name, start_datetime, organizer:users(id, name, email)),
+          venue_booking:venue_bookings(id, venue:venues(id, code, name)),
+          resource:resource_types(id, code, name, category:resource_categories(id, code, name)),
+          requester:users!requester_user_id(id, name, email),
+          approver:users!approved_by(id, name, email)
+        `);
+
+      // Apply status filter
+      if (filters.status) {
+        query = query.eq('status', filters.status);
+      }
+
+      // Apply resource filter
+      if (filters.resource_id) {
+        query = query.eq('resource_id', filters.resource_id);
+      }
+
+      // Apply event filter
+      if (filters.event_id) {
+        query = query.eq('event_id', filters.event_id);
+      }
+
+      // Apply search filter
+      if (filters.search) {
+        query = query.ilike('event.event_name', `%${filters.search}%`);
+      }
+
+      // Apply sorting
+      const sortBy = filters.sort_by || 'created_at';
+      const sortOrder = filters.sort_order === 'asc';
+      query = query.order(sortBy, { ascending: sortOrder });
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error getting resource requests with filters:', error);
+      throw error;
+    }
+  }
 }
 
 module.exports = ResourceRequest;

@@ -237,12 +237,6 @@ function VenueAvailabilityPage() {
       return (bookingStart <= dayEnd && bookingEnd >= dayStart);
     });
     
-    // Debug log for first day of month
-    if (day === 1 && selectedVenueBookings.length > 0) {
-      console.log(`Venue ${selectedVenue.id} has ${selectedVenueBookings.length} total approved bookings`);
-      console.log('Sample booking:', selectedVenueBookings[0]);
-    }
-    
     return dayBookings;
   };
 
@@ -425,18 +419,31 @@ function VenueAvailabilityPage() {
                         <div className="day-indicators">
                           {dayBookings.map(booking => {
                             let eventStart = new Date(booking.approved_start_datetime || booking.requested_start_datetime);
+                            let eventEnd = new Date(booking.approved_end_datetime || booking.requested_end_datetime);
                             
-                            // Include setup time in the display
+                            // Include setup time and teardown time in the display
                             if (booking.setup_time) {
                               eventStart = new Date(eventStart.getTime() - booking.setup_time * 60 * 1000);
                             }
+                            if (booking.teardown_time) {
+                              eventEnd = new Date(eventEnd.getTime() + booking.teardown_time * 60 * 1000);
+                            }
                             
                             const currentDay = new Date(year, month, day);
+                            currentDay.setHours(0, 0, 0, 0);
                             const startsBeforeToday = eventStart < currentDay;
                             
-                            const displayTime = startsBeforeToday 
+                            const nextDay = new Date(year, month, day + 1);
+                            nextDay.setHours(0, 0, 0, 0);
+                            const endsAfterToday = eventEnd >= nextDay;
+                            
+                            const displayStartTime = startsBeforeToday 
                               ? '00:00' 
                               : eventStart.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+                            
+                            const displayEndTime = endsAfterToday
+                              ? '23:59'
+                              : eventEnd.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
                             
                             const eventName = booking.event?.event_name || 'N/A';
                             return (
@@ -444,8 +451,8 @@ function VenueAvailabilityPage() {
                                 key={booking.id}
                                 className="booking-bar-indicator"
                               >
-                                <span className="bar-time">{displayTime}</span>
-                                <span className="bar-name">{eventName}</span>
+                                <div style={{ whiteSpace: 'nowrap' }}>{displayStartTime} - {displayEndTime}</div>
+                                <div>{eventName}</div>
                               </div>
                             );
                           })}
