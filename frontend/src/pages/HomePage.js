@@ -127,6 +127,13 @@ function HomePage() {
         color: '#3498db'
       },
       {
+        title: 'Resource Catalogue',
+        description: 'Manage resource categories and types',
+        icon: '📦',
+        path: '/admin/resources',
+        color: '#16a085'
+      },
+      {
         title: 'Venue Availability',
         description: 'Manage venue availability',
         icon: '🔒',

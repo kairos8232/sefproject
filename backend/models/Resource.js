@@ -1,62 +1,85 @@
 const supabase = require('../config/supabase');
 
 class Resource {
-  // Get all active resources
+  // Get all active resource types
   static async getAll() {
     try {
       const { data, error } = await supabase
-        .from('resources')
+        .from('resource_types')
         .select(`
           *,
+          category:resource_categories!inner(id, code, name),
           manager:users!managed_by(id, name, email)
         `)
         .eq('status', 'active')
-        .order('category', { ascending: true })
         .order('name', { ascending: true });
 
       if (error) throw error;
-      return data;
+      
+      // Transform data to include category info at top level
+      return (data || []).map(item => ({
+        ...item,
+        category_id: item.category?.id,
+        category_code: item.category?.code,
+        category_name: item.category?.name
+      }));
     } catch (error) {
       console.error('Error getting resources:', error);
       throw error;
     }
   }
 
-  // Get resource by ID
+  // Get resource type by ID
   static async getById(id) {
     try {
       const { data, error } = await supabase
-        .from('resources')
+        .from('resource_types')
         .select(`
           *,
+          category:resource_categories!inner(id, code, name),
           manager:users!managed_by(id, name, email)
         `)
         .eq('id', id)
         .single();
 
       if (error) throw error;
-      return data;
+      
+      if (!data) return null;
+      
+      return {
+        ...data,
+        category_id: data.category?.id,
+        category_code: data.category?.code,
+        category_name: data.category?.name
+      };
     } catch (error) {
       console.error('Error getting resource by ID:', error);
       throw error;
     }
   }
 
-  // Get resources by category
-  static async getByCategory(category) {
+  // Get resource types by category ID
+  static async getByCategory(categoryId) {
     try {
       const { data, error } = await supabase
-        .from('resources')
+        .from('resource_types')
         .select(`
           *,
+          category:resource_categories!inner(id, code, name),
           manager:users!managed_by(id, name, email)
         `)
         .eq('status', 'active')
-        .eq('category', category)
+        .eq('category_id', categoryId)
         .order('name', { ascending: true });
 
       if (error) throw error;
-      return data;
+      
+      return (data || []).map(item => ({
+        ...item,
+        category_id: item.category?.id,
+        category_code: item.category?.code,
+        category_name: item.category?.name
+      }));
     } catch (error) {
       console.error('Error getting resources by category:', error);
       throw error;
@@ -113,23 +136,24 @@ class Resource {
     }
   }
 
-  // Get available resources for a specific time range with quantities
-  static async getAvailableResources(startDatetime, endDatetime, category = null) {
+  // Get available resource types for a specific time range with quantities
+  static async getAvailableResources(startDatetime, endDatetime, categoryId = null) {
     try {
-      // Get all active resources
+      // Get all active resource types
       let query = supabase
-        .from('resources')
+        .from('resource_types')
         .select(`
           *,
+          category:resource_categories!inner(id, code, name),
           manager:users!managed_by(id, name, email)
         `)
         .eq('status', 'active');
 
-      if (category) {
-        query = query.eq('category', category);
+      if (categoryId) {
+        query = query.eq('category_id', categoryId);
       }
 
-      const { data: resources, error } = await query.order('category', { ascending: true }).order('name', { ascending: true });
+      const { data: resources, error } = await query.order('name', { ascending: true });
 
       if (error) throw error;
 
@@ -142,7 +166,10 @@ class Resource {
         resources.map(async (resource) => {
           const availability = await this.checkAvailableQuantity(resource.id, startDatetime, endDatetime);
           return { 
-            ...resource, 
+            ...resource,
+            category_id: resource.category?.id,
+            category_code: resource.category?.code,
+            category_name: resource.category?.name,
             availableQuantity: availability.available,
             allocatedQuantity: availability.allocated
           };

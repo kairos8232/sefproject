@@ -27,7 +27,8 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 DROP TABLE IF EXISTS event_feedbacks CASCADE;
 DROP TABLE IF EXISTS venue_availability_blocks CASCADE;
 DROP TABLE IF EXISTS resource_requests CASCADE;
-DROP TABLE IF EXISTS resources CASCADE;
+DROP TABLE IF EXISTS resource_types CASCADE;
+DROP TABLE IF EXISTS resource_categories CASCADE;
 DROP TABLE IF EXISTS event_registration_responses CASCADE;
 DROP TABLE IF EXISTS event_registration_fields CASCADE;
 DROP TABLE IF EXISTS event_participation CASCADE;
@@ -285,7 +286,51 @@ CREATE INDEX idx_registration_responses_participation_id ON event_registration_r
 CREATE INDEX idx_registration_responses_field_id ON event_registration_responses(field_id);
 
 -- ========================================
--- Table: resources
+-- Table: resource_categories
+-- Stores resource categories (Audio Visual, Furniture, IT Equipment, etc.)
+-- ========================================
+CREATE TABLE resource_categories (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  code VARCHAR(50) UNIQUE NOT NULL, -- e.g., 'AV', 'FURN', 'IT'
+  name VARCHAR(255) NOT NULL,
+  description TEXT,
+  status VARCHAR(50) NOT NULL DEFAULT 'active', -- 'active', 'inactive'
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Indexes for resource_categories
+CREATE INDEX idx_resource_categories_code ON resource_categories(code);
+CREATE INDEX idx_resource_categories_status ON resource_categories(status);
+
+-- ========================================
+-- Table: resource_types
+-- Stores resource types (Projector, Microphone, Tables, etc.)
+-- ========================================
+CREATE TABLE resource_types (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  category_id UUID NOT NULL REFERENCES resource_categories(id) ON DELETE RESTRICT,
+  code VARCHAR(50) UNIQUE NOT NULL, -- e.g., 'PROJ-HD', 'MIC-WL', 'TBL-RND'
+  name VARCHAR(255) NOT NULL,
+  description TEXT,
+  total_quantity INTEGER NOT NULL DEFAULT 0, -- Total number available
+  available_quantity INTEGER NOT NULL DEFAULT 0, -- Currently available
+  unit VARCHAR(50), -- 'pieces', 'sets', 'units'
+  status VARCHAR(50) NOT NULL DEFAULT 'active', -- 'active', 'inactive'
+  managed_by UUID REFERENCES users(id) ON DELETE SET NULL, -- Faculty manager or admin
+  notes TEXT, -- Usage restrictions, special instructions
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Indexes for resource_types
+CREATE INDEX idx_resource_types_category_id ON resource_types(category_id);
+CREATE INDEX idx_resource_types_code ON resource_types(code);
+CREATE INDEX idx_resource_types_status ON resource_types(status);
+CREATE INDEX idx_resource_types_managed_by ON resource_types(managed_by);
+
+-- ========================================
+-- Table: resources (LEGACY - kept for backward compatibility)
 -- Stores available campus resources (equipment, furniture, etc.)
 -- ========================================
 CREATE TABLE resources (
@@ -311,12 +356,13 @@ CREATE INDEX idx_resources_managed_by ON resources(managed_by);
 -- ========================================
 -- Table: resource_requests
 -- Stores resource requests for events
+-- Updated to use resource_types instead of legacy resources table
 -- ========================================
 CREATE TABLE resource_requests (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
   venue_booking_id UUID NOT NULL REFERENCES venue_bookings(id) ON DELETE CASCADE,
-  resource_id UUID NOT NULL REFERENCES resources(id) ON DELETE CASCADE,
+  resource_id UUID NOT NULL REFERENCES resource_types(id) ON DELETE CASCADE,
   requester_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   requested_quantity INTEGER NOT NULL,
   usage_start_datetime TIMESTAMP WITH TIME ZONE NOT NULL,
@@ -356,6 +402,8 @@ ALTER TABLE event_invitations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE event_participation ENABLE ROW LEVEL SECURITY;
 ALTER TABLE event_registration_fields ENABLE ROW LEVEL SECURITY;
 ALTER TABLE event_registration_responses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE resource_categories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE resource_types ENABLE ROW LEVEL SECURITY;
 ALTER TABLE resources ENABLE ROW LEVEL SECURITY;
 ALTER TABLE resource_requests ENABLE ROW LEVEL SECURITY;
 
@@ -521,7 +569,41 @@ CREATE POLICY "Backend can delete event_invitations" ON event_invitations
   FOR DELETE
   USING (true);
 
--- Backend can manage all resources
+-- Backend can manage all resource_categories
+CREATE POLICY "Backend can read all resource_categories" ON resource_categories
+  FOR SELECT
+  USING (true);
+
+CREATE POLICY "Backend can insert resource_categories" ON resource_categories
+  FOR INSERT
+  WITH CHECK (true);
+
+CREATE POLICY "Backend can update resource_categories" ON resource_categories
+  FOR UPDATE
+  USING (true);
+
+CREATE POLICY "Backend can delete resource_categories" ON resource_categories
+  FOR DELETE
+  USING (true);
+
+-- Backend can manage all resource_types
+CREATE POLICY "Backend can read all resource_types" ON resource_types
+  FOR SELECT
+  USING (true);
+
+CREATE POLICY "Backend can insert resource_types" ON resource_types
+  FOR INSERT
+  WITH CHECK (true);
+
+CREATE POLICY "Backend can update resource_types" ON resource_types
+  FOR UPDATE
+  USING (true);
+
+CREATE POLICY "Backend can delete resource_types" ON resource_types
+  FOR DELETE
+  USING (true);
+
+-- Backend can manage all resources (legacy)
 CREATE POLICY "Backend can read all resources" ON resources
   FOR SELECT
   USING (true);
@@ -968,7 +1050,152 @@ SELECT
 WHERE EXISTS (SELECT 1 FROM events WHERE event_name = 'Alumni Meetup');
 
 -- ========================================
--- Sample Resources Data
+-- Sample Resource Categories Data
+-- ========================================
+INSERT INTO resource_categories (code, name, description, status) VALUES
+  ('AV', 'Audio Visual Equipment', 'Projectors, microphones, speakers, and other presentation equipment', 'active'),
+  ('FURN', 'Furniture', 'Tables, chairs, and other furniture items', 'active'),
+  ('IT', 'IT Equipment', 'Laptops, computers, and other IT devices', 'active'),
+  ('CATER', 'Catering', 'Food and beverage services', 'active'),
+  ('OTHER', 'Other Resources', 'Miscellaneous resources', 'active');
+
+-- ========================================
+-- Sample Resource Types Data
+-- ========================================
+INSERT INTO resource_types (category_id, code, name, description, total_quantity, available_quantity, unit, status, managed_by)
+SELECT 
+  (SELECT id FROM resource_categories WHERE code = 'AV' LIMIT 1),
+  'PROJ-LCD',
+  'LCD Projector',
+  'Full HD projector with HDMI and VGA inputs',
+  10,
+  10,
+  'units',
+  'active',
+  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1)
+WHERE EXISTS (SELECT 1 FROM resource_categories WHERE code = 'AV');
+
+INSERT INTO resource_types (category_id, code, name, description, total_quantity, available_quantity, unit, status, managed_by)
+SELECT 
+  (SELECT id FROM resource_categories WHERE code = 'AV' LIMIT 1),
+  'MIC-WL',
+  'Wireless Microphone Set',
+  'Wireless microphone with receiver and batteries',
+  8,
+  8,
+  'sets',
+  'active',
+  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1)
+WHERE EXISTS (SELECT 1 FROM resource_categories WHERE code = 'AV');
+
+INSERT INTO resource_types (category_id, code, name, description, total_quantity, available_quantity, unit, status, managed_by)
+SELECT 
+  (SELECT id FROM resource_categories WHERE code = 'AV' LIMIT 1),
+  'SOUND-PA',
+  'PA Sound System',
+  'Complete sound system with speakers and mixer',
+  4,
+  4,
+  'sets',
+  'active',
+  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1)
+WHERE EXISTS (SELECT 1 FROM resource_categories WHERE code = 'AV');
+
+INSERT INTO resource_types (category_id, code, name, description, total_quantity, available_quantity, unit, status, managed_by)
+SELECT 
+  (SELECT id FROM resource_categories WHERE code = 'AV' LIMIT 1),
+  'LED-SCREEN',
+  'Portable LED Screen',
+  'Large LED display screen for outdoor events',
+  2,
+  2,
+  'units',
+  'active',
+  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1)
+WHERE EXISTS (SELECT 1 FROM resource_categories WHERE code = 'AV');
+
+INSERT INTO resource_types (category_id, code, name, description, total_quantity, available_quantity, unit, status, managed_by, notes)
+SELECT 
+  (SELECT id FROM resource_categories WHERE code = 'AV' LIMIT 1),
+  'CAM-VIDEO',
+  'Video Camera Kit',
+  'Professional video camera with tripod',
+  3,
+  3,
+  'kits',
+  'active',
+  (SELECT id FROM users WHERE email = 'james.lee@fac.edu' LIMIT 1),
+  'FAC students only - requires training certification'
+WHERE EXISTS (SELECT 1 FROM resource_categories WHERE code = 'AV');
+
+INSERT INTO resource_types (category_id, code, name, description, total_quantity, available_quantity, unit, status, managed_by)
+SELECT 
+  (SELECT id FROM resource_categories WHERE code = 'FURN' LIMIT 1),
+  'CHAIR-FOLD',
+  'Folding Chairs',
+  'Portable folding chairs for events',
+  200,
+  200,
+  'pieces',
+  'active',
+  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1)
+WHERE EXISTS (SELECT 1 FROM resource_categories WHERE code = 'FURN');
+
+INSERT INTO resource_types (category_id, code, name, description, total_quantity, available_quantity, unit, status, managed_by)
+SELECT 
+  (SELECT id FROM resource_categories WHERE code = 'FURN' LIMIT 1),
+  'TABLE-6FT',
+  'Folding Tables (6ft)',
+  '6-foot folding tables',
+  50,
+  50,
+  'pieces',
+  'active',
+  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1)
+WHERE EXISTS (SELECT 1 FROM resource_categories WHERE code = 'FURN');
+
+INSERT INTO resource_types (category_id, code, name, description, total_quantity, available_quantity, unit, status, managed_by)
+SELECT 
+  (SELECT id FROM resource_categories WHERE code = 'FURN' LIMIT 1),
+  'WB-MOBILE',
+  'Whiteboard (Mobile)',
+  'Large mobile whiteboard with markers',
+  15,
+  15,
+  'units',
+  'active',
+  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1)
+WHERE EXISTS (SELECT 1 FROM resource_categories WHERE code = 'FURN');
+
+INSERT INTO resource_types (category_id, code, name, description, total_quantity, available_quantity, unit, status, managed_by)
+SELECT 
+  (SELECT id FROM resource_categories WHERE code = 'IT' LIMIT 1),
+  'LAPTOP-PRES',
+  'Laptop (Presentation)',
+  'Laptop pre-loaded with presentation software',
+  5,
+  5,
+  'units',
+  'active',
+  (SELECT id FROM users WHERE email = 'alice.wong@fci.edu' LIMIT 1)
+WHERE EXISTS (SELECT 1 FROM resource_categories WHERE code = 'IT');
+
+INSERT INTO resource_types (category_id, code, name, description, total_quantity, available_quantity, unit, status, managed_by, notes)
+SELECT 
+  (SELECT id FROM resource_categories WHERE code = 'CATER' LIMIT 1),
+  'SNACK-PKG',
+  'Catering Package (Snacks)',
+  'Light refreshments package for events',
+  20,
+  20,
+  'packages',
+  'active',
+  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1),
+  'Requires 48 hours advance notice'
+WHERE EXISTS (SELECT 1 FROM resource_categories WHERE code = 'CATER');
+
+-- ========================================
+-- Sample Resources Data (LEGACY - for backward compatibility)
 -- ========================================
 INSERT INTO resources (name, category, description, total_quantity, available_quantity, unit, status, managed_by)
 SELECT 

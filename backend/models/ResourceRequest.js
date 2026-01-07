@@ -10,7 +10,7 @@ class ResourceRequest {
           *,
           event:events(id, event_name, start_datetime, end_datetime, organizer_id),
           venue_booking:venue_bookings(id, venue:venues(name, code)),
-          resource:resources(id, name, category, unit),
+          resource:resource_types(id, name, code, unit, category:resource_categories(name)),
           requester:users!requester_user_id(id, name, email),
           approver:users!approved_by(id, name, email)
         `)
@@ -33,7 +33,7 @@ class ResourceRequest {
           *,
           event:events(id, event_name, start_datetime, end_datetime, organizer_id),
           venue_booking:venue_bookings(id, venue:venues(name, code)),
-          resource:resources(id, name, category, unit, total_quantity),
+          resource:resource_types(id, name, code, unit, total_quantity, available_quantity, category:resource_categories(name)),
           requester:users!requester_user_id(id, name, email),
           approver:users!approved_by(id, name, email)
         `)
@@ -57,7 +57,7 @@ class ResourceRequest {
           *,
           event:events(id, event_name, start_datetime, end_datetime),
           venue_booking:venue_bookings(id, venue:venues(name, code)),
-          resource:resources(id, name, category, unit),
+          resource:resource_types(id, name, code, unit, category:resource_categories(name)),
           requester:users!requester_user_id(id, name, email),
           approver:users!approved_by(id, name, email)
         `)
@@ -81,7 +81,7 @@ class ResourceRequest {
           *,
           event:events(id, event_name, start_datetime, end_datetime),
           venue_booking:venue_bookings(id, venue:venues(name, code)),
-          resource:resources(id, name, category, unit),
+          resource:resource_types(id, name, code, unit, category:resource_categories(name)),
           requester:users!requester_user_id(id, name, email),
           approver:users!approved_by(id, name, email)
         `)
