@@ -318,3 +318,54 @@
 .ed-organizer-notice a:hover {
   color: #004499;
 }
+/* Venue and Resources Sections */
+.ed-venue-section,
+.ed-resources-section {
+  background-color: #f8f9fa;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px;
+  margin-top: 20px;
+}
+
+.ed-venue-section h3,
+.ed-resources-section h3 {
+  margin: 0 0 15px 0;
+  color: #667eea;
+  font-size: 18px;
+}
+
+.ed-venue-details p {
+  margin: 8px 0;
+  color: #333;
+  font-size: 14px;
+}
+
+.ed-venue-details strong {
+  color: #555;
+  font-weight: 600;
+}
+
+.ed-resources-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 15px;
+}
+
+.ed-resource-item {
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 15px;
+}
+
+.ed-resource-item p {
+  margin: 6px 0;
+  font-size: 13px;
+  color: #555;
+}
+
+.ed-resource-item strong {
+  color: #667eea;
+  font-size: 14px;
+}

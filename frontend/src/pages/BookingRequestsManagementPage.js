@@ -115,9 +115,9 @@ const BookingRequestsManagementPage = () => {
           }
         });
         const resourcesData = await resourcesResponse.json();
-        setResources(resourcesData || []);
-        if (resourcesData && resourcesData.length > 0 && !selectedResource) {
-          setSelectedResource(resourcesData[0].id);
+        setResources(resourcesData.resourceTypes || []);
+        if (resourcesData.resourceTypes && resourcesData.resourceTypes.length > 0 && !selectedResource) {
+          setSelectedResource(resourcesData.resourceTypes[0].id);
         }
       } catch (err) {
         console.error('Failed to load venues/resources:', err);

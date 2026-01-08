@@ -3,11 +3,16 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import eventService from '../services/eventService';
 import participationService from '../services/participationService';
 import registrationFieldService from '../services/registrationFieldService';
+import venueBookingService from '../services/venueBookingService';
+import resourceRequestService from '../services/resourceRequestService';
+import authService from '../services/authService';
 import { formatDateTime } from '../utils/dateUtils';
 import './EventDetailsPage.css';
 
 function EventDetailsPage() {
   const [event, setEvent] = useState(null);
+  const [venueBooking, setVenueBooking] = useState(null);
+  const [resources, setResources] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [participationStatus, setParticipationStatus] = useState(null);
@@ -28,6 +33,30 @@ function EventDetailsPage() {
       setError('');
       const data = await eventService.getEventById(id);
       setEvent(data.event);
+      
+      const currentUser = authService.getCurrentUser();
+      const isCreator = data.event.organizer_id === currentUser.id;
+      
+      // If user is the creator, load venue booking and resources
+      if (isCreator) {
+        try {
+          const bookingResponse = await venueBookingService.getBookingsByEvent(id);
+          const approvedBooking = bookingResponse.bookings?.find(b => b.status === 'approved');
+          if (approvedBooking) {
+            setVenueBooking(approvedBooking);
+          }
+        } catch (err) {
+          console.error('Error loading venue booking:', err);
+        }
+        
+        try {
+          const resourceResponse = await resourceRequestService.getByEvent(id);
+          const approvedResources = resourceResponse.requests?.filter(r => r.status === 'approved') || [];
+          setResources(approvedResources);
+        } catch (err) {
+          console.error('Error loading resources:', err);
+        }
+      }
       
       // Load participation status
       try {
@@ -247,6 +276,35 @@ function EventDetailsPage() {
           <p><strong>Event ID:</strong> {event.id}</p>
           <p><strong>Created:</strong> {formatDateTime(event.created_at)}</p>
         </div>
+
+        {/* Venue and Resources Section - Only for event creator */}
+        {isManagementView && venueBooking && (
+          <div className="ed-venue-section">
+            <h3>Approved Venue Booking</h3>
+            <div className="ed-venue-details">
+              <p><strong>Venue:</strong> {venueBooking.venue?.name || 'N/A'} ({venueBooking.venue?.code || 'N/A'})</p>
+              <p><strong>Location:</strong> {venueBooking.venue?.location || 'N/A'}</p>
+              <p><strong>Capacity:</strong> {venueBooking.venue?.capacity || 'N/A'} people</p>
+              <p><strong>Period:</strong> {formatDateTime(venueBooking.requested_start_datetime)} - {formatDateTime(venueBooking.requested_end_datetime)}</p>
+            </div>
+          </div>
+        )}
+
+        {isManagementView && resources.length > 0 && (
+          <div className="ed-resources-section">
+            <h3>Approved Resources</h3>
+            <div className="ed-resources-list">
+              {resources.map((resource) => (
+                <div key={resource.id} className="ed-resource-item">
+                  <p><strong>{resource.resource?.name || 'N/A'}</strong></p>
+                  <p>Quantity: {resource.requested_quantity} {resource.resource?.unit || 'units'}</p>
+                  <p>Category: {resource.resource?.category?.name || 'N/A'}</p>
+                  <p>Period: {formatDateTime(resource.usage_start_datetime)} - {formatDateTime(resource.usage_end_datetime)}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Participation Actions - Only show if NOT in management view */}
         {!isManagementView && (event.status === 'upcoming' || event.status === 'ongoing') && (

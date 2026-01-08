@@ -55,33 +55,33 @@ function MyVenueRequestsPage() {
   };
 
   const getStatusBadgeClass = (status) => {
-    return `status-${status}`;
+    return `mvr-status-${status}`;
   };
 
   if (loading) {
     return (
       <div className="my-venue-requests-container">
-        <div className="loading">Loading venue requests...</div>
+        <div className="mvr-loading">Loading venue requests...</div>
       </div>
     );
   }
 
   return (
     <div className="my-venue-requests-container">
-      <div className="my-venue-requests-header">
+      <div className="mvr-header">
         <div>
           <h1>My Venue Requests</h1>
           <p>Manage your venue booking requests</p>
         </div>
-        <button onClick={() => navigate('/home')} className="back-button">
+        <button onClick={() => navigate('/home')} className="mvr-back-button">
           Back to Home
         </button>
       </div>
 
-      {error && <div className="error-message">{error}</div>}
+      {error && <div className="mvr-error-message">{error}</div>}
 
       {/* Filter Section */}
-      <div className="filter-section">
+      <div className="mvr-filter-section">
         <label>Filter by status: </label>
         <select value={filter} onChange={(e) => setFilter(e.target.value)}>
           <option value="all">All Requests</option>
@@ -94,12 +94,12 @@ function MyVenueRequestsPage() {
 
       {/* Bookings Table */}
       {bookings.length === 0 ? (
-        <div className="no-bookings">
+        <div className="mvr-no-bookings">
           <p>No venue requests found.</p>
         </div>
       ) : (
-        <div className="bookings-table-container">
-          <table className="bookings-table">
+        <div className="mvr-bookings-table-container">
+          <table className="mvr-bookings-table">
             <thead>
               <tr>
                 <th>Event Name</th>
@@ -114,31 +114,31 @@ function MyVenueRequestsPage() {
               {bookings.map(booking => (
                 <tr key={booking.id}>
                   <td>
-                    <div className="event-name">{booking.event?.event_name || 'N/A'}</div>
+                    <div className="mvr-event-name">{booking.event?.event_name || 'N/A'}</div>
                   </td>
                   <td>
-                    <div className="venue-info">
-                      <div className="venue-name">{booking.venue?.name || 'N/A'}</div>
-                      <div className="venue-code">{booking.venue?.code || ''}</div>
+                    <div className="mvr-venue-info">
+                      <div className="mvr-venue-name">{booking.venue?.name || 'N/A'}</div>
+                      <div className="mvr-venue-code">{booking.venue?.code || ''}</div>
                     </div>
                   </td>
                   <td>
-                    <div className="datetime-cell">
+                    <div className="mvr-datetime-cell">
                       <div>{formatDateTime(booking.requested_start_datetime)}</div>
-                      <div className="datetime-to">to</div>
+                      <div className="mvr-datetime-to">to</div>
                       <div>{formatDateTime(booking.requested_end_datetime)}</div>
                     </div>
                   </td>
                   <td>
-                    <span className={`status-badge ${getStatusBadgeClass(booking.status)}`}>
+                    <span className={`mvr-status-badge ${getStatusBadgeClass(booking.status)}`}>
                       {booking.status}
                     </span>
                   </td>
                   <td>{formatDateTime(booking.created_at)}</td>
-                  <td className="actions-cell">
+                  <td className="mvr-actions-cell">
                     <button 
                       onClick={() => handleViewDetails(booking.id)}
-                      className="action-button view-button"
+                      className="mvr-action-button mvr-view-button"
                       title="View Details"
                     >
                       👁️
@@ -146,7 +146,7 @@ function MyVenueRequestsPage() {
                     {booking.status === 'pending' && (
                       <button 
                         onClick={() => handleCancelBooking(booking.id, booking.event?.event_name)}
-                        className="action-button delete-button"
+                        className="mvr-action-button mvr-delete-button"
                         title="Cancel Request"
                       >
                         ❌

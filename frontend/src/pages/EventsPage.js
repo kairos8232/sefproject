@@ -14,6 +14,13 @@ function EventsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filter, setFilter] = useState(location.state?.filter || 'all');
+  const [eventTypeFilter, setEventTypeFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [visibilityFilter, setVisibilityFilter] = useState('all');
+  const [periodFilter, setPeriodFilter] = useState('all');
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
+  const [showMyRegistrations, setShowMyRegistrations] = useState(location.state?.filter === 'registered' || false);
 
   const loadEvents = useCallback(async () => {
     try {
@@ -48,24 +55,102 @@ function EventsPage() {
     const applyFilter = () => {
       let filtered = [...allEvents];
       
+      // Apply search filter (event name)
+      if (searchQuery.trim()) {
+        filtered = filtered.filter(e => 
+          e.event_name.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+      }
+      
+      // Apply status filter
       if (filter === 'upcoming') {
         filtered = filtered.filter(e => e.status === 'upcoming');
       } else if (filter === 'ongoing') {
         filtered = filtered.filter(e => e.status === 'ongoing');
-      } else if (filter === 'registered') {
-        // Filter events that the user has registered for
-        const registeredEventIds = myParticipations.map(p => p.event_id);
-        filtered = filtered.filter(e => registeredEventIds.includes(e.id));
-      } else if (filter === 'campuswide' || filter === 'facultyonly' || filter === 'inviteonly') {
-        filtered = filtered.filter(e => e.visibility === filter);
       }
       // 'all' shows everything
+      
+      // Apply event type filter
+      if (eventTypeFilter !== 'all') {
+        filtered = filtered.filter(e => e.event_type === eventTypeFilter);
+      }
+      
+      // Apply visibility filter
+      if (visibilityFilter !== 'all') {
+        filtered = filtered.filter(e => e.visibility === visibilityFilter);
+      }
+      
+      // Apply period filter (based on event start and end dates)
+      if (periodFilter !== 'all') {
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const todayEnd = new Date(today);
+        todayEnd.setHours(23, 59, 59, 999);
+        const weekEnd = new Date(today);
+        weekEnd.setDate(weekEnd.getDate() + 7);
+        
+        // Calendar month boundaries
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+        
+        if (periodFilter === 'today') {
+          // Events happening today (including multi-day events)
+          filtered = filtered.filter(e => {
+            const start = new Date(e.start_datetime);
+            const end = new Date(e.end_datetime);
+            return start <= todayEnd && end >= today;
+          });
+        } else if (periodFilter === 'this-week') {
+          // Events happening within this week (including multi-day events)
+          filtered = filtered.filter(e => {
+            const start = new Date(e.start_datetime);
+            const end = new Date(e.end_datetime);
+            return start < weekEnd && end >= today;
+          });
+        } else if (periodFilter === 'this-month') {
+          // Events happening within the current calendar month (including multi-day events)
+          filtered = filtered.filter(e => {
+            const start = new Date(e.start_datetime);
+            const end = new Date(e.end_datetime);
+            return start <= monthEnd && end >= monthStart;
+          });
+        } else if (periodFilter === 'custom') {
+          // Custom date range filter
+          if (customStartDate || customEndDate) {
+            filtered = filtered.filter(e => {
+              const eventStart = new Date(e.start_datetime);
+              const eventEnd = new Date(e.end_datetime);
+              
+              if (customStartDate && customEndDate) {
+                const rangeStart = new Date(customStartDate);
+                const rangeEnd = new Date(customEndDate);
+                rangeEnd.setHours(23, 59, 59, 999);
+                return eventStart <= rangeEnd && eventEnd >= rangeStart;
+              } else if (customStartDate) {
+                const rangeStart = new Date(customStartDate);
+                return eventEnd >= rangeStart;
+              } else if (customEndDate) {
+                const rangeEnd = new Date(customEndDate);
+                rangeEnd.setHours(23, 59, 59, 999);
+                return eventStart <= rangeEnd;
+              }
+              return true;
+            });
+          }
+        }
+      }
+      
+      // Apply My Registrations filter (checkbox)
+      if (showMyRegistrations) {
+        const registeredEventIds = myParticipations.map(p => p.event_id);
+        filtered = filtered.filter(e => registeredEventIds.includes(e.id));
+      }
       
       setEvents(filtered);
     };
     
     applyFilter();
-  }, [allEvents, filter, myParticipations]);
+  }, [allEvents, filter, myParticipations, eventTypeFilter, searchQuery, visibilityFilter, periodFilter, customStartDate, customEndDate, showMyRegistrations]);
 
   const handleEventClick = (eventId) => {
     navigate(`/events/${eventId}`, { state: { fromEventsPage: true, filter } });
@@ -95,16 +180,73 @@ function EventsPage() {
       </div>
 
       <div className="ep-filter-section">
-        <label>Filter by: </label>
-        <select value={filter} onChange={(e) => setFilter(e.target.value)}>
-          <option value="all">All Events</option>
-          <option value="registered">My Registrations</option>
-          <option value="upcoming">Upcoming</option>
-          <option value="ongoing">Ongoing</option>
-          <option value="campuswide">Campus Wide</option>
+        <label>Event Name: </label>
+        <input
+          type="text"
+          placeholder="Search by event name..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          style={{ padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc', marginRight: '15px', width: '200px' }}
+        />
+        
+        <label>Type: </label>
+        <select value={eventTypeFilter} onChange={(e) => setEventTypeFilter(e.target.value)}>
+          <option value="all">All Types</option>
+          <option value="seminar">Seminar</option>
+          <option value="workshop">Workshop</option>
+          <option value="sports">Sports</option>
+          <option value="cultural">Cultural</option>
+          <option value="career">Career</option>
+          <option value="orientation">Orientation</option>
+          <option value="networking">Networking</option>
+          <option value="general">General</option>
+        </select>
+        
+        <label style={{ marginLeft: '15px' }}>Period: </label>
+        <select value={periodFilter} onChange={(e) => setPeriodFilter(e.target.value)}>
+          <option value="all">All Time</option>
+          <option value="today">Today</option>
+          <option value="this-week">This Week</option>
+          <option value="this-month">This Month</option>
+          <option value="custom">Custom Range</option>
+        </select>
+        
+        {periodFilter === 'custom' && (
+          <>
+            <label style={{ marginLeft: '15px' }}>From: </label>
+            <input
+              type="date"
+              value={customStartDate}
+              onChange={(e) => setCustomStartDate(e.target.value)}
+              style={{ padding: '5px', borderRadius: '4px', border: '1px solid #ccc' }}
+            />
+            <label style={{ marginLeft: '10px' }}>To: </label>
+            <input
+              type="date"
+              value={customEndDate}
+              onChange={(e) => setCustomEndDate(e.target.value)}
+              style={{ padding: '5px', borderRadius: '4px', border: '1px solid #ccc' }}
+            />
+          </>
+        )}
+        
+        <label style={{ marginLeft: '15px' }}>Visibility: </label>
+        <select value={visibilityFilter} onChange={(e) => setVisibilityFilter(e.target.value)}>
+          <option value="all">All Visibility</option>
+          <option value="campuswide">Campus-Wide</option>
           <option value="facultyonly">Faculty Only</option>
           <option value="inviteonly">Invite Only</option>
         </select>
+        
+        <label style={{ marginLeft: '20px', display: 'inline-flex', alignItems: 'center', cursor: 'pointer' }}>
+          <input
+            type="checkbox"
+            checked={showMyRegistrations}
+            onChange={(e) => setShowMyRegistrations(e.target.checked)}
+            style={{ marginRight: '5px', cursor: 'pointer' }}
+          />
+          My Registrations
+        </label>
       </div>
 
       {error && <div className="ep-error-message">{error}</div>}

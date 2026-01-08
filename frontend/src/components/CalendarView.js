@@ -18,9 +18,9 @@ const CalendarView = ({
   const [statusFilter, setStatusFilter] = React.useState('all'); // 'all', 'pending', 'approved', 'rejected', 'cancelled', 'blocked'
   
   // Filter items by faculty (for venues only)
-  const filteredItems = type === 'venue' && selectedFaculty
+  const filteredItems = type === 'venue' && selectedFaculty && Array.isArray(items)
     ? items.filter(item => item.faculty_id === selectedFaculty)
-    : items;
+    : Array.isArray(items) ? items : [];
 
   // Filter bookings by status
   const filteredBookings = statusFilter === 'all' 
@@ -188,7 +188,7 @@ const CalendarView = ({
   const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'];
 
-  const selectedItem = items.find(item => item.id === selectedId);
+  const selectedItem = Array.isArray(items) ? items.find(item => item.id === selectedId) : null;
 
   return (
     <div className="booking-requests-calendar-view">
@@ -199,11 +199,13 @@ const CalendarView = ({
             <select 
               value={selectedFaculty || ''} 
               onChange={(e) => {
-                const newFacultyId = e.target.value;
+                const newFacultyId = parseInt(e.target.value);
                 setSelectedFaculty(newFacultyId);
-                const facultyVenues = items.filter(v => v.faculty_id === newFacultyId);
-                if (facultyVenues.length > 0) {
-                  setSelectedId(facultyVenues[0].id);
+                if (Array.isArray(items)) {
+                  const facultyVenues = items.filter(v => v.faculty_id === newFacultyId);
+                  if (facultyVenues.length > 0) {
+                    setSelectedId(facultyVenues[0].id);
+                  }
                 }
               }}
             >
@@ -221,15 +223,19 @@ const CalendarView = ({
           <select 
             value={selectedId || ''} 
             onChange={(e) => {
-              const newId = e.target.value;
+              const newId = parseInt(e.target.value);
               setSelectedId(newId);
             }}
           >
-            {filteredItems.map(item => (
-              <option key={item.id} value={item.id}>
-                {item.name}
-              </option>
-            ))}
+            {filteredItems.length > 0 ? (
+              filteredItems.map(item => (
+                <option key={item.id} value={item.id}>
+                  {item.name || item.resource_name}
+                </option>
+              ))
+            ) : (
+              <option value="">No {type === 'venue' ? 'venues' : 'resources'} available</option>
+            )}
           </select>
         </div>
         

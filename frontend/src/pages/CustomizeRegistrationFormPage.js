@@ -239,9 +239,9 @@ function CustomizeRegistrationFormPage() {
       
       case 'radio':
         return (
-          <div className="preview-options">
+          <div className="crf-preview-options">
             {field.options && field.options.map((opt, i) => (
-              <label key={i} className="preview-option">
+              <label key={i} className="crf-preview-option">
                 <input type="radio" name={field.id} disabled /> {opt}
               </label>
             ))}
@@ -250,9 +250,9 @@ function CustomizeRegistrationFormPage() {
       
       case 'checkbox':
         return (
-          <div className="preview-options">
+          <div className="crf-preview-options">
             {field.options && field.options.map((opt, i) => (
-              <label key={i} className="preview-option">
+              <label key={i} className="crf-preview-option">
                 <input type="checkbox" disabled /> {opt}
               </label>
             ))}
@@ -265,74 +265,74 @@ function CustomizeRegistrationFormPage() {
   };
 
   if (loading) {
-    return <div className="customize-form-page"><div className="loading">Loading...</div></div>;
+    return <div className="crf-customize-form-page"><div className="crf-loading">Loading...</div></div>;
   }
 
   return (
-    <div className="customize-form-page">
-      <div className="page-header">
-        <div className="header-content">
+    <div className="crf-customize-form-page">
+      <div className="crf-page-header">
+        <div className="crf-header-content">
           <h1>Customize Registration Form</h1>
-          <p className="event-name">{event?.event_name}</p>
+          <p>{event?.event_name}</p>
         </div>
-        <button onClick={() => navigate('/my-events')} className="back-button">
-          ← Back to My Events
+        <button onClick={() => navigate('/my-events')} className="crf-back-button">
+          Back to My Events
         </button>
       </div>
 
-      {error && <div className="error-message">{error}</div>}
-      {success && <div className="success-message">{success}</div>}
+      {error && <div className="crf-error-message">{error}</div>}
+      {success && <div className="crf-success-message">{success}</div>}
 
       {hasRegistrations && (
-        <div className="info-message">
+        <div className="crf-info-message">
           ⓘ This event has registrations. You cannot add, edit, or delete fields. You can only view the form and reorder fields.
         </div>
       )}
 
-      <div className="form-builder-container">
+      <div className="crf-form-builder-container">
         {/* Left Panel - Field Builder */}
-        <div className="builder-panel">
-          <div className="panel-header">
+        <div className="crf-builder-panel">
+          <div className="crf-panel-header">
             <h2>Form Fields</h2>
             {canEdit && (
-              <button onClick={handleAddField} className="add-field-button">
+              <button onClick={handleAddField} className="crf-add-field-button">
                 + Add Field
               </button>
             )}
           </div>
 
           {fields.length === 0 ? (
-            <div className="empty-state">
+            <div className="crf-empty-state">
               <p>No custom fields yet</p>
-              <p className="empty-hint">Click "Add Field" to create your first custom field</p>
+              <p className="crf-empty-hint">Click "Add Field" to create your first custom field</p>
             </div>
           ) : (
-            <div className="fields-list">
+            <div className="crf-fields-list">
               {fields.map((field, index) => (
                 <div
                   key={field.id}
-                  className={`field-item ${draggedIndex === index ? 'dragging' : ''}`}
+                  className={`crf-field-item ${draggedIndex === index ? 'crf-dragging' : ''}`}
                   draggable={canEdit}
                   onDragStart={() => handleDragStart(index)}
                   onDragOver={(e) => handleDragOver(e, index)}
                   onDragEnd={handleDragEnd}
                 >
-                  <div className="field-drag-handle">☰</div>
-                  <div className="field-info">
-                    <div className="field-label">
+                  <div className="crf-field-drag-handle">☰</div>
+                  <div className="crf-field-info">
+                    <div className="crf-field-label">
                       {field.label}
-                      {field.is_required && <span className="required-badge">Required</span>}
+                      {field.is_required && <span className="crf-required-badge">Required</span>}
                     </div>
-                    <div className="field-type">
+                    <div className="crf-field-type">
                       {FIELD_TYPES.find(t => t.value === field.field_type)?.label}
                     </div>
                   </div>
                   {canEdit && (
-                    <div className="field-actions">
-                      <button onClick={() => handleEditField(field)} className="edit-button">
+                    <div className="crf-field-actions">
+                      <button onClick={() => handleEditField(field)} className="crf-edit-button">
                         ✏️
                       </button>
-                      <button onClick={() => handleDeleteField(field.id)} className="delete-button">
+                      <button onClick={() => handleDeleteField(field.id)} className="crf-delete-button">
                         🗑️
                       </button>
                     </div>
@@ -344,22 +344,22 @@ function CustomizeRegistrationFormPage() {
         </div>
 
         {/* Right Panel - Preview */}
-        <div className="preview-panel">
-          <div className="panel-header">
+        <div className="crf-preview-panel">
+          <div className="crf-panel-header">
             <h2>Preview</h2>
           </div>
-          <div className="preview-content">
-            <div className="preview-form">
+          <div className="crf-preview-content">
+            <div className="crf-preview-form">
               {fields.length === 0 ? (
-                <p className="preview-empty">No custom fields to preview</p>
+                <p className="crf-preview-empty">No custom fields to preview</p>
               ) : (
                 fields.map((field) => (
-                  <div key={field.id} className="preview-field">
+                  <div key={field.id} className="crf-preview-field">
                     <label>
                       {field.label}
-                      {field.is_required && <span className="required-star">*</span>}
+                      {field.is_required && <span className="crf-required-star">*</span>}
                     </label>
-                    {field.help_text && <p className="preview-help-text">{field.help_text}</p>}
+                    {field.help_text && <p className="crf-preview-help-text">{field.help_text}</p>}
                     {renderFieldPreview(field)}
                   </div>
                 ))
@@ -371,27 +371,27 @@ function CustomizeRegistrationFormPage() {
 
       {/* Add/Edit Field Modal */}
       {showAddModal && (
-        <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="crf-modal-overlay" onClick={() => setShowAddModal(false)}>
+          <div className="crf-modal-content" onClick={(e) => e.stopPropagation()}>
             <h2>{editingField ? 'Edit Field' : 'Add New Field'}</h2>
             
-            <div className="form-group">
+            <div className="crf-form-group">
               <label>Field Type *</label>
-              <div className="field-type-grid">
+              <div className="crf-field-type-grid">
                 {FIELD_TYPES.map((type) => (
                   <button
                     key={type.value}
-                    className={`field-type-option ${fieldForm.field_type === type.value ? 'selected' : ''}`}
+                    className={`crf-field-type-option ${fieldForm.field_type === type.value ? 'crf-selected' : ''}`}
                     onClick={() => setFieldForm({ ...fieldForm, field_type: type.value })}
                   >
-                    <span className="type-icon">{type.icon}</span>
-                    <span className="type-label">{type.label}</span>
+                    <span className="crf-type-icon">{type.icon}</span>
+                    <span className="crf-type-label">{type.label}</span>
                   </button>
                 ))}
               </div>
             </div>
 
-            <div className="form-group">
+            <div className="crf-form-group">
               <label>Field Label *</label>
               <input
                 type="text"
@@ -401,7 +401,7 @@ function CustomizeRegistrationFormPage() {
               />
             </div>
 
-            <div className="form-group">
+            <div className="crf-form-group">
               <label>Help Text (optional)</label>
               <input
                 type="text"
@@ -411,8 +411,8 @@ function CustomizeRegistrationFormPage() {
               />
             </div>
 
-            <div className="form-group">
-              <label className="checkbox-label">
+            <div className="crf-form-group">
+              <label className="crf-checkbox-label">
                 <input
                   type="checkbox"
                   checked={fieldForm.is_required}
@@ -423,10 +423,10 @@ function CustomizeRegistrationFormPage() {
             </div>
 
             {['dropdown', 'radio', 'checkbox'].includes(fieldForm.field_type) && (
-              <div className="form-group">
+              <div className="crf-form-group">
                 <label>Options *</label>
                 {fieldForm.options.map((option, index) => (
-                  <div key={index} className="option-input-group">
+                  <div key={index} className="crf-option-input-group">
                     <input
                       type="text"
                       value={option}
@@ -437,24 +437,23 @@ function CustomizeRegistrationFormPage() {
                       <button
                         type="button"
                         onClick={() => removeOption(index)}
-                        className="remove-option-button"
-                      >
-                        ✕
+                        className="crf-remove-option-button">
+                        ❌
                       </button>
                     )}
                   </div>
                 ))}
-                <button type="button" onClick={addOption} className="add-option-button">
+                <button type="button" onClick={addOption} className="crf-add-option-button">
                   + Add Option
                 </button>
               </div>
             )}
 
-            <div className="modal-actions">
-              <button type="button" onClick={() => setShowAddModal(false)} className="cancel-button">
+            <div className="crf-modal-actions">
+              <button type="button" onClick={() => setShowAddModal(false)} className="crf-cancel-button">
                 Cancel
               </button>
-              <button type="button" onClick={handleSaveField} className="save-button">
+              <button type="button" onClick={handleSaveField} className="crf-save-button">
                 {editingField ? 'Update Field' : 'Add Field'}
               </button>
             </div>

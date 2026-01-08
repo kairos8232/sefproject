@@ -3,7 +3,6 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import authService from '../services/authService';
 import participationService from '../services/participationService';
 import eventService from '../services/eventService';
-import { formatDateTime } from '../utils/dateUtils';
 import './HomePage.css';
 
 function HomePage() {

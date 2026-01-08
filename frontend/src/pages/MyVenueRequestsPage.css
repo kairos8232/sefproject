@@ -4,7 +4,7 @@
   padding: 20px;
 }
 
-.my-venue-requests-header {
+.mvr-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -16,18 +16,18 @@
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.my-venue-requests-header h1 {
+.mvr-header h1 {
   margin: 0 0 5px 0;
   font-size: 28px;
 }
 
-.my-venue-requests-header p {
+.mvr-header p {
   margin: 0;
   opacity: 0.9;
   font-size: 14px;
 }
 
-.back-button {
+.mvr-back-button {
   padding: 10px 20px;
   background-color: rgba(255, 255, 255, 0.2);
   color: white;
@@ -44,12 +44,12 @@
   justify-content: center;
 }
 
-.back-button:hover {
+.mvr-back-button:hover {
   background-color: rgba(255, 255, 255, 0.3);
 }
 
 /* Filter Section */
-.filter-section {
+.mvr-filter-section {
   display: flex;
   align-items: center;
   gap: 15px;
@@ -60,13 +60,13 @@
   margin-bottom: 20px;
 }
 
-.filter-section label {
+.mvr-filter-section label {
   font-weight: 600;
   color: #333;
   margin: 0;
 }
 
-.filter-section select {
+.mvr-filter-section select {
   padding: 8px 15px;
   border: 2px solid #ddd;
   border-radius: 8px;
@@ -77,73 +77,73 @@
   min-width: 150px;
 }
 
-.filter-section select:hover {
+.mvr-filter-section select:hover {
   border-color: #667eea;
 }
 
-.filter-section select:focus {
+.mvr-filter-section select:focus {
   outline: none;
   border-color: #667eea;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
 /* Table */
-.bookings-table-container {
+.mvr-bookings-table-container {
   background: white;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   overflow: hidden;
 }
 
-.bookings-table {
+.mvr-bookings-table {
   width: 100%;
   border-collapse: collapse;
 }
 
-.bookings-table thead {
+.mvr-bookings-table thead {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
 }
 
-.bookings-table th {
+.mvr-bookings-table th {
   padding: 15px;
   text-align: left;
   font-weight: 600;
   font-size: 14px;
 }
 
-.bookings-table td {
+.mvr-bookings-table td {
   padding: 15px;
   border-bottom: 1px solid #eee;
 }
 
-.bookings-table tbody tr {
+.mvr-bookings-table tbody tr {
   transition: background-color 0.2s;
 }
 
-.bookings-table tbody tr:hover {
+.mvr-bookings-table tbody tr:hover {
   background-color: #f9f9f9;
 }
 
 /* Event Name */
-.event-name {
+.mvr-event-name {
   font-weight: 600;
   color: #333;
 }
 
 /* Venue Info */
-.venue-info {
+.mvr-venue-info {
   display: flex;
   flex-direction: column;
   gap: 3px;
 }
 
-.venue-name {
+.mvr-venue-name {
   font-weight: 600;
   color: #333;
 }
 
-.venue-code {
+.mvr-venue-code {
   background: #667eea;
   color: white;
   padding: 4px 10px;
@@ -153,19 +153,19 @@
 }
 
 /* DateTime Cell */
-.datetime-cell {
+.mvr-datetime-cell {
   font-size: 13px;
   color: #555;
 }
 
-.datetime-to {
+.mvr-datetime-to {
   font-size: 11px;
   color: #999;
   margin: 2px 0;
 }
 
 /* Status Badges */
-.status-badge {
+.mvr-status-badge {
   display: inline-block;
   padding: 4px 10px;
   border-radius: 12px;
@@ -174,32 +174,32 @@
   text-transform: capitalize;
 }
 
-.status-pending {
+.mvr-status-pending {
   background-color: #fff3cd;
   color: #856404;
 }
 
-.status-approved {
+.mvr-status-approved {
   background-color: #d4edda;
   color: #155724;
 }
 
-.status-rejected {
+.mvr-status-rejected {
   background-color: #f8d7da;
   color: #721c24;
 }
 
-.status-cancelled {
+.mvr-status-cancelled {
   background-color: #e2e3e5;
   color: #383d41;
 }
 
 /* Actions */
-.actions-cell {
+.mvr-actions-cell {
   white-space: nowrap;
 }
 
-.action-button {
+.mvr-action-button {
   padding: 6px 10px;
   border: none;
   border-radius: 6px;
@@ -209,28 +209,28 @@
   transition: all 0.2s;
 }
 
-.action-button:hover {
+.mvr-action-button:hover {
   transform: scale(1.1);
 }
 
-.view-button {
+.mvr-view-button {
   background-color: #e7f3ff;
 }
 
-.view-button:hover {
+.mvr-view-button:hover {
   background-color: #cce5ff;
 }
 
-.delete-button {
+.mvr-delete-button {
   background-color: #f8d7da;
 }
 
-.delete-button:hover {
+.mvr-delete-button:hover {
   background-color: #f5c6cb;
 }
 
 /* Messages */
-.error-message {
+.mvr-error-message {
   background-color: #f8d7da;
   color: #721c24;
   padding: 15px;
@@ -239,14 +239,14 @@
   border-left: 4px solid #721c24;
 }
 
-.loading {
+.mvr-loading {
   text-align: center;
   padding: 40px;
   font-size: 18px;
   color: #666;
 }
 
-.no-bookings {
+.mvr-no-bookings {
   text-align: center;
   padding: 60px 20px;
   background: white;
@@ -254,7 +254,7 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.no-bookings p {
+.mvr-no-bookings p {
   color: #666;
   font-size: 16px;
   margin: 0;
@@ -262,25 +262,17 @@
 
 /* Responsive */
 @media (max-width: 768px) {
-  .my-venue-requests-header {
+  .mvr-header {
     flex-direction: column;
     gap: 15px;
     text-align: center;
   }
 
-  .bookings-table-container {
+  .mvr-bookings-table-container {
     overflow-x: auto;
   }
 
-  .bookings-table {
+  .mvr-bookings-table {
     min-width: 800px;
-  }
-
-  .filter-buttons {
-    flex-direction: column;
-  }
-
-  .filter-button {
-    width: 100%;
   }
 }
