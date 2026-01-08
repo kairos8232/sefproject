@@ -10,6 +10,11 @@ function CreateEventPage() {
   const location = useLocation();
   const user = authService.getCurrentUser();
 
+  // Set page title
+  React.useEffect(() => {
+    document.title = 'Create Event - CESMS';
+  }, []);
+
   // Check if user can change visibility (only event_organizer and administrator)
   const canChangeVisibility = user.role === 'event_organizer' || user.role === 'administrator';
 

@@ -26,6 +26,7 @@ function VenueBookingDetailsPage() {
   }, [id]);
 
   useEffect(() => {
+    document.title = 'Venue Booking Details - CESMS';
     loadBookingDetails();
   }, [loadBookingDetails]);
 

@@ -7,6 +7,10 @@ import './FacultyVenueManagementPage.css';
 const FacultyVenueManagementPage = () => {
   const navigate = useNavigate();
   
+  React.useEffect(() => {
+    document.title = 'Faculty & Venue Management - CESMS';
+  }, []);
+  
   // Faculty state
   const [faculties, setFaculties] = useState([]);
   const [allFaculties, setAllFaculties] = useState([]);

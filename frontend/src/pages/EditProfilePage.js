@@ -17,6 +17,7 @@ function EditProfilePage() {
   });
 
   useEffect(() => {
+    document.title = 'Edit Profile - CESMS';
     loadUserData();
   }, []);
 

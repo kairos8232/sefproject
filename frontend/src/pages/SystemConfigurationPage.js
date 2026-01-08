@@ -17,6 +17,7 @@ const SystemConfigurationPage = () => {
   const [lastUpdated, setLastUpdated] = useState(null);
 
   const loadSettings = useCallback(async () => {
+    document.title = 'System Configuration - CESMS';
     try {
       setLoading(true);
       setError('');

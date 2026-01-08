@@ -231,6 +231,13 @@
 }
 
 /* Messages */
+.mvr-bookings-count {
+  margin-bottom: 15px;
+  font-size: 14px;
+  color: #666;
+  font-weight: 600;
+}
+
 .mvr-error-message {
   background-color: #f8d7da;
   color: #721c24;

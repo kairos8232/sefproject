@@ -29,6 +29,7 @@ function EventDetailsPage() {
   const eventFilter = location.state?.filter;
 
   const loadEventDetails = useCallback(async () => {
+    document.title = 'Event Details - CESMS';
     try {
       setLoading(true);
       setError('');

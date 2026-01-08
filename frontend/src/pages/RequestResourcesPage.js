@@ -41,6 +41,7 @@ function RequestResourcesPage() {
   }, [venueBooking, categoryFilter]);
 
   useEffect(() => {
+    document.title = 'Request Resources - CESMS';
     if (!event || !venueBooking) {
       navigate('/my-events');
       return;
@@ -242,7 +243,9 @@ function RequestResourcesPage() {
                   readOnly
                   className="readonly-field"
                 />
-                <small>Resource usage time matches your approved venue booking</small>
+                <small style={{ display: 'block', marginTop: '5px', color: '#667eea', fontStyle: 'italic' }}>
+                  ℹ️ Resource usage time automatically includes setup and teardown periods from your venue booking
+                </small>
               </div>
 
               <div className="form-group">

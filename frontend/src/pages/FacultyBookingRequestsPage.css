@@ -4,7 +4,7 @@
   padding: 20px;
 }
 
-.page-header {
+.fbrp-page-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -16,18 +16,18 @@
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.page-header h1 {
+.fbrp-page-header h1 {
   margin: 0 0 5px 0;
   font-size: 28px;
 }
 
-.page-header p {
+.fbrp-page-header p {
   margin: 0;
   opacity: 0.9;
   font-size: 14px;
 }
 
-.back-button {
+.fbrp-back-button {
   padding: 10px 20px;
   background-color: rgba(255, 255, 255, 0.2);
   color: white;
@@ -41,12 +41,12 @@
   height: 40px;
 }
 
-.back-button:hover {
+.fbrp-back-button:hover {
   background-color: rgba(255, 255, 255, 0.3);
 }
 
 /* Messages */
-.success-message {
+.fbrp-success-message {
   background: #d4edda;
   color: #155724;
   padding: 12px 20px;
@@ -55,7 +55,7 @@
   border: 1px solid #c3e6cb;
 }
 
-.error-message {
+.fbrp-error-message {
   background: #f8d7da;
   color: #721c24;
   padding: 12px 20px;
@@ -74,184 +74,175 @@
   text-align: center;
 }
 
-/* Filters Section */
-.filters-section {
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+/* Filter Section */
+.fbrp-filter-section {
   margin-bottom: 20px;
-}
-
-.filters-section h3 {
-  margin: 0 0 15px 0;
-  color: #333;
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.filter-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 15px;
-  align-items: flex-end;
-}
-
-.filter-group {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.filter-group label {
-  font-weight: 600;
-  color: #555;
-  font-size: 14px;
-}
-
-.filter-group select,
-.filter-group input[type="text"] {
-  padding: 8px 15px;
-  border: 2px solid #ddd;
+  padding: 15px;
+  background: white;
   border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.fbrp-filter-section label {
+  margin-right: 10px;
+  font-weight: 600;
+}
+
+.fbrp-filter-section select {
+  padding: 8px 12px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
   font-size: 14px;
+  cursor: pointer;
   transition: border-color 0.2s;
 }
 
-.search-group input {
-  min-width: 250px;
-}
-
-.filter-group select:focus,
-.filter-group input:focus {
+.fbrp-filter-section select:focus {
   outline: none;
   border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* Table Container */
+.fbrp-bookings-table-container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow-x: auto;
 }
 
 /* Bookings Table */
-.bookings-table {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  overflow: hidden;
-}
-
-.bookings-table table {
+.faculty-booking-requests-page .bookings-table {
   width: 100%;
   border-collapse: collapse;
 }
 
-.bookings-table thead {
-  background: #f8f9fa;
-  border-bottom: 2px solid #dee2e6;
+.faculty-booking-requests-page .bookings-table thead {
+  background-color: #f8f9fa;
 }
 
-.bookings-table th {
-  padding: 15px 12px;
+.faculty-booking-requests-page .bookings-table th {
+  padding: 15px;
   text-align: left;
   font-weight: 600;
-  color: #495057;
-  font-size: 14px;
+  color: #333;
+  border-bottom: 2px solid #dee2e6;
+  white-space: nowrap;
 }
 
-.bookings-table td {
-  padding: 15px 12px;
-  border-bottom: 1px solid #e9ecef;
-  font-size: 14px;
+.faculty-booking-requests-page .bookings-table td {
+  padding: 15px;
+  border-bottom: 1px solid #dee2e6;
+  vertical-align: top;
 }
 
-.bookings-table tbody tr:hover {
-  background: #f8f9fa;
+.faculty-booking-requests-page .bookings-table tbody tr {
+  transition: background-color 0.2s;
 }
 
-.bookings-table tbody tr:last-child td {
-  border-bottom: none;
+.faculty-booking-requests-page .bookings-table tbody tr:hover {
+  background-color: #f8f9fa;
 }
 
-/* Status Badges */
-.status-badge {
+/* Event Name Cell */
+.faculty-booking-requests-page .event-name-cell {
+  max-width: 300px;
+}
+
+.faculty-booking-requests-page .event-name {
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+.faculty-booking-requests-page .event-description-preview {
+  font-size: 12px;
+  color: #666;
+  line-height: 1.4;
+}
+
+/* Badges */
+.faculty-booking-requests-page .status-badge {
   display: inline-block;
-  padding: 4px 12px;
+  padding: 4px 10px;
   border-radius: 12px;
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
 }
 
-.status-pending {
-  background: #fff3cd;
+.faculty-booking-requests-page .status-pending {
+  background-color: #fff3cd;
   color: #856404;
 }
 
-.status-approved {
-  background: #d4edda;
+.faculty-booking-requests-page .status-approved {
+  background-color: #d4edda;
   color: #155724;
 }
 
-.status-rejected {
-  background: #f8d7da;
+.faculty-booking-requests-page .status-rejected {
+  background-color: #f8d7da;
   color: #721c24;
 }
 
-.status-cancelled {
-  background: #e2e3e5;
+.faculty-booking-requests-page .status-cancelled {
+  background-color: #e2e3e5;
   color: #383d41;
-}
-
-/* Table Cell Styling */
-.event-name {
-  font-weight: 500;
-  color: #333;
-}
-
-.venue-name {
-  color: #007bff;
-  font-weight: 500;
-}
-
-.requester-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
 }
 
 .faculty-booking-requests-page .role-badge {
   font-size: 11px;
-  color: #6c757d;
-  background: #e9ecef;
-  padding: 2px 6px;
-  border-radius: 3px;
-  display: inline-block;
-  width: fit-content;
+  color: #666;
+  text-transform: capitalize;
 }
 
-.datetime-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+.faculty-booking-requests-page .fbrp-venue-info {
+  color: #666;
 }
 
-.time-range {
+.faculty-booking-requests-page .time-range {
   font-size: 12px;
-  color: #6c757d;
+  color: #666;
+  margin-top: 3px;
 }
 
-.time-ago {
-  color: #6c757d;
+.faculty-booking-requests-page .time-ago {
+  color: #666;
   font-size: 13px;
 }
 
-/* Buttons */
-.btn-view-details {
-  background: #007bff;
-  color: white;
+/* Actions Cell */
+.faculty-booking-requests-page .actions-cell {
+  white-space: nowrap;
+}
+
+.faculty-booking-requests-page .action-button {
+  padding: 6px 10px;
   border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
   font-size: 14px;
-  transition: background 0.2s;
+  margin-right: 5px;
+  transition: all 0.2s;
 }
+
+.faculty-booking-requests-page .action-button:hover {
+  transform: scale(1.1);
+}
+
+.faculty-booking-requests-page .view-button {
+  background-color: #e7f3ff;
+}
+
+.faculty-booking-requests-page .view-button:hover {
+  background-color: #cce5ff;
+}
+
+/* Buttons */
 
 .btn-view-details:hover {
   background: #0056b3;
@@ -551,7 +542,7 @@ button:disabled {
 }
 
 /* Loading and No Data States */
-.loading,
+.fbrp-loading,
 .no-data {
   text-align: center;
   padding: 60px 20px;
@@ -574,11 +565,11 @@ button:disabled {
     min-width: 0;
   }
 
-  .bookings-table {
+  .fbrp-bookings-table {
     overflow-x: auto;
   }
 
-  .bookings-table table {
+  .fbrp-bookings-table table {
     min-width: 800px;
   }
 

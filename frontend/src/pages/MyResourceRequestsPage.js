@@ -21,6 +21,7 @@ function MyResourceRequestsPage() {
   const location = useLocation();
 
   const loadMyRequests = useCallback(async () => {
+    document.title = 'My Resource Requests - CESMS';
     try {
       setLoading(true);
       setError('');
@@ -315,51 +316,55 @@ function MyResourceRequestsPage() {
               </thead>
               <tbody>
                 {requests.map((request) => (
-                  <tr key={request.id}>
-                    <td className="mrr-event-cell">
-                      <div className="mrr-event-name">{request.event?.event_name || 'Unknown Event'}</div>
-                      <div className="mrr-venue-info">
-                        {typeof request.venue_booking?.venue === 'object' 
-                          ? `${request.venue_booking?.venue?.name || 'Unknown'} (${request.venue_booking?.venue?.code || 'N/A'})` 
-                          : request.venue_booking?.venue || 'Unknown Venue'}
-                      </div>
-                    </td>
-                    <td className="mrr-resource-cell">
-                      <div className="mrr-resource-name">{request.resource?.name}</div>
-                      <span className="mrr-resource-category">
-                        {getCategoryLabel(request.resource?.category)}
-                      </span>
-                    </td>
-                    <td>
-                      <strong>{request.requested_quantity}</strong> {typeof request.resource?.unit === 'object' ? request.resource?.unit?.name || 'units' : request.resource?.unit || 'units'}
-                    </td>
-                    <td className="mrr-datetime-cell">
-                      <div>{formatDateTime(request.usage_start_datetime)}</div>
-                      <div className="mrr-datetime-to">to</div>
-                      <div>{formatDateTime(request.usage_end_datetime)}</div>
-                    </td>
-                    <td>
-                      <span className={`mrr-status-badge ${getStatusBadgeClass(request.status)}`}>
-                        {request.status}
-                      </span>
-                      {request.status === 'rejected' && request.rejection_reason && (
-                        <div className="mrr-rejection-reason">
-                          {request.rejection_reason}
+                  <>
+                    <tr key={request.id}>
+                      <td className="mrr-event-cell">
+                        <div className="mrr-event-name">{request.event?.event_name || 'Unknown Event'}</div>
+                        <div className="mrr-venue-info">
+                          {typeof request.venue_booking?.venue === 'object' 
+                            ? `${request.venue_booking?.venue?.name || 'Unknown'} (${request.venue_booking?.venue?.code || 'N/A'})` 
+                            : request.venue_booking?.venue || 'Unknown Venue'}
                         </div>
-                      )}
-                    </td>
-                    <td className="mrr-actions-cell">
-                      {(request.status === 'pending' || request.status === 'approved') && (
-                        <button
-                          onClick={() => handleCancelRequest(request.id, request.resource?.name)}
-                          className="mrr-action-button mrr-cancel-button"
-                          title="Cancel Request"
+                      </td>
+                      <td className="mrr-resource-cell">
+                        <div className="mrr-resource-name">{request.resource?.name}</div>
+                        <span className="mrr-resource-category">
+                          {getCategoryLabel(request.resource?.category)}
+                        </span>
+                      </td>
+                      <td>
+                        <strong>{request.requested_quantity}</strong> {typeof request.resource?.unit === 'object' ? request.resource?.unit?.name || 'units' : request.resource?.unit || 'units'}
+                      </td>
+                      <td className="mrr-datetime-cell">
+                        <div>{formatDateTime(request.usage_start_datetime)}</div>
+                        <div className="mrr-datetime-to">to</div>
+                        <div>{formatDateTime(request.usage_end_datetime)}</div>
+                      </td>
+                      <td>
+                        <span className={`mrr-status-badge ${getStatusBadgeClass(request.status)}`}>
+                          {request.status}
+                        </span>
+                      </td>
+                      <td className="mrr-actions-cell">
+                        <button 
+                          onClick={() => navigate(`/resource-requests/${request.id}`)}
+                          className="mrr-action-button mrr-view-button"
+                          title="View Details"
                         >
-                          ✖️
+                          👁️
                         </button>
-                      )}
-                    </td>
-                  </tr>
+                        {request.status === 'pending' && (
+                          <button
+                            onClick={() => handleCancelRequest(request.id, request.resource?.name)}
+                            className="mrr-action-button mrr-cancel-button"
+                            title="Cancel Request"
+                          >
+                            ✖️
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  </>
                 ))}
               </tbody>
             </table>

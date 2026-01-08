@@ -10,6 +10,11 @@ const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'
 
 function ReportsAnalyticsPage() {
   const navigate = useNavigate();
+  
+  React.useEffect(() => {
+    document.title = 'Reports & Analytics - CESMS';
+  }, []);
+  
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   

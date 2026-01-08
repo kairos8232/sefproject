@@ -115,6 +115,7 @@ const FacultyBookingRequestsPage = () => {
   }, []);
 
   useEffect(() => {
+    document.title = 'Venue Booking Requests - CESMS';
     fetchBookings();
     fetchVenues();
   }, [fetchBookings, fetchVenues]);
@@ -221,6 +222,21 @@ const FacultyBookingRequestsPage = () => {
     setError(null);
   };
 
+  const getStatusBadgeClass = (status) => {
+    switch (status) {
+      case 'pending':
+        return 'status-pending';
+      case 'approved':
+        return 'status-approved';
+      case 'rejected':
+        return 'status-rejected';
+      case 'cancelled':
+        return 'status-cancelled';
+      default:
+        return '';
+    }
+  };
+
   const getStatusBadge = (status) => {
     const badges = {
       pending: { icon: '🟡', label: 'Pending', class: 'status-pending' },
@@ -304,81 +320,71 @@ const FacultyBookingRequestsPage = () => {
 
   return (
     <div className="faculty-booking-requests-page">
-      <div className="page-header">
+      <div className="fbrp-page-header">
         <div>
           <h1>🏢 Venue Booking Requests</h1>
           <p>Review and manage venue booking requests for your faculty</p>
         </div>
-        <button onClick={() => navigate('/home')} className="back-button">
+        <button onClick={() => navigate('/home')} className="fbrp-back-button">
           ← Back to Home
         </button>
       </div>
 
-      {successMessage && <div className="success-message">{successMessage}</div>}
-      {error && <div className="error-message">{error}</div>}
+      {successMessage && <div className="fbrp-success-message">{successMessage}</div>}
+      {error && <div className="fbrp-error-message">{error}</div>}
 
-      <div className="filters-section">
-        <h3>🔍 Filters & Search</h3>
-        <div className="filter-row">
-          <div className="filter-group">
-            <label>Status:</label>
-            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-              <option value="">All Statuses</option>
-              <option value="pending">Pending</option>
-              <option value="approved">Approved</option>
-              <option value="rejected">Rejected</option>
-              <option value="cancelled">Cancelled</option>
-            </select>
-          </div>
-
-          <div className="filter-group">
-            <label>Venue:</label>
-            <select value={venueFilter} onChange={(e) => setVenueFilter(e.target.value)}>
-              <option value="">All Venues</option>
-              {venues.map(venue => (
-                <option key={venue.id} value={venue.id}>{venue.name} ({venue.code})</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="filter-group">
-            <label>Sort by:</label>
-            <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-              <option value="created_at">Submission Date</option>
-              <option value="requested_start_datetime">Event Date</option>
-              <option value="status">Status</option>
-            </select>
-            <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value)}>
-              <option value="desc">Newest First</option>
-              <option value="asc">Oldest First</option>
-            </select>
-          </div>
-
-          <div className="filter-group search-group">
-            <label>Search:</label>
-            <input
-              type="text"
-              placeholder="Event name or requester..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-        </div>
+      <div className="fbrp-filter-section">
+        <label>Search: </label>
+        <input
+          type="text"
+          placeholder="Event name or requester..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          style={{ padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc', marginRight: '15px', width: '200px' }}
+        />
+        
+        <label>Status: </label>
+        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+          <option value="">All Statuses</option>
+          <option value="pending">Pending</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+        
+        <label style={{ marginLeft: '15px' }}>Venue: </label>
+        <select value={venueFilter} onChange={(e) => setVenueFilter(e.target.value)}>
+          <option value="">All Venues</option>
+          {venues.map(venue => (
+            <option key={venue.id} value={venue.id}>{venue.name} ({venue.code})</option>
+          ))}
+        </select>
+        
+        <label style={{ marginLeft: '15px' }}>Sort by: </label>
+        <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+          <option value="created_at">Submission Date</option>
+          <option value="requested_start_datetime">Event Date</option>
+          <option value="status">Status</option>
+        </select>
+        <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} style={{ marginLeft: '5px' }}>
+          <option value="desc">Newest First</option>
+          <option value="asc">Oldest First</option>
+        </select>
       </div>
 
       {loading ? (
-        <div className="loading">Loading booking requests...</div>
+        <div className="fbrp-loading">Loading booking requests...</div>
       ) : bookings.length === 0 ? (
         <div className="no-data">No booking requests found</div>
       ) : (
-        <div className="bookings-table">
-          <table>
+        <div className="fbrp-bookings-table-container">
+          <table className="bookings-table">
             <thead>
               <tr>
-                <th>Status</th>
                 <th>Event Name</th>
                 <th>Requester</th>
                 <th>Venue</th>
+                <th>Status</th>
                 <th>Date & Time</th>
                 <th>Submitted</th>
                 <th>Actions</th>
@@ -387,30 +393,39 @@ const FacultyBookingRequestsPage = () => {
             <tbody>
               {bookings.map(booking => (
                 <tr key={booking.id}>
-                  <td>{getStatusBadge(booking.status)}</td>
-                  <td className="event-name">{booking.event?.event_name || 'N/A'}</td>
-                  <td>
-                    <div className="requester-info">
-                      <div>{booking.requester?.name || 'N/A'}</div>
-                      <div className="role-badge">{booking.requester?.role || ''}</div>
-                    </div>
-                  </td>
-                  <td className="venue-name">{booking.venue?.name || 'N/A'}</td>
-                  <td>
-                    <div className="datetime-info">
-                      <div>{formatDateRange(booking.requested_start_datetime, booking.requested_end_datetime)}</div>
-                      <div className="time-range">
-                        {formatTime(booking.requested_start_datetime)} - {formatTime(booking.requested_end_datetime)}
+                  <td className="event-name-cell">
+                    <div className="event-name">{booking.event?.event_name || 'N/A'}</div>
+                    {booking.event?.description && (
+                      <div className="event-description-preview">
+                        {booking.event.description.substring(0, 60)}
+                        {booking.event.description.length > 60 ? '...' : ''}
                       </div>
+                    )}
+                  </td>
+                  <td>
+                    <div>{booking.requester?.name || 'N/A'}</div>
+                    <div className="role-badge">{booking.requester?.role || ''}</div>
+                  </td>
+                  <td className="fbrp-venue-info">{booking.venue?.name || 'N/A'}</td>
+                  <td>
+                    <span className={`status-badge ${getStatusBadgeClass(booking.status)}`}>
+                      {booking.status}
+                    </span>
+                  </td>
+                  <td>
+                    <div>{formatDateRange(booking.requested_start_datetime, booking.requested_end_datetime)}</div>
+                    <div className="time-range">
+                      {formatTime(booking.requested_start_datetime)} - {formatTime(booking.requested_end_datetime)}
                     </div>
                   </td>
                   <td className="time-ago">{getTimeAgo(booking.created_at)}</td>
-                  <td>
+                  <td className="actions-cell">
                     <button 
-                      className="btn-view-details"
+                      className="action-button view-button"
                       onClick={() => handleViewDetails(booking)}
+                      title="View Details"
                     >
-                      View Details
+                      👁️
                     </button>
                   </td>
                 </tr>

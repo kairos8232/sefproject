@@ -43,6 +43,7 @@ function CustomizeRegistrationFormPage() {
   });
 
   useEffect(() => {
+    document.title = 'Customize Registration Form - CESMS';
     loadData();
   }, [eventId]);
 

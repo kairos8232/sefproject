@@ -221,6 +221,8 @@ class Event {
             requested_end_datetime,
             approved_start_datetime,
             approved_end_datetime,
+            setup_time,
+            teardown_time,
             expected_attendees,
             venue:venue_id (
               id,
@@ -357,11 +359,12 @@ class Event {
         .from('resource_requests')
         .select(`
           *,
-          resource:resource_id (
+          resource:resource_types (
             id,
             name,
-            category,
-            unit
+            code,
+            unit,
+            category:resource_categories(name)
           ),
           requester:requester_user_id (
             id,

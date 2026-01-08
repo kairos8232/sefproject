@@ -24,6 +24,7 @@ const FacultyProvideFeedbackPage = () => {
   });
 
   const loadEventAndFeedback = useCallback(async () => {
+    document.title = 'Provide Feedback - CESMS';
     try {
       setLoading(true);
       setError('');

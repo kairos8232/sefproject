@@ -26,6 +26,7 @@ function VenueBookingPage() {
 
   // Redirect if no event provided
   useEffect(() => {
+    document.title = 'Book Venue - CESMS';
     if (!event) {
       navigate('/my-events');
     }

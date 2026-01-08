@@ -17,8 +17,8 @@ function MyVenueRequestsPage() {
   const navigate = useNavigate();
 
   const loadMyBookings = useCallback(async () => {
+    document.title = 'My Venue Requests - CESMS';
     try {
-      setLoading(true);
       setError('');
       const result = await venueBookingService.getMyBookings();
       let myBookings = result.bookings || [];
@@ -106,8 +106,19 @@ function MyVenueRequestsPage() {
   }, [filter, eventSearch, venueSearch, periodFilter, customStartDate, customEndDate]);
 
   useEffect(() => {
-    loadMyBookings();
-  }, [loadMyBookings]);
+    const initialLoad = async () => {
+      setLoading(true);
+      await loadMyBookings();
+      setLoading(false);
+    };
+    initialLoad();
+  }, []);
+
+  useEffect(() => {
+    if (!loading) {
+      loadMyBookings();
+    }
+  }, [filter, eventSearch, venueSearch, periodFilter, customStartDate, customEndDate]);
 
   const handleViewDetails = (bookingId) => {
     navigate(`/venue-bookings/${bookingId}`);
@@ -217,7 +228,11 @@ function MyVenueRequestsPage() {
           <p>No venue requests found.</p>
         </div>
       ) : (
-        <div className="mvr-bookings-table-container">
+        <>
+          <div className="mvr-bookings-count">
+            Showing {bookings.length} request{bookings.length !== 1 ? 's' : ''}
+          </div>
+          <div className="mvr-bookings-table-container">
           <table className="mvr-bookings-table">
             <thead>
               <tr>
@@ -277,6 +292,7 @@ function MyVenueRequestsPage() {
             </tbody>
           </table>
         </div>
+        </>
       )}
     </div>
   );

@@ -90,6 +90,7 @@ function EditEventPage() {
   }, [id, user.id, navigate]);
 
   useEffect(() => {
+    document.title = 'Edit Event - CESMS';
     loadEvent();
   }, [loadEvent]);
 

@@ -88,6 +88,7 @@ function VenueAvailabilityPage() {
   }, []);
 
   useEffect(() => {
+    document.title = 'Venue Availability - CESMS';
     loadVenues();
     loadBlocks();
     loadBookings();

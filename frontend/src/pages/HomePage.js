@@ -18,6 +18,7 @@ function HomePage() {
   const location = useLocation();
 
   useEffect(() => {
+    document.title = 'Home - CESMS';
     // Check for session expired message
     if (location.state?.message) {
       setMessage(location.state.message);

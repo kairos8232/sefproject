@@ -7,6 +7,11 @@ import './BookingRequestsManagementPage.css';
 
 const BookingRequestsManagementPage = () => {
   const navigate = useNavigate();
+  
+  React.useEffect(() => {
+    document.title = 'Booking Requests Management - CESMS';
+  }, []);
+  
   const [activeTab, setActiveTab] = useState('venue'); // 'venue' or 'resource'
   const [viewMode, setViewMode] = useState('table'); // 'table' or 'calendar'
   const [venueBookings, setVenueBookings] = useState([]);

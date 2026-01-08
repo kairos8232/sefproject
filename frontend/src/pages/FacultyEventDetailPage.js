@@ -39,6 +39,7 @@ function FacultyEventDetailPage() {
   }, [id]);
 
   useEffect(() => {
+    document.title = 'Faculty Event Details - CESMS';
     loadEventDetails();
   }, [loadEventDetails]);
 
@@ -226,6 +227,9 @@ function FacultyEventDetailPage() {
       {/* Resource Requests Section */}
       <div className="detail-section">
         <h2>📦 Resource Requests</h2>
+        <p style={{ color: '#666', fontSize: '14px', marginBottom: '10px', fontStyle: 'italic' }}>
+          * Resource usage periods include setup and teardown time
+        </p>
         {event.resource_requests && event.resource_requests.length > 0 ? (
           <div className="table-container">
             <table className="resources-table">
@@ -234,7 +238,7 @@ function FacultyEventDetailPage() {
                   <th>Resource</th>
                   <th>Category</th>
                   <th>Quantity</th>
-                  <th>Usage Period</th>
+                  <th>Usage Period (incl. setup/teardown)</th>
                   <th>Status</th>
                   <th>Requester</th>
                 </tr>
@@ -245,7 +249,7 @@ function FacultyEventDetailPage() {
                     <td className="resource-name">{request.resource?.name}</td>
                     <td>
                       <span className="category-badge">
-                        {request.resource?.category?.replace('_', ' ')}
+                        {request.resource?.category?.name || 'N/A'}
                       </span>
                     </td>
                     <td>

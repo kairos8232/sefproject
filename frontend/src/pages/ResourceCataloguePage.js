@@ -6,6 +6,11 @@ import './ResourceCataloguePage.css';
 
 const ResourceCataloguePage = () => {
   const navigate = useNavigate();
+  
+  React.useEffect(() => {
+    document.title = 'Resource Catalogue - CESMS';
+  }, []);
+  
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');

@@ -174,6 +174,7 @@ function MyEventsPage() {
   }, [filter, typeFilter, visibilityFilter, periodFilter, searchQuery, customStartDate, customEndDate, user.id]);
 
   useEffect(() => {
+    document.title = 'My Events - CESMS';
     loadMyEvents();
     
     // Check for success message from navigation

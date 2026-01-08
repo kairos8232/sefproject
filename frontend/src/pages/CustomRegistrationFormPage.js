@@ -18,6 +18,7 @@ function CustomRegistrationFormPage() {
   const [participationId, setParticipationId] = useState(null);
 
   const loadData = useCallback(async () => {
+    document.title = 'Event Registration - CESMS';
     try {
       setLoading(true);
       const [eventData, fieldsData] = await Promise.all([

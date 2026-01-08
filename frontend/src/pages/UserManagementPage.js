@@ -44,6 +44,7 @@ function UserManagementPage() {
   });
 
   useEffect(() => {
+    document.title = 'User Management - CESMS';
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

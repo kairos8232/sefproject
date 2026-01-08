@@ -20,6 +20,7 @@ const FacultyBookingRequestDetailPage = () => {
   const [adjustedEndTime, setAdjustedEndTime] = useState('');
 
   const fetchBookingDetails = useCallback(async () => {
+    document.title = 'Booking Request Details - CESMS';
     try {
       setLoading(true);
       setError(null);

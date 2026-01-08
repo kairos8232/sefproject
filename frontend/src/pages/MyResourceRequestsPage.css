@@ -121,6 +121,13 @@
   color: #666;
 }
 
+.mrr-requests-count {
+  margin-bottom: 15px;
+  font-size: 14px;
+  color: #666;
+  font-weight: 600;
+}
+
 .mrr-no-requests {
   text-align: center;
   padding: 60px 20px;
@@ -303,4 +310,57 @@
   .mrr-requests-table {
     min-width: 800px;
   }
+}
+
+/* Expanded Details Panel */
+.mrr-expanded-row {
+  background-color: #f9f9f9;
+}
+
+.mrr-details-panel {
+  padding: 20px;
+  border-top: 2px solid #e0e0e0;
+}
+
+.mrr-details-panel h4 {
+  margin: 0 0 15px 0;
+  color: #333;
+  font-size: 16px;
+}
+
+.mrr-details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.mrr-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.mrr-detail-item.mrr-full-width {
+  grid-column: 1 / -1;
+}
+
+.mrr-detail-label {
+  font-weight: 600;
+  color: #666;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.mrr-detail-value {
+  color: #333;
+  font-size: 14px;
+}
+
+.mrr-view-button {
+  background-color: #e7f3ff;
+}
+
+.mrr-view-button:hover {
+  background-color: #cce5ff;
 }

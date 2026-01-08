@@ -47,6 +47,7 @@ function EventsPage() {
   }, []);
 
   useEffect(() => {
+    document.title = 'Browse Events - CESMS';
     loadEvents();
   }, [loadEvents]);
 

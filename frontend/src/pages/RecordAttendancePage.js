@@ -17,6 +17,7 @@ const RecordAttendancePage = () => {
   const [attendanceMap, setAttendanceMap] = useState({});
 
   const loadEventAndParticipants = useCallback(async () => {
+    document.title = 'Record Attendance - CESMS';
     try {
       setLoading(true);
       setError('');

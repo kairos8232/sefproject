@@ -13,6 +13,7 @@ function LoginPage() {
   const location = useLocation();
 
   useEffect(() => {
+    document.title = 'Login - CESMS';
     // Check for session expired from URL
     const params = new URLSearchParams(location.search);
     if (params.get('expired') === 'true') {
