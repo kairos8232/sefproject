@@ -1,0 +1,332 @@
+.epp-container {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.epp-layout {
+  display: grid;
+  grid-template-columns: 350px 1fr;
+  gap: 24px;
+  min-height: calc(100vh - 40px);
+}
+
+/* Left Panel - User Profile (Same as HomePage) */
+.epp-user-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.epp-user-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 16px;
+  padding: 30px;
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+  text-align: center;
+  color: white;
+}
+
+.epp-user-avatar {
+  width: 80px;
+  height: 80px;
+  background: white;
+  color: #667eea;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin: 0 auto 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.epp-user-info h2 {
+  margin: 0 0 8px 0;
+  font-size: 1.5rem;
+  color: white;
+}
+
+.epp-user-role {
+  background: rgba(255, 255, 255, 0.25);
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: inline-block;
+  margin: 8px 0;
+  letter-spacing: 1px;
+}
+
+.epp-user-email {
+  margin: 8px 0 0 0;
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.epp-faculty-info {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 15px;
+  margin-top: 20px;
+}
+
+.epp-faculty-label {
+  font-size: 0.75rem;
+  opacity: 0.8;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.epp-faculty-name {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 3px;
+}
+
+.epp-faculty-code {
+  font-size: 0.85rem;
+  opacity: 0.9;
+}
+
+.epp-user-stats {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.epp-stat-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 12px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  border-radius: 10px;
+  transition: transform 0.2s;
+}
+
+.epp-stat-item:hover {
+  transform: translateX(5px);
+}
+
+.epp-stat-icon {
+  font-size: 2rem;
+  min-width: 50px;
+  text-align: center;
+}
+
+.epp-stat-details {
+  flex: 1;
+}
+
+.epp-stat-value {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #667eea;
+  line-height: 1;
+}
+
+.epp-stat-label {
+  font-size: 0.85rem;
+  color: #666;
+  margin-top: 4px;
+}
+
+/* Right Panel - Content */
+.epp-content-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Header */
+.epp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 25px 30px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.epp-header h1 {
+  margin: 0 0 5px 0;
+  font-size: 28px;
+  color: #333;
+}
+
+.epp-header p {
+  margin: 0;
+  font-size: 14px;
+  color: #666;
+}
+
+.epp-back-button {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.epp-back-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+/* Messages */
+.epp-error-message {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 12px 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border: 1px solid #f5c6cb;
+}
+
+.epp-success-message {
+  background-color: #d4edda;
+  color: #155724;
+  padding: 12px 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border: 1px solid #c3e6cb;
+}
+
+.epp-loading {
+  text-align: center;
+  padding: 40px;
+  font-size: 18px;
+  color: #666;
+}
+
+/* Content */
+.epp-content {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.epp-content.epp-two-column {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.epp-section {
+  background: white;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.epp-section h2 {
+  margin: 0 0 25px 0;
+  font-size: 20px;
+  color: #333;
+  border-bottom: 2px solid #667eea;
+  padding-bottom: 10px;
+}
+
+/* Form */
+.epp-form-group {
+  margin-bottom: 20px;
+}
+
+.epp-form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+}
+
+.epp-form-group input {
+  width: 100%;
+  padding: 12px 15px;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.epp-form-group input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.epp-form-group input.epp-disabled {
+  background-color: #f5f5f5;
+  color: #666;
+  cursor: not-allowed;
+}
+
+.epp-helper-text {
+  display: block;
+  margin-top: 5px;
+  font-size: 12px;
+  color: #666;
+  font-style: italic;
+}
+
+.epp-form-actions {
+  margin-top: 25px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+}
+
+.epp-btn-primary {
+  padding: 12px 30px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.2);
+}
+
+.epp-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(102, 126, 234, 0.3);
+}
+
+.epp-btn-primary:active {
+  transform: translateY(0);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .epp-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .epp-header {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
+
+  .epp-back-button {
+    width: 100%;
+  }
+
+  .epp-section {
+    padding: 20px;
+  }
+}

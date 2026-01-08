@@ -10,6 +10,13 @@ function MyResourceRequestsPage() {
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [filter, setFilter] = useState('all');
+  const [eventSearch, setEventSearch] = useState('');
+  const [resourceTypeFilter, setResourceTypeFilter] = useState('all');
+  const [resourceSearch, setResourceSearch] = useState('');
+  const [periodFilter, setPeriodFilter] = useState('all');
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
+  const [resourceCategories, setResourceCategories] = useState([]);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -20,10 +27,97 @@ function MyResourceRequestsPage() {
 
       const data = await resourceRequestService.getMyRequests();
       let allRequests = data.requests || [];
+      
+      console.log('All requests:', allRequests);
+      console.log('Resource type filter:', resourceTypeFilter);
+      if (allRequests.length > 0) {
+        console.log('Sample request:', allRequests[0]);
+        console.log('Sample resource:', allRequests[0].resource);
+        console.log('Sample category:', allRequests[0].resource?.category);
+      }
+      
+      // Apply event name filter
+      if (eventSearch.trim()) {
+        allRequests = allRequests.filter(r => 
+          r.event?.event_name?.toLowerCase().includes(eventSearch.toLowerCase())
+        );
+      }
+      
+      // Apply resource type filter (match by category name)
+      if (resourceTypeFilter !== 'all') {
+        console.log('Filtering by category:', resourceTypeFilter);
+        allRequests = allRequests.filter(r => {
+          const categoryName = r.resource?.category?.name;
+          console.log(`Request ${r.id}: category = ${categoryName}, matches = ${categoryName === resourceTypeFilter}`);
+          return categoryName === resourceTypeFilter;
+        });
+        console.log('After type filter:', allRequests.length, 'requests');
+      }
+      
+      // Apply resource search filter
+      if (resourceSearch.trim()) {
+        allRequests = allRequests.filter(r => 
+          r.resource?.name?.toLowerCase().includes(resourceSearch.toLowerCase())
+        );
+      }
 
-      // Apply filter
+      // Apply status filter
       if (filter !== 'all') {
         allRequests = allRequests.filter(r => r.status === filter);
+      }
+      
+      // Apply period filter (usage period)
+      if (periodFilter !== 'all') {
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const todayEnd = new Date(today);
+        todayEnd.setHours(23, 59, 59, 999);
+        const weekEnd = new Date(today);
+        weekEnd.setDate(weekEnd.getDate() + 7);
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+        
+        if (periodFilter === 'today') {
+          allRequests = allRequests.filter(r => {
+            const start = new Date(r.usage_start_datetime);
+            const end = new Date(r.usage_end_datetime);
+            return start <= todayEnd && end >= today;
+          });
+        } else if (periodFilter === 'this-week') {
+          allRequests = allRequests.filter(r => {
+            const start = new Date(r.usage_start_datetime);
+            const end = new Date(r.usage_end_datetime);
+            return start < weekEnd && end >= today;
+          });
+        } else if (periodFilter === 'this-month') {
+          allRequests = allRequests.filter(r => {
+            const start = new Date(r.usage_start_datetime);
+            const end = new Date(r.usage_end_datetime);
+            return start <= monthEnd && end >= monthStart;
+          });
+        } else if (periodFilter === 'custom') {
+          if (customStartDate || customEndDate) {
+            allRequests = allRequests.filter(r => {
+              const usageStart = new Date(r.usage_start_datetime);
+              const usageEnd = new Date(r.usage_end_datetime);
+              
+              if (customStartDate && customEndDate) {
+                const rangeStart = new Date(customStartDate);
+                const rangeEnd = new Date(customEndDate);
+                rangeEnd.setHours(23, 59, 59, 999);
+                return usageStart <= rangeEnd && usageEnd >= rangeStart;
+              } else if (customStartDate) {
+                const rangeStart = new Date(customStartDate);
+                return usageEnd >= rangeStart;
+              } else if (customEndDate) {
+                const rangeEnd = new Date(customEndDate);
+                rangeEnd.setHours(23, 59, 59, 999);
+                return usageStart <= rangeEnd;
+              }
+              return true;
+            });
+          }
+        }
       }
 
       setRequests(allRequests);
@@ -33,9 +127,27 @@ function MyResourceRequestsPage() {
     } finally {
       setLoading(false);
     }
-  }, [filter]);
+  }, [filter, eventSearch, resourceTypeFilter, resourceSearch, periodFilter, customStartDate, customEndDate]);
 
   useEffect(() => {
+    // Load resource categories for dropdown
+    const loadResourceCategories = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('http://localhost:5001/api/resource-categories', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+        setResourceCategories(data.categories || []);
+      } catch (err) {
+        console.error('Failed to load resource categories:', err);
+      }
+    };
+    loadResourceCategories();
+  }, []);
+
+  useEffect(() => {
+    console.log('useEffect triggered - filters changed');
     loadMyRequests();
 
     // Check for success message from navigation
@@ -96,8 +208,8 @@ function MyResourceRequestsPage() {
           <h1>My Resource Requests</h1>
           <p>View and manage your resource requests</p>
         </div>
-        <button onClick={() => navigate('/my-events')} className="mrr-back-button">
-          Back to My Events
+        <button onClick={() => navigate('/home')} className="mrr-back-button">
+          Back to Home
         </button>
       </div>
 
@@ -108,9 +220,63 @@ function MyResourceRequestsPage() {
       )}
 
       <div className="mrr-filter-section">
-        <label>Filter by status:</label>
+        <label>Event Name: </label>
+        <input
+          type="text"
+          placeholder="Search event name..."
+          value={eventSearch}
+          onChange={(e) => setEventSearch(e.target.value)}
+          style={{ padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc', marginRight: '15px', width: '180px' }}
+        />
+        
+        <label>Type: </label>
+        <select value={resourceTypeFilter} onChange={(e) => setResourceTypeFilter(e.target.value)}>
+          <option value="all">All Types</option>
+          {resourceCategories.map(category => (
+            <option key={category.id} value={category.name}>{category.name}</option>
+          ))}
+        </select>
+        
+        <label style={{ marginLeft: '15px' }}>Resource: </label>
+        <input
+          type="text"
+          placeholder="Search resource..."
+          value={resourceSearch}
+          onChange={(e) => setResourceSearch(e.target.value)}
+          style={{ padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc', marginRight: '15px', width: '150px' }}
+        />
+        
+        <label>Period: </label>
+        <select value={periodFilter} onChange={(e) => setPeriodFilter(e.target.value)}>
+          <option value="all">All Time</option>
+          <option value="today">Today</option>
+          <option value="this-week">This Week</option>
+          <option value="this-month">This Month</option>
+          <option value="custom">Custom Range</option>
+        </select>
+        
+        {periodFilter === 'custom' && (
+          <>
+            <label style={{ marginLeft: '15px' }}>From: </label>
+            <input
+              type="date"
+              value={customStartDate}
+              onChange={(e) => setCustomStartDate(e.target.value)}
+              style={{ padding: '5px', borderRadius: '4px', border: '1px solid #ccc' }}
+            />
+            <label style={{ marginLeft: '10px' }}>To: </label>
+            <input
+              type="date"
+              value={customEndDate}
+              onChange={(e) => setCustomEndDate(e.target.value)}
+              style={{ padding: '5px', borderRadius: '4px', border: '1px solid #ccc' }}
+            />
+          </>
+        )}
+        
+        <label style={{ marginLeft: '15px' }}>Status: </label>
         <select value={filter} onChange={(e) => setFilter(e.target.value)}>
-          <option value="all">All Requests</option>
+          <option value="all">All Status</option>
           <option value="pending">Pending</option>
           <option value="approved">Approved</option>
           <option value="rejected">Rejected</option>
@@ -176,11 +342,6 @@ function MyResourceRequestsPage() {
                       <span className={`mrr-status-badge ${getStatusBadgeClass(request.status)}`}>
                         {request.status}
                       </span>
-                      {request.status === 'approved' && request.approver && (
-                        <div className="mrr-approver-info">
-                          By: {typeof request.approver === 'object' ? request.approver?.name || 'Unknown' : request.approver}
-                        </div>
-                      )}
                       {request.status === 'rejected' && request.rejection_reason && (
                         <div className="mrr-rejection-reason">
                           {request.rejection_reason}

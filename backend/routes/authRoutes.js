@@ -17,6 +17,12 @@ router.post(
 // Logout route
 router.post('/logout', AuthController.logout);
 
+// Update profile (protected route)
+router.put('/profile', AuthController.verifyToken, AuthController.updateProfile);
+
+// Change password (protected route)
+router.put('/change-password', AuthController.verifyToken, AuthController.changePassword);
+
 // Protected route example (verify token)
 router.get('/me', AuthController.verifyToken, async (req, res) => {
   res.json({ user: req.user });

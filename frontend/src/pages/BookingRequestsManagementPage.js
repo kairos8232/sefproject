@@ -28,6 +28,23 @@ const BookingRequestsManagementPage = () => {
     sort_by: 'created_at',
     sort_order: 'desc'
   });
+  
+  // Venue-specific filters
+  const [venueSearchQuery, setVenueSearchQuery] = useState('');
+  const [venueEventSearch, setVenueEventSearch] = useState('');
+  const [venuePeriodFilter, setVenuePeriodFilter] = useState('all');
+  const [venueCustomStartDate, setVenueCustomStartDate] = useState('');
+  const [venueCustomEndDate, setVenueCustomEndDate] = useState('');
+  const [venueStatusFilter, setVenueStatusFilter] = useState('all');
+  
+  // Resource-specific filters
+  const [resourceEventSearch, setResourceEventSearch] = useState('');
+  const [resourceTypeFilter, setResourceTypeFilter] = useState('all');
+  const [resourceSearchQuery, setResourceSearchQuery] = useState('');
+  const [resourcePeriodFilter, setResourcePeriodFilter] = useState('all');
+  const [resourceCustomStartDate, setResourceCustomStartDate] = useState('');
+  const [resourceCustomEndDate, setResourceCustomEndDate] = useState('');
+  const [resourceStatusFilter, setResourceStatusFilter] = useState('all');
 
   // Modal state
   const [selectedItem, setSelectedItem] = useState(null);
@@ -317,53 +334,173 @@ const BookingRequestsManagementPage = () => {
       {/* Filters - only show in table view */}
       {viewMode === 'table' && (
         <div className="filters-section">
-        <div className="filter-group">
-          <label>Status:</label>
-          <select
-            value={filters.status}
-            onChange={(e) => handleFilterChange('status', e.target.value)}
-          >
-            <option value="">All</option>
-            <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
+          {activeTab === 'venue' ? (
+            // Venue Booking Filters
+            <>
+              <div className="filter-group">
+                <label>Event Name:</label>
+                <input
+                  type="text"
+                  placeholder="Search event name..."
+                  value={venueEventSearch}
+                  onChange={(e) => setVenueEventSearch(e.target.value)}
+                  style={{ padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc', width: '180px' }}
+                />
+              </div>
+              
+              <div className="filter-group">
+                <label>Venue:</label>
+                <input
+                  type="text"
+                  placeholder="Search venue..."
+                  value={venueSearchQuery}
+                  onChange={(e) => setVenueSearchQuery(e.target.value)}
+                  style={{ padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc', width: '150px' }}
+                />
+              </div>
+              
+              <div className="filter-group">
+                <label>Period:</label>
+                <select
+                  value={venuePeriodFilter}
+                  onChange={(e) => setVenuePeriodFilter(e.target.value)}
+                >
+                  <option value="all">All Time</option>
+                  <option value="today">Today</option>
+                  <option value="this-week">This Week</option>
+                  <option value="this-month">This Month</option>
+                  <option value="custom">Custom Range</option>
+                </select>
+              </div>
+              
+              {venuePeriodFilter === 'custom' && (
+                <>
+                  <div className="filter-group">
+                    <label>From:</label>
+                    <input
+                      type="date"
+                      value={venueCustomStartDate}
+                      onChange={(e) => setVenueCustomStartDate(e.target.value)}
+                      style={{ padding: '5px' }}
+                    />
+                  </div>
+                  <div className="filter-group">
+                    <label>To:</label>
+                    <input
+                      type="date"
+                      value={venueCustomEndDate}
+                      onChange={(e) => setVenueCustomEndDate(e.target.value)}
+                      style={{ padding: '5px' }}
+                    />
+                  </div>
+                </>
+              )}
+              
+              <div className="filter-group">
+                <label>Status:</label>
+                <select
+                  value={venueStatusFilter}
+                  onChange={(e) => setVenueStatusFilter(e.target.value)}
+                >
+                  <option value="all">All Status</option>
+                  <option value="pending">Pending</option>
+                  <option value="approved">Approved</option>
+                  <option value="rejected">Rejected</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              </div>
+            </>
+          ) : (
+            // Resource Request Filters
+            <>
+              <div className="filter-group">
+                <label>Event Name:</label>
+                <input
+                  type="text"
+                  placeholder="Search event name..."
+                  value={resourceEventSearch}
+                  onChange={(e) => setResourceEventSearch(e.target.value)}
+                  style={{ padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc', width: '180px' }}
+                />
+              </div>
+              
+              <div className="filter-group">
+                <label>Type:</label>
+                <select
+                  value={resourceTypeFilter}
+                  onChange={(e) => setResourceTypeFilter(e.target.value)}
+                >
+                  <option value="all">All Types</option>
+                  {resources.map(r => (
+                    <option key={r.id} value={r.id}>{r.name}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <div className="filter-group">
+                <label>Resource:</label>
+                <input
+                  type="text"
+                  placeholder="Search resource..."
+                  value={resourceSearchQuery}
+                  onChange={(e) => setResourceSearchQuery(e.target.value)}
+                  style={{ padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc', width: '150px' }}
+                />
+              </div>
+              
+              <div className="filter-group">
+                <label>Period:</label>
+                <select
+                  value={resourcePeriodFilter}
+                  onChange={(e) => setResourcePeriodFilter(e.target.value)}
+                >
+                  <option value="all">All Time</option>
+                  <option value="today">Today</option>
+                  <option value="this-week">This Week</option>
+                  <option value="this-month">This Month</option>
+                  <option value="custom">Custom Range</option>
+                </select>
+              </div>
+              
+              {resourcePeriodFilter === 'custom' && (
+                <>
+                  <div className="filter-group">
+                    <label>From:</label>
+                    <input
+                      type="date"
+                      value={resourceCustomStartDate}
+                      onChange={(e) => setResourceCustomStartDate(e.target.value)}
+                      style={{ padding: '5px' }}
+                    />
+                  </div>
+                  <div className="filter-group">
+                    <label>To:</label>
+                    <input
+                      type="date"
+                      value={resourceCustomEndDate}
+                      onChange={(e) => setResourceCustomEndDate(e.target.value)}
+                      style={{ padding: '5px' }}
+                    />
+                  </div>
+                </>
+              )}
+              
+              <div className="filter-group">
+                <label>Status:</label>
+                <select
+                  value={resourceStatusFilter}
+                  onChange={(e) => setResourceStatusFilter(e.target.value)}
+                >
+                  <option value="all">All Status</option>
+                  <option value="pending">Pending</option>
+                  <option value="approved">Approved</option>
+                  <option value="rejected">Rejected</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              </div>
+            </>
+          )}
         </div>
-
-        <div className="filter-group">
-          <label>Search:</label>
-          <input
-            type="text"
-            placeholder="Search event name..."
-            value={filters.search}
-            onChange={(e) => handleFilterChange('search', e.target.value)}
-          />
-        </div>
-
-        <div className="filter-group">
-          <label>Sort by:</label>
-          <select
-            value={filters.sort_by}
-            onChange={(e) => handleFilterChange('sort_by', e.target.value)}
-          >
-            <option value="created_at">Created Date</option>
-            <option value="requested_start_datetime">Start Date</option>
-            <option value="status">Status</option>
-          </select>
-        </div>
-
-        <div className="filter-group">
-          <label>Order:</label>
-          <select
-            value={filters.sort_order}
-            onChange={(e) => handleFilterChange('sort_order', e.target.value)}
-          >
-            <option value="desc">Newest First</option>
-            <option value="asc">Oldest First</option>
-          </select>
-        </div>
-      </div>
       )}
 
       {/* Content */}
@@ -374,12 +511,61 @@ const BookingRequestsManagementPage = () => {
           {activeTab === 'venue' ? (
             <VenueBookingsTable
               bookings={venueBookings.filter(b => {
-                // Client-side search filter
-                if (!filters.search) return true;
-                const searchLower = filters.search.toLowerCase();
-                return b.event?.event_name?.toLowerCase().includes(searchLower) ||
-                       b.venue?.name?.toLowerCase().includes(searchLower) ||
-                       b.requester?.name?.toLowerCase().includes(searchLower);
+                // Event name filter
+                if (venueEventSearch && !b.event?.event_name?.toLowerCase().includes(venueEventSearch.toLowerCase())) {
+                  return false;
+                }
+                
+                // Venue filter
+                if (venueSearchQuery && !b.venue?.name?.toLowerCase().includes(venueSearchQuery.toLowerCase())) {
+                  return false;
+                }
+                
+                // Status filter
+                if (venueStatusFilter !== 'all' && b.status !== venueStatusFilter) {
+                  return false;
+                }
+                
+                // Period filter
+                if (venuePeriodFilter !== 'all') {
+                  const now = new Date();
+                  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                  const todayEnd = new Date(today);
+                  todayEnd.setHours(23, 59, 59, 999);
+                  const weekEnd = new Date(today);
+                  weekEnd.setDate(weekEnd.getDate() + 7);
+                  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+                  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+                  
+                  const requestStart = new Date(b.requested_start_datetime);
+                  const requestEnd = new Date(b.requested_end_datetime);
+                  
+                  if (venuePeriodFilter === 'today') {
+                    if (!(requestStart <= todayEnd && requestEnd >= today)) return false;
+                  } else if (venuePeriodFilter === 'this-week') {
+                    if (!(requestStart < weekEnd && requestEnd >= today)) return false;
+                  } else if (venuePeriodFilter === 'this-month') {
+                    if (!(requestStart <= monthEnd && requestEnd >= monthStart)) return false;
+                  } else if (venuePeriodFilter === 'custom') {
+                    if (venueCustomStartDate || venueCustomEndDate) {
+                      if (venueCustomStartDate && venueCustomEndDate) {
+                        const rangeStart = new Date(venueCustomStartDate);
+                        const rangeEnd = new Date(venueCustomEndDate);
+                        rangeEnd.setHours(23, 59, 59, 999);
+                        if (!(requestStart <= rangeEnd && requestEnd >= rangeStart)) return false;
+                      } else if (venueCustomStartDate) {
+                        const rangeStart = new Date(venueCustomStartDate);
+                        if (requestEnd < rangeStart) return false;
+                      } else if (venueCustomEndDate) {
+                        const rangeEnd = new Date(venueCustomEndDate);
+                        rangeEnd.setHours(23, 59, 59, 999);
+                        if (requestStart > rangeEnd) return false;
+                      }
+                    }
+                  }
+                }
+                
+                return true;
               })}
               onAction={openModal}
               getStatusBadgeClass={getStatusBadgeClass}
@@ -387,12 +573,66 @@ const BookingRequestsManagementPage = () => {
           ) : (
             <ResourceRequestsTable
               requests={resourceRequests.filter(r => {
-                // Client-side search filter
-                if (!filters.search) return true;
-                const searchLower = filters.search.toLowerCase();
-                return r.event?.event_name?.toLowerCase().includes(searchLower) ||
-                       r.resource_type?.name?.toLowerCase().includes(searchLower) ||
-                       r.requester?.name?.toLowerCase().includes(searchLower);
+                // Event name filter
+                if (resourceEventSearch && !r.event?.event_name?.toLowerCase().includes(resourceEventSearch.toLowerCase())) {
+                  return false;
+                }
+                
+                // Resource type filter
+                if (resourceTypeFilter !== 'all' && r.resource_type_id !== parseInt(resourceTypeFilter)) {
+                  return false;
+                }
+                
+                // Resource search filter
+                if (resourceSearchQuery && !r.resource_type?.name?.toLowerCase().includes(resourceSearchQuery.toLowerCase())) {
+                  return false;
+                }
+                
+                // Status filter
+                if (resourceStatusFilter !== 'all' && r.status !== resourceStatusFilter) {
+                  return false;
+                }
+                
+                // Period filter (usage period)
+                if (resourcePeriodFilter !== 'all') {
+                  const now = new Date();
+                  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                  const todayEnd = new Date(today);
+                  todayEnd.setHours(23, 59, 59, 999);
+                  const weekEnd = new Date(today);
+                  weekEnd.setDate(weekEnd.getDate() + 7);
+                  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+                  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+                  
+                  const usageStart = new Date(r.usage_start_datetime);
+                  const usageEnd = new Date(r.usage_end_datetime);
+                  
+                  if (resourcePeriodFilter === 'today') {
+                    if (!(usageStart <= todayEnd && usageEnd >= today)) return false;
+                  } else if (resourcePeriodFilter === 'this-week') {
+                    if (!(usageStart < weekEnd && usageEnd >= today)) return false;
+                  } else if (resourcePeriodFilter === 'this-month') {
+                    if (!(usageStart <= monthEnd && usageEnd >= monthStart)) return false;
+                  } else if (resourcePeriodFilter === 'custom') {
+                    if (resourceCustomStartDate || resourceCustomEndDate) {
+                      if (resourceCustomStartDate && resourceCustomEndDate) {
+                        const rangeStart = new Date(resourceCustomStartDate);
+                        const rangeEnd = new Date(resourceCustomEndDate);
+                        rangeEnd.setHours(23, 59, 59, 999);
+                        if (!(usageStart <= rangeEnd && usageEnd >= rangeStart)) return false;
+                      } else if (resourceCustomStartDate) {
+                        const rangeStart = new Date(resourceCustomStartDate);
+                        if (usageEnd < rangeStart) return false;
+                      } else if (resourceCustomEndDate) {
+                        const rangeEnd = new Date(resourceCustomEndDate);
+                        rangeEnd.setHours(23, 59, 59, 999);
+                        if (usageStart > rangeEnd) return false;
+                      }
+                    }
+                  }
+                }
+                
+                return true;
               })}
               onAction={openModal}
               getStatusBadgeClass={getStatusBadgeClass}

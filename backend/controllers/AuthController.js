@@ -123,6 +123,86 @@ class AuthController {
       res.status(401).json({ error: 'Invalid token' });
     }
   }
+
+  // Update profile
+  async updateProfile(req, res) {
+    try {
+      const userId = req.user.userId;
+      const { name, email } = req.body;
+
+      if (!name || !email) {
+        return res.status(400).json({ message: 'Name and email are required' });
+      }
+
+      // Check if email is already taken by another user
+      const existingUser = await User.findByEmail(email);
+      if (existingUser && existingUser.id !== userId) {
+        return res.status(400).json({ message: 'Email already in use' });
+      }
+
+      // Update user
+      const updatedUser = await User.update(userId, { name, email });
+
+      // Remove password from response
+      const { password: _, ...userWithoutPassword } = updatedUser;
+
+      res.json({
+        success: true,
+        user: userWithoutPassword
+      });
+    } catch (error) {
+      console.error('Update profile error:', error);
+      res.status(500).json({ message: 'Failed to update profile' });
+    }
+  }
+
+  // Change password
+  async changePassword(req, res) {
+    try {
+      const userId = req.user.userId;
+      const { currentPassword, newPassword } = req.body;
+
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ 
+          message: 'Current password and new password are required' 
+        });
+      }
+
+      if (newPassword.length < 6) {
+        return res.status(400).json({ 
+          message: 'New password must be at least 6 characters' 
+        });
+      }
+
+      // Get user
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      // Verify current password
+      const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+      if (!isPasswordValid) {
+        return res.status(401).json({ 
+          message: 'Current password is incorrect' 
+        });
+      }
+
+      // Hash new password
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+      // Update password
+      await User.update(userId, { password: hashedPassword });
+
+      res.json({
+        success: true,
+        message: 'Password changed successfully'
+      });
+    } catch (error) {
+      console.error('Change password error:', error);
+      res.status(500).json({ message: 'Failed to change password' });
+    }
+  }
 }
 
 module.exports = new AuthController();

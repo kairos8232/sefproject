@@ -273,26 +273,54 @@ function HomePage() {
             </div>
           </div>
 
+          {/* Upcoming Events Preview */}
+          {!loading && stats.upcomingRegistrations.length > 0 && user.role !== 'administrator' && (
+            <div className="upcoming-preview">
+              <h3>Upcoming Events</h3>
+              <div className="upcoming-list">
+                {stats.upcomingRegistrations.slice(0, 3).map((participation) => (
+                  <div 
+                    key={participation.event.id} 
+                    className="upcoming-item"
+                    onClick={() => navigate(`/events/${participation.event.id}`, { state: { fromHome: true } })}
+                  >
+                    <div className="upcoming-date">
+                      {new Date(participation.event.start_datetime).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </div>
+                    <div className="upcoming-details">
+                      <h4>{participation.event.event_name}</h4>
+                      <span className="event-type-badge">
+                        {participation.event.event_type.charAt(0).toUpperCase() + participation.event.event_type.slice(1)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Quick Stats */}
           {!loading && user.role !== 'administrator' && (
             <div className="user-stats">
               <h3>My Statistics</h3>
-              <div className="stat-item">
-                <div className="stat-icon">📊</div>
-                <div className="stat-details">
-                  <div className="stat-value">{stats.registeredEvents}</div>
-                  <div className="stat-label">Registered Events</div>
-                </div>
-              </div>
-              {(user.role === 'student' || user.role === 'faculty_manager' || user.role === 'event_organizer') && (
-                <div className="stat-item">
-                  <div className="stat-icon">🎪</div>
+              <div className="stats-grid">
+                <div className="stat-item" onClick={() => navigate('/events', { state: { filter: 'registered' } })}>
+                  <div className="stat-icon">📊</div>
                   <div className="stat-details">
-                    <div className="stat-value">{stats.myEvents}</div>
-                    <div className="stat-label">My Events</div>
+                    <div className="stat-value">{stats.registeredEvents}</div>
+                    <div className="stat-label">Registered Events</div>
                   </div>
                 </div>
-              )}
+                {(user.role === 'student' || user.role === 'faculty_manager' || user.role === 'event_organizer') && (
+                  <div className="stat-item" onClick={() => navigate('/my-events')}>
+                    <div className="stat-icon">🎪</div>
+                    <div className="stat-details">
+                      <div className="stat-value">{stats.myEvents}</div>
+                      <div className="stat-label">My Events</div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -305,30 +333,6 @@ function HomePage() {
               🚪 Logout
             </button>
           </div>
-
-          {/* Upcoming Events Preview */}
-          {!loading && stats.upcomingRegistrations.length > 0 && user.role !== 'administrator' && (
-            <div className="upcoming-preview">
-              <h3>Upcoming Events</h3>
-              <div className="upcoming-list">
-                {stats.upcomingRegistrations.slice(0, 3).map((participation) => (
-                  <div 
-                    key={participation.event.id} 
-                    className="upcoming-item"
-                    onClick={() => navigate(`/events/${participation.event.id}`)}
-                  >
-                    <div className="upcoming-date">
-                      {new Date(participation.event.start_datetime).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                    </div>
-                    <div className="upcoming-details">
-                      <h4>{participation.event.event_name}</h4>
-                      <span className="event-type-badge">{participation.event.event_type}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Right Side - Quick Actions by Category */}

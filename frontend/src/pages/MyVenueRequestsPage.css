@@ -52,6 +52,7 @@
 .mvr-filter-section {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 15px;
   background: white;
   padding: 15px 20px;

@@ -7,6 +7,7 @@ import EventDetailsPage from './pages/EventDetailsPage';
 import MyEventsPage from './pages/MyEventsPage';
 import CreateEventPage from './pages/CreateEventPage';
 import EditEventPage from './pages/EditEventPage';
+import EditProfilePage from './pages/EditProfilePage';
 import VenueBookingPage from './pages/VenueBookingPage';
 import VenueBookingDetailsPage from './pages/VenueBookingDetailsPage';
 import MyVenueRequestsPage from './pages/MyVenueRequestsPage';
@@ -34,6 +35,7 @@ function App() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/home" element={<HomePage />} />
+        <Route path="/profile" element={<EditProfilePage />} />
         <Route path="/events" element={<EventsPage />} />
         <Route path="/events/:id" element={<EventDetailsPage />} />
         <Route path="/events/:id/edit" element={<EditEventPage />} />

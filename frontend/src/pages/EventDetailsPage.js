@@ -25,6 +25,7 @@ function EventDetailsPage() {
   // Check if user came from My Events page (management view)
   const isManagementView = location.state?.fromMyEvents;
   const fromEventsPage = location.state?.fromEventsPage;
+  const fromHome = location.state?.fromHome;
   const eventFilter = location.state?.filter;
 
   const loadEventDetails = useCallback(async () => {
@@ -130,7 +131,9 @@ function EventDetailsPage() {
 
   const handleBackToEvents = () => {
     // Navigate back to the page user came from
-    if (isManagementView) {
+    if (fromHome) {
+      navigate('/home');
+    } else if (isManagementView) {
       navigate('/my-events');
     } else if (fromEventsPage && eventFilter) {
       navigate('/events', { state: { filter: eventFilter } });
@@ -141,9 +144,16 @@ function EventDetailsPage() {
 
   const calculateDuration = (start, end) => {
     const diff = new Date(end) - new Date(start);
-    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    return `${hours}h ${minutes}m`;
+    
+    const parts = [];
+    if (days > 0) parts.push(`${days} day${days > 1 ? 's' : ''}`);
+    if (hours > 0) parts.push(`${hours} hour${hours > 1 ? 's' : ''}`);
+    if (minutes > 0 || parts.length === 0) parts.push(`${minutes} minute${minutes !== 1 ? 's' : ''}`);
+    
+    return parts.join(', ');
   };
 
   const formatVisibility = (visibility, organizerFaculty) => {
@@ -188,7 +198,7 @@ function EventDetailsPage() {
       <div className="event-details-container">
         <div className="ed-error-message">{error}</div>
         <button onClick={handleBackToEvents} className="ed-back-button">
-          {isManagementView ? 'Back to My Events' : 'Back to Events'}
+          {fromHome ? 'Back to Home' : (isManagementView ? 'Back to My Events' : 'Back to Events')}
         </button>
       </div>
     );
@@ -199,7 +209,7 @@ function EventDetailsPage() {
       <div className="event-details-container">
         <div className="ed-error-message">Event not found</div>
         <button onClick={handleBackToEvents} className="ed-back-button">
-          {isManagementView ? 'Back to My Events' : 'Back to Events'}
+          {fromHome ? 'Back to Home' : (isManagementView ? 'Back to My Events' : 'Back to Events')}
         </button>
       </div>
     );
@@ -213,7 +223,7 @@ function EventDetailsPage() {
           <p>View event information and manage your registration</p>
         </div>
         <button onClick={handleBackToEvents} className="ed-back-button">
-          {isManagementView ? 'Back to My Events' : 'Back to Events'}
+          {fromHome ? 'Back to Home' : (isManagementView ? 'Back to My Events' : 'Back to Events')}
         </button>
       </div>
 
@@ -250,8 +260,10 @@ function EventDetailsPage() {
 
           <div className="ed-info-section">
             <h3>Organizer</h3>
-            <p>{event.organizer?.name || event.organizer?.email || 'Unknown'}</p>
-            <p className="ed-role-badge">{formatRole(event.organizer?.role, event.organizer?.faculty)}</p>
+            <div className="ed-organizer-info">
+              <span>{event.organizer?.name || event.organizer?.email || 'Unknown'}</span>
+              <span className="ed-role-badge">{formatRole(event.organizer?.role, event.organizer?.faculty)}</span>
+            </div>
           </div>
         </div>
 
@@ -306,8 +318,8 @@ function EventDetailsPage() {
           </div>
         )}
 
-        {/* Participation Actions - Only show if NOT in management view */}
-        {!isManagementView && (event.status === 'upcoming' || event.status === 'ongoing') && (
+        {/* Participation Actions - Only show if NOT in management view and NOT from home */}
+        {!isManagementView && !fromHome && (event.status === 'upcoming' || event.status === 'ongoing') && (
           <div className="ed-participation-actions">
             {actionMessage && (
               <div className={`ed-action-message ${actionMessage.includes('Success') || actionMessage.includes('cancel') ? 'ed-success' : 'ed-error'}`}>

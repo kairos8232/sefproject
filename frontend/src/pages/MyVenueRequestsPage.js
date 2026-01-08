@@ -9,6 +9,11 @@ function MyVenueRequestsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filter, setFilter] = useState('all');
+  const [eventSearch, setEventSearch] = useState('');
+  const [venueSearch, setVenueSearch] = useState('');
+  const [periodFilter, setPeriodFilter] = useState('all');
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
   const navigate = useNavigate();
 
   const loadMyBookings = useCallback(async () => {
@@ -18,9 +23,77 @@ function MyVenueRequestsPage() {
       const result = await venueBookingService.getMyBookings();
       let myBookings = result.bookings || [];
 
+      // Apply event name filter
+      if (eventSearch.trim()) {
+        myBookings = myBookings.filter(b => 
+          b.event?.event_name?.toLowerCase().includes(eventSearch.toLowerCase())
+        );
+      }
+      
+      // Apply venue filter
+      if (venueSearch.trim()) {
+        myBookings = myBookings.filter(b => 
+          b.venue?.name?.toLowerCase().includes(venueSearch.toLowerCase())
+        );
+      }
+
       // Apply status filter
       if (filter !== 'all') {
         myBookings = myBookings.filter(b => b.status === filter);
+      }
+      
+      // Apply period filter
+      if (periodFilter !== 'all') {
+        const now = new Date();
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const todayEnd = new Date(today);
+        todayEnd.setHours(23, 59, 59, 999);
+        const weekEnd = new Date(today);
+        weekEnd.setDate(weekEnd.getDate() + 7);
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+        
+        if (periodFilter === 'today') {
+          myBookings = myBookings.filter(b => {
+            const start = new Date(b.requested_start_datetime);
+            const end = new Date(b.requested_end_datetime);
+            return start <= todayEnd && end >= today;
+          });
+        } else if (periodFilter === 'this-week') {
+          myBookings = myBookings.filter(b => {
+            const start = new Date(b.requested_start_datetime);
+            const end = new Date(b.requested_end_datetime);
+            return start < weekEnd && end >= today;
+          });
+        } else if (periodFilter === 'this-month') {
+          myBookings = myBookings.filter(b => {
+            const start = new Date(b.requested_start_datetime);
+            const end = new Date(b.requested_end_datetime);
+            return start <= monthEnd && end >= monthStart;
+          });
+        } else if (periodFilter === 'custom') {
+          if (customStartDate || customEndDate) {
+            myBookings = myBookings.filter(b => {
+              const requestStart = new Date(b.requested_start_datetime);
+              const requestEnd = new Date(b.requested_end_datetime);
+              
+              if (customStartDate && customEndDate) {
+                const rangeStart = new Date(customStartDate);
+                const rangeEnd = new Date(customEndDate);
+                rangeEnd.setHours(23, 59, 59, 999);
+                return requestStart <= rangeEnd && requestEnd >= rangeStart;
+              } else if (customStartDate) {
+                const rangeStart = new Date(customStartDate);
+                return requestEnd >= rangeStart;
+              } else if (customEndDate) {
+                const rangeEnd = new Date(customEndDate);
+                rangeEnd.setHours(23, 59, 59, 999);
+                return requestStart <= rangeEnd;
+              }
+              return true;
+            });
+          }
+        }
       }
 
       setBookings(myBookings);
@@ -30,7 +103,7 @@ function MyVenueRequestsPage() {
     } finally {
       setLoading(false);
     }
-  }, [filter]);
+  }, [filter, eventSearch, venueSearch, periodFilter, customStartDate, customEndDate]);
 
   useEffect(() => {
     loadMyBookings();
@@ -82,9 +155,55 @@ function MyVenueRequestsPage() {
 
       {/* Filter Section */}
       <div className="mvr-filter-section">
-        <label>Filter by status: </label>
+        <label>Event Name: </label>
+        <input
+          type="text"
+          placeholder="Search event name..."
+          value={eventSearch}
+          onChange={(e) => setEventSearch(e.target.value)}
+          style={{ padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc', marginRight: '15px', width: '180px' }}
+        />
+        
+        <label>Venue: </label>
+        <input
+          type="text"
+          placeholder="Search venue..."
+          value={venueSearch}
+          onChange={(e) => setVenueSearch(e.target.value)}
+          style={{ padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc', marginRight: '15px', width: '150px' }}
+        />
+        
+        <label>Period: </label>
+        <select value={periodFilter} onChange={(e) => setPeriodFilter(e.target.value)}>
+          <option value="all">All Time</option>
+          <option value="today">Today</option>
+          <option value="this-week">This Week</option>
+          <option value="this-month">This Month</option>
+          <option value="custom">Custom Range</option>
+        </select>
+        
+        {periodFilter === 'custom' && (
+          <>
+            <label style={{ marginLeft: '15px' }}>From: </label>
+            <input
+              type="date"
+              value={customStartDate}
+              onChange={(e) => setCustomStartDate(e.target.value)}
+              style={{ padding: '5px', borderRadius: '4px', border: '1px solid #ccc' }}
+            />
+            <label style={{ marginLeft: '10px' }}>To: </label>
+            <input
+              type="date"
+              value={customEndDate}
+              onChange={(e) => setCustomEndDate(e.target.value)}
+              style={{ padding: '5px', borderRadius: '4px', border: '1px solid #ccc' }}
+            />
+          </>
+        )}
+        
+        <label style={{ marginLeft: '15px' }}>Status: </label>
         <select value={filter} onChange={(e) => setFilter(e.target.value)}>
-          <option value="all">All Requests</option>
+          <option value="all">All Status</option>
           <option value="pending">Pending</option>
           <option value="approved">Approved</option>
           <option value="rejected">Rejected</option>
