@@ -19,6 +19,7 @@ function MyEventsPage() {
   const [filter, setFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
   const [visibilityFilter, setVisibilityFilter] = useState('all');
+  const [registrationFilter, setRegistrationFilter] = useState('all');
   const [periodFilter, setPeriodFilter] = useState('all');
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
@@ -83,6 +84,11 @@ function MyEventsPage() {
       // Apply visibility filter
       if (visibilityFilter !== 'all') {
         myEvents = myEvents.filter(e => e.visibility === visibilityFilter);
+      }
+
+      // Apply registration status filter
+      if (registrationFilter !== 'all') {
+        myEvents = myEvents.filter(e => e.registration_status === registrationFilter);
       }
       
       // Apply period filter (based on event start and end dates)
@@ -185,7 +191,7 @@ function MyEventsPage() {
     } finally {
       setLoading(false);
     }
-  }, [filter, typeFilter, visibilityFilter, periodFilter, searchQuery, customStartDate, customEndDate, userId, navigate]);
+  }, [filter, typeFilter, visibilityFilter, registrationFilter, periodFilter, searchQuery, customStartDate, customEndDate, userId, navigate]);
 
   useEffect(() => {
     document.title = 'My Events - CESMS';
@@ -207,6 +213,35 @@ function MyEventsPage() {
 
   const handleViewEvent = (eventId) => {
     navigate(`/events/${eventId}`, { state: { fromMyEvents: true } });
+  };
+
+  const handleToggleRegistration = async (event) => {
+    const action = event.registration_status === 'open' ? 'close' : 'open';
+    const actionText = action === 'open' ? 'reopen' : 'close';
+    
+    // Show confirmation for reopening
+    if (action === 'open') {
+      const registrationInfo = event.registration_limit 
+        ? `Registration limit: ${event.registered_count || 0}/${event.registration_limit}`
+        : '';
+      
+      if (!window.confirm(`Are you sure you want to reopen registration for "${event.event_name}"?\n${registrationInfo}`)) {
+        return;
+      }
+    } else {
+      if (!window.confirm(`Are you sure you want to close registration for "${event.event_name}"?`)) {
+        return;
+      }
+    }
+
+    try {
+      await eventService.toggleRegistrationStatus(event.id);
+      setSuccessMessage(`Registration ${action === 'open' ? 'opened' : 'closed'} successfully`);
+      setTimeout(() => setSuccessMessage(''), 3000);
+      loadMyEvents(); // Reload to get updated status
+    } catch (err) {
+      alert(err?.response?.data?.error || `Failed to ${actionText} registration`);
+    }
   };
 
   const handleDeleteEvent = async (eventId, eventName) => {
@@ -355,6 +390,15 @@ function MyEventsPage() {
             <option value="inviteonly">Invite Only</option>
           </select>
         </div>
+
+        <div className="me-filter-group">
+          <label>Registration:</label>
+          <select value={registrationFilter} onChange={(e) => setRegistrationFilter(e.target.value)}>
+            <option value="all">All</option>
+            <option value="open">Open</option>
+            <option value="closed">Closed</option>
+          </select>
+        </div>
         
         <div className="me-filter-group">
           <label>Period:</label>
@@ -433,8 +477,8 @@ function MyEventsPage() {
                       <div className="event-name">{event.event_name}</div>
                       {event.description && (
                         <div className="event-description-preview">
-                          {event.description.substring(0, 60)}
-                          {event.description.length > 60 ? '...' : ''}
+                          {event.description.substring(0, 50)}
+                          {event.description.length > 50 ? '...' : ''}
                         </div>
                       )}
                     </td>
@@ -447,6 +491,12 @@ function MyEventsPage() {
                       <span className={`status-badge ${getStatusBadgeClass(event.status)}`}>
                         {event.status}
                       </span>
+                      {event.registration_status === 'open' && (
+                        <span className="registration-status-badge open">✓ Open</span>
+                      )}
+                      {event.registration_status === 'closed' && (
+                        <span className="registration-status-badge closed">🔒 Closed</span>
+                      )}
                     </td>
                     <td>
                       <span className="visibility-badge">
@@ -496,6 +546,13 @@ function MyEventsPage() {
                         title="Customize Registration Form"
                       >
                         📝
+                      </button>
+                      <button 
+                        onClick={() => handleToggleRegistration(event)}
+                        className={`action-button ${event.registration_status === 'open' ? 'close-reg-button' : 'open-reg-button'}`}
+                        title={event.registration_status === 'open' ? 'Close Registration' : 'Open Registration'}
+                      >
+                        {event.registration_status === 'open' ? '🔒' : '🔓'}
                       </button>
                       <button 
                         onClick={() => handleEditEvent(event.id)}

@@ -83,10 +83,29 @@ class EventController {
     // Get user's event invitations
     const invitedEventIds = await Event.getUserInvitations(userId);
 
+    // Get venue bookings for approved venue check
+    const supabase = require('../config/supabase');
+    const { data: approvedBookings } = await supabase
+      .from('venue_bookings')
+      .select('event_id')
+      .eq('status', 'approved');
+    const approvedEventIds = new Set(approvedBookings?.map(b => b.event_id) || []);
+
     const filteredEvents = events.filter(event => {
-      // Administrators can see all events
+      // Administrators can see all events (with or without approved venue)
       if (userRole === 'administrator') {
         return true;
+      }
+
+      // Event organizers can see their own events (for My Events page)
+      if (event.organizer_id === userId) {
+        return true;
+      }
+
+      // For browse events: Only show events with approved venue bookings
+      // Faculty managers, students, and other event organizers should only see public events with venues
+      if (!approvedEventIds.has(event.id)) {
+        return false;
       }
 
       // Campus-wide events: Everyone can see
@@ -240,6 +259,11 @@ class EventController {
       const { id } = req.params;
       const userId = req.user.userId;
       const eventData = req.body;
+
+      // Auto-close registration when event status changes to completed
+      if (eventData.status === 'completed') {
+        eventData.registration_status = 'closed';
+      }
 
       // Get existing event
       const event = await Event.getById(id);
@@ -405,6 +429,73 @@ class EventController {
         error: 'An error occurred while fetching event details' 
       });
     }
-  }}
+  }
+
+  // Toggle registration status (open/close)
+  toggleRegistrationStatus = async (req, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.userId;
+      const userRole = req.user.role;
+
+      // Get event
+      const event = await Event.getById(id);
+      if (!event) {
+        return res.status(404).json({ error: 'Event not found' });
+      }
+
+      // Check authorization
+      if (event.organizer_id !== userId && userRole !== 'administrator') {
+        return res.status(403).json({ error: 'Not authorized to modify this event' });
+      }
+
+      const newStatus = event.registration_status === 'open' ? 'closed' : 'open';
+
+      // If reopening, check venue capacity
+      if (newStatus === 'open') {
+        // Get approved venue booking
+        const supabase = require('../config/supabase');
+        const { data: venueBooking } = await supabase
+          .from('venue_bookings')
+          .select('venue:venues(capacity)')
+          .eq('event_id', id)
+          .eq('status', 'approved')
+          .single();
+
+        // Get current registration count
+        const { count: registeredCount } = await supabase
+          .from('event_participation')
+          .select('*', { count: 'exact', head: true })
+          .eq('event_id', id)
+          .eq('status', 'registered');
+
+        const venueCapacity = venueBooking?.venue?.capacity;
+
+        // Block reopening if venue capacity is full
+        if (venueCapacity && registeredCount >= venueCapacity) {
+          return res.status(400).json({ 
+            error: 'Cannot reopen - venue capacity full',
+            registered: registeredCount,
+            capacity: venueCapacity
+          });
+        }
+      }
+
+      // Update registration status
+      const updatedEvent = await Event.update(id, { registration_status: newStatus });
+
+      res.json({
+        success: true,
+        message: `Registration ${newStatus === 'open' ? 'opened' : 'closed'} successfully`,
+        event: updatedEvent
+      });
+    } catch (error) {
+      console.error('Toggle registration status error:', error);
+      res.status(500).json({ 
+        error: 'An error occurred while updating registration status' 
+      });
+    }
+  }
+}
 
 module.exports = new EventController();

@@ -90,6 +90,17 @@ const eventService = {
     } catch (error) {
       throw error.response?.data?.error || 'Failed to update event';
     }
-  },};
+  },
+
+  // Toggle registration status (open/close)
+  toggleRegistrationStatus: async (eventId) => {
+    try {
+      const response = await api.put(`/events/${eventId}/registration-status`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data?.error || 'Failed to toggle registration status';
+    }
+  },
+};
 
 export default eventService;

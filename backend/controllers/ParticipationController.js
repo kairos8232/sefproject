@@ -14,6 +14,11 @@ class ParticipationController {
         return res.status(404).json({ error: 'Event not found' });
       }
 
+      // Check if registration is closed
+      if (event.registration_status === 'closed') {
+        return res.status(400).json({ error: 'Registration is closed for this event' });
+      }
+
       // Check if event is still upcoming or ongoing
       if (event.status === 'completed' || event.status === 'cancelled') {
         return res.status(400).json({ error: 'Cannot register for completed or cancelled events' });
@@ -55,6 +60,12 @@ class ParticipationController {
       // Register user (will update if previously cancelled, or insert if new)
       const participation = await Participation.register(eventId, userId);
       const message = existingParticipation ? 'Successfully re-registered for event' : 'Successfully registered for event';
+
+      // Auto-close registration if limit reached
+      const newCount = currentCount + 1;
+      if (capacityLimit && newCount >= capacityLimit) {
+        await Event.update(eventId, { registration_status: 'closed' });
+      }
 
       res.status(201).json({
         message,

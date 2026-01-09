@@ -155,6 +155,7 @@ CREATE TABLE events (
   visibility VARCHAR(50) NOT NULL DEFAULT 'campuswide', -- 'facultyonly', 'campuswide', 'inviteonly'
   event_type VARCHAR(100), -- e.g., 'seminar', 'workshop', 'sports', 'cultural'
   status VARCHAR(50) NOT NULL DEFAULT 'upcoming', -- 'upcoming', 'ongoing', 'completed', 'cancelled'
+  registration_status VARCHAR(20) NOT NULL DEFAULT 'open', -- 'open', 'closed'
   expected_attendees INTEGER, -- Expected number of attendees for the event
   registration_limit INTEGER, -- Optional limit for event registrations. If NULL, uses venue capacity
   start_datetime TIMESTAMP WITH TIME ZONE NOT NULL,

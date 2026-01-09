@@ -247,15 +247,30 @@
 }
 
 /* Badges */
+.my-events-container .status-badge {
+  margin-bottom: 5px;
+}
+
 .my-events-container .event-type-badge,
 .my-events-container .status-badge,
-.my-events-container .visibility-badge {
+.my-events-container .visibility-badge,
+.my-events-container .registration-status-badge {
   display: inline-block;
   padding: 4px 10px;
   border-radius: 12px;
   font-size: 12px;
   font-weight: 600;
   text-transform: capitalize;
+}
+
+.my-events-container .registration-status-badge.open {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.my-events-container .registration-status-badge.closed {
+  background-color: #ffebee;
+  color: #c62828;
 }
 
 .my-events-container .event-type-badge {
@@ -354,6 +369,22 @@
 
 .my-events-container .customize-form-button:hover:not(:disabled) {
   background-color: #bbdefb;
+}
+
+.my-events-container .open-reg-button {
+  background-color: #d4edda;
+}
+
+.my-events-container .open-reg-button:hover:not(:disabled) {
+  background-color: #c3e6cb;
+}
+
+.my-events-container .close-reg-button {
+  background-color: #fff3cd;
+}
+
+.my-events-container .close-reg-button:hover:not(:disabled) {
+  background-color: #ffe69c;
 }
 
 .my-events-container .edit-button {

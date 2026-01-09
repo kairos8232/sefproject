@@ -354,7 +354,11 @@ function EventDetailsPage() {
               </div>
             )}
 
-            {participationStatus?.status === 'registered' ? (
+            {event.registration_status === 'closed' ? (
+              <div className="ed-registration-closed">
+                🔒 Registration Closed
+              </div>
+            ) : participationStatus?.status === 'registered' ? (
               <button 
                 onClick={handleCancel} 
                 disabled={actionLoading}

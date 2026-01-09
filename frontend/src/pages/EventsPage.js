@@ -25,6 +25,7 @@ function EventsPage() {
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
   const [showMyRegistrations, setShowMyRegistrations] = useState(location.state?.filter === 'registered' || false);
+  const [registrationFilter, setRegistrationFilter] = useState('all'); // 'all', 'open', 'closed'
 
   const userRole = currentUser?.role;
 
@@ -158,12 +159,17 @@ function EventsPage() {
         const registeredEventIds = myParticipations.map(p => p.event_id);
         filtered = filtered.filter(e => registeredEventIds.includes(e.id));
       }
+
+      // Apply registration status filter
+      if (registrationFilter !== 'all') {
+        filtered = filtered.filter(e => e.registration_status === registrationFilter);
+      }
       
       setEvents(filtered);
     };
     
     applyFilter();
-  }, [allEvents, userRole, filter, myParticipations, statusFilter, eventTypeFilter, searchQuery, visibilityFilter, periodFilter, customStartDate, customEndDate, showMyRegistrations]);
+  }, [allEvents, userRole, filter, myParticipations, statusFilter, eventTypeFilter, searchQuery, visibilityFilter, periodFilter, customStartDate, customEndDate, showMyRegistrations, registrationFilter]);
 
   const handleEventClick = (eventId) => {
     navigate(`/events/${eventId}`, { state: { fromEventsPage: true, filter } });
@@ -219,6 +225,15 @@ function EventsPage() {
             <option value="ongoing">Ongoing</option>
             <option value="completed">Completed</option>
             <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+
+        <div className="ep-filter-group">
+          <label>Registration:</label>
+          <select value={registrationFilter} onChange={(e) => setRegistrationFilter(e.target.value)}>
+            <option value="all">All</option>
+            <option value="open">Open</option>
+            <option value="closed">Closed</option>
           </select>
         </div>
         
@@ -311,7 +326,6 @@ function EventsPage() {
               className="ep-event-card"
               onClick={() => handleEventClick(event.id)}
             >
-              <div className={`ep-event-status-badge ${event.status}`}>{event.status}</div>
               <h3>{event.event_name}</h3>
               <p className="ep-event-type">{event.event_type || 'General'}</p>
               <p className="ep-event-description">
@@ -319,8 +333,19 @@ function EventsPage() {
                 {event.description?.length > 100 ? '...' : ''}
               </p>
               <div className="ep-event-details">
-                <p><strong>Start:</strong> {formatDateTime(event.start_datetime)}</p>
-                <p><strong>Visibility:</strong> {formatVisibility(event.visibility, event)}</p>
+                <p>
+                  <strong>Start:</strong> {formatDateTime(event.start_datetime)}
+                  <span className={`ep-event-status-badge ${event.status}`}>{event.status}</span>
+                </p>
+                <p>
+                  <strong>Visibility:</strong> {formatVisibility(event.visibility, event)}
+                  {event.registration_status === 'closed' && (
+                    <span className="registration-closed-badge">Closed</span>
+                  )}
+                  {event.registration_status === 'open' && (
+                    <span className="registration-open-badge">Open</span>
+                  )}
+                </p>
                 <p><strong>Organizer:</strong> {event.organizer?.name || event.organizer?.email || 'Unknown'}</p>
               </div>
             </div>
