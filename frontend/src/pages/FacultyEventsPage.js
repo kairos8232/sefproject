@@ -97,16 +97,6 @@ function FacultyEventsPage() {
     return <span className={statusClasses[status] || 'status-badge'}>{status}</span>;
   };
 
-  const getBookingStatusBadge = (status) => {
-    const statusClasses = {
-      pending: 'fep-booking-status fep-pending',
-      approved: 'fep-booking-status fep-approved',
-      rejected: 'fep-booking-status fep-rejected',
-      cancelled: 'fep-booking-status fep-cancelled'
-    };
-    return <span className={statusClasses[status] || 'booking-status'}>{status}</span>;
-  };
-
   // Check if event is eligible for feedback (completed + last 3 months + approved booking)
   const isEligibleForFeedback = (event) => {
     if (event.status !== 'completed') return false;

@@ -285,64 +285,6 @@ function MyEventsPage() {
     navigate(`/events/${eventId}`, { state: { fromMyEvents: true } });
   };
 
-  // Helper to get venue booking info for display
-  const getVenueBookingInfo = (event) => {
-    const bookingsData = eventBookings[event.id];
-    console.log(`[MyEvents] getVenueBookingInfo for event ${event.id}:`, bookingsData);
-    
-    if (!bookingsData) return null;
-    
-    const totalPackages = bookingsData.packages?.length || 0;
-    const totalStandalone = bookingsData.standalone?.length || 0;
-    const totalBookings = totalPackages + totalStandalone;
-    
-    console.log(`[MyEvents] Venue info - packages: ${totalPackages}, standalone: ${totalStandalone}`);
-    
-    if (totalBookings === 0) return null;
-    
-    let info = '';
-    if (totalPackages > 0) {
-      const totalVenues = bookingsData.packages.reduce((sum, pkg) => sum + pkg.length, 0);
-      info += `${totalVenues} venue${totalVenues > 1 ? 's' : ''} (${totalPackages} package${totalPackages > 1 ? 's' : ''})`;
-    }
-    if (totalStandalone > 0) {
-      if (info) info += ' + ';
-      info += `${totalStandalone} venue${totalStandalone > 1 ? 's' : ''}`;
-    }
-    
-    console.log(`[MyEvents] Venue info result:`, info);
-    return info;
-  };
-
-  // Helper to get resource request info for display
-  const getResourceRequestInfo = (event) => {
-    const resourcesData = eventResources[event.id];
-    console.log(`[MyEvents] getResourceRequestInfo for event ${event.id}:`, resourcesData);
-    
-    if (!resourcesData) return null;
-    
-    const totalResourcePackages = resourcesData.packages?.length || 0;
-    const totalStandaloneResources = resourcesData.standalone?.length || 0;
-    const totalRequests = totalResourcePackages + totalStandaloneResources;
-    
-    console.log(`[MyEvents] Resource info - packages: ${totalResourcePackages}, standalone: ${totalStandaloneResources}`);
-    
-    if (totalRequests === 0) return null;
-    
-    let info = '';
-    if (totalResourcePackages > 0) {
-      const totalResources = resourcesData.packages.reduce((sum, pkg) => sum + pkg.length, 0);
-      info += `${totalResources} resource${totalResources > 1 ? 's' : ''} (${totalResourcePackages} package${totalResourcePackages > 1 ? 's' : ''})`;
-    }
-    if (totalStandaloneResources > 0) {
-      if (info) info += ' + ';
-      info += `${totalStandaloneResources} resource${totalStandaloneResources > 1 ? 's' : ''}`;
-    }
-    
-    console.log(`[MyEvents] Resource info result:`, info);
-    return info;
-  };
-
   const handleToggleRegistration = async (event) => {
     const action = event.registration_status === 'open' ? 'close' : 'open';
     const actionText = action === 'open' ? 'reopen' : 'close';
