@@ -260,6 +260,93 @@
   font-size: 1.1rem;
 }
 
+/* User Activity Analytics Styles */
+.rap-user-activity-section {
+  margin: 30px 0;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.rap-user-activity-section h4 {
+  margin: 0 0 15px 0;
+  font-size: 18px;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rap-activity-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.rap-activity-table thead {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.rap-activity-table th,
+.rap-activity-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.rap-activity-table th {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.rap-activity-table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.rap-activity-table td {
+  font-size: 14px;
+  color: #555;
+}
+
+.rap-rejection-rate,
+.rap-cancellation-rate {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-weight: 600;
+  background-color: #fee;
+  color: #c33;
+}
+
+.rap-status-approved {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-weight: 600;
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.rap-status-pending {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-weight: 600;
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.rap-status-rejected {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-weight: 600;
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
 /* Responsive design */
 @media (max-width: 1200px) {
   .rap-reports-content {

@@ -154,6 +154,16 @@ function EditProfilePage() {
               <h2>📋 Profile Information</h2>
               <form>
                 <div className="epp-form-group">
+                  <label>ID</label>
+                  <input
+                    type="text"
+                    value={user?.staff_id || '-'}
+                    disabled
+                    className="epp-disabled"
+                  />
+                </div>
+
+                <div className="epp-form-group">
                   <label>Name</label>
                   <input
                     type="text"

@@ -25,6 +25,7 @@ const FacultyVenueManagementPage = () => {
   const [showCreateVenueModal, setShowCreateVenueModal] = useState(false);
   const [showEditVenueModal, setShowEditVenueModal] = useState(false);
   const [selectedVenue, setSelectedVenue] = useState(null);
+  const [selectedVenueIds, setSelectedVenueIds] = useState([]);
   
   // Common state
   const [loading, setLoading] = useState(true);
@@ -270,6 +271,49 @@ const FacultyVenueManagementPage = () => {
     }
   };
 
+  const handleToggleAllVenues = async (newStatus) => {
+    try {
+      setError('');
+      setSuccess('');
+
+      if (selectedVenueIds.length === 0) {
+        setError('Please select venues to update');
+        return;
+      }
+
+      // Update only selected venues
+      const updatePromises = selectedVenueIds.map(venueId => 
+        venueService.updateVenueStatus(venueId, newStatus)
+      );
+      
+      await Promise.all(updatePromises);
+      setSuccess(`${selectedVenueIds.length} venue(s) ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully!`);
+      setSelectedVenueIds([]);
+      loadData();
+    } catch (err) {
+      console.error('Error toggling selected venues:', err);
+      setError(err.response?.data?.message || 'Failed to update venues status');
+    }
+  };
+
+  const handleSelectAllVenues = (e) => {
+    if (e.target.checked) {
+      setSelectedVenueIds(venues.map(v => v.id));
+    } else {
+      setSelectedVenueIds([]);
+    }
+  };
+
+  const handleSelectVenue = (venueId) => {
+    setSelectedVenueIds(prev => {
+      if (prev.includes(venueId)) {
+        return prev.filter(id => id !== venueId);
+      } else {
+        return [...prev, venueId];
+      }
+    });
+  };
+
   if (loading) {
     return <div className="fvm-faculty-venue-container"><div className="loading">Loading...</div></div>;
   }
@@ -327,8 +371,24 @@ const FacultyVenueManagementPage = () => {
               <option value="">All Status</option>
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
-            </select>
-          </div>
+            </select>            {venues.length > 0 && (
+              <div className="fvm-select-all-container">
+                <button
+                  className="fvm-btn fvm-btn-success"
+                  onClick={() => handleToggleAllVenues('active')}
+                  title="Activate all visible venues"
+                >
+                  ✅ Enable All
+                </button>
+                <button
+                  className="fvm-btn fvm-btn-danger"
+                  onClick={() => handleToggleAllVenues('inactive')}
+                  title="Deactivate all visible venues"
+                >
+                  🚫 Disable All
+                </button>
+              </div>
+            )}          </div>
 
           <div className="faculty-cards">
             {faculties.length === 0 ? (
@@ -431,6 +491,25 @@ const FacultyVenueManagementPage = () => {
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
             </select>
+            {selectedVenueIds.length > 0 && (
+              <div className="fvm-select-all-container">
+                <span className="fvm-selected-count">{selectedVenueIds.length} selected</span>
+                <button
+                  className="fvm-btn fvm-btn-success"
+                  onClick={() => handleToggleAllVenues('active')}
+                  title="Activate selected venues"
+                >
+                  ✅
+                </button>
+                <button
+                  className="fvm-btn fvm-btn-danger"
+                  onClick={() => handleToggleAllVenues('inactive')}
+                  title="Deactivate selected venues"
+                >
+                  🚫
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="venues-list">
@@ -440,6 +519,14 @@ const FacultyVenueManagementPage = () => {
               <table className="data-table">
                 <thead>
                   <tr>
+                    <th>
+                      <input
+                        type="checkbox"
+                        checked={venues.length > 0 && selectedVenueIds.length === venues.length}
+                        onChange={handleSelectAllVenues}
+                        title="Select all venues"
+                      />
+                    </th>
                     <th>Code</th>
                     <th>Name</th>
                     <th>Faculty</th>
@@ -452,13 +539,16 @@ const FacultyVenueManagementPage = () => {
                 <tbody>
                   {venues.map((venue) => (
                     <tr key={venue.id}>
-                      <td><code>{venue.code}</code></td>
-                      <td>{venue.name}</td>
                       <td>
-                        <span className="faculty-badge">
-                          {venue.faculty?.code || '-'}
-                        </span>
+                        <input
+                          type="checkbox"
+                          checked={selectedVenueIds.includes(venue.id)}
+                          onChange={() => handleSelectVenue(venue.id)}
+                        />
                       </td>
+                      <td>{venue.code}</td>
+                      <td>{venue.name}</td>
+                      <td>{venue.faculty?.code || '-'}</td>
                       <td>{venue.location || '-'}</td>
                       <td>{venue.capacity || '-'}</td>
                       <td>

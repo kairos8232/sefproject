@@ -47,6 +47,7 @@ const ResourceCataloguePage = () => {
   const [showCreateTypeModal, setShowCreateTypeModal] = useState(false);
   const [showEditTypeModal, setShowEditTypeModal] = useState(false);
   const [selectedType, setSelectedType] = useState(null);
+  const [selectedTypeIds, setSelectedTypeIds] = useState([]);
   const [typeFormData, setTypeFormData] = useState({
     category_id: '',
     code: '',
@@ -286,6 +287,49 @@ const ResourceCataloguePage = () => {
     }
   };
 
+  const handleToggleAllTypes = async (newStatus) => {
+    try {
+      setError('');
+      setSuccess('');
+
+      if (selectedTypeIds.length === 0) {
+        setError('Please select resource types to update');
+        return;
+      }
+
+      // Update only selected types
+      const updatePromises = selectedTypeIds.map(typeId => 
+        resourceTypeService.updateTypeStatus(typeId, newStatus)
+      );
+      
+      await Promise.all(updatePromises);
+      setSuccess(`${selectedTypeIds.length} resource type(s) ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully!`);
+      setSelectedTypeIds([]);
+      loadData();
+    } catch (err) {
+      console.error('Error toggling selected resource types:', err);
+      setError(err.response?.data?.error || 'Failed to update resource types status');
+    }
+  };
+
+  const handleSelectAllTypes = (e) => {
+    if (e.target.checked) {
+      setSelectedTypeIds(types.map(t => t.id));
+    } else {
+      setSelectedTypeIds([]);
+    }
+  };
+
+  const handleSelectType = (typeId) => {
+    setSelectedTypeIds(prev => {
+      if (prev.includes(typeId)) {
+        return prev.filter(id => id !== typeId);
+      } else {
+        return [...prev, typeId];
+      }
+    });
+  };
+
   if (loading) return <div className="rcp-resource-catalogue-container"><div className="rcp-loading">Loading...</div></div>;
 
   return (
@@ -432,7 +476,7 @@ const ResourceCataloguePage = () => {
           <div className="rcp-section-filters">
             <input
               type="text"
-              placeholder="Search resource types..."
+              placeholder="🔍 Search resource types..."
               value={typeFilters.search}
               onChange={(e) => setTypeFilters({ ...typeFilters, search: e.target.value })}
               className="rcp-search-input"
@@ -467,6 +511,25 @@ const ResourceCataloguePage = () => {
                 Clear Filter
               </button>
             )}
+            {selectedTypeIds.length > 0 && (
+              <div className="rcp-select-all-container">
+                <span className="rcp-selected-count">{selectedTypeIds.length} selected</span>
+                <button
+                  className="rcp-btn rcp-btn-success"
+                  onClick={() => handleToggleAllTypes('active')}
+                  title="Activate selected resource types"
+                >
+                  ✅
+                </button>
+                <button
+                  className="rcp-btn rcp-btn-danger"
+                  onClick={() => handleToggleAllTypes('inactive')}
+                  title="Deactivate selected resource types"
+                >
+                  🚫
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="rcp-types-list">
@@ -476,6 +539,14 @@ const ResourceCataloguePage = () => {
               <table className="rcp-data-table">
                 <thead>
                   <tr>
+                    <th>
+                      <input
+                        type="checkbox"
+                        checked={types.length > 0 && selectedTypeIds.length === types.length}
+                        onChange={handleSelectAllTypes}
+                        title="Select all resource types"
+                      />
+                    </th>
                     <th>Code</th>
                     <th>Name</th>
                     <th>Category</th>
@@ -488,7 +559,14 @@ const ResourceCataloguePage = () => {
                 <tbody>
                   {types.map((type) => (
                     <tr key={type.id}>
-                      <td><code>{type.code}</code></td>
+                      <td>
+                        <input
+                          type="checkbox"
+                          checked={selectedTypeIds.includes(type.id)}
+                          onChange={() => handleSelectType(type.id)}
+                        />
+                      </td>
+                      <td>{type.code}</td>
                       <td>{type.name}</td>
                       <td>{type.category_name}</td>
                       <td>{type.available_quantity} / {type.total_quantity}</td>

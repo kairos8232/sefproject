@@ -149,6 +149,12 @@
 .ed-event-description-section {
   margin-bottom: 30px;
   padding: 20px;
+
+.ed-full-badge {
+  color: #d32f2f;
+  font-weight: 600;
+  font-size: 14px;
+}
   background-color: #f9f9f9;
   border-radius: 8px;
 }

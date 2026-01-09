@@ -435,9 +435,9 @@ class VenueBooking {
         .from('venue_bookings')
         .select(`
           *,
-          event:events(id, event_name, start_datetime, end_datetime, organizer:users(id, name, email)),
+          event:events(id, event_name, description, start_datetime, end_datetime, organizer:users(id, name, email, staff_id)),
           venue:venues(id, code, name, capacity, location, faculty_id, faculty:faculties(id, code, name)),
-          requester:users!requester_user_id(id, name, email),
+          requester:users!requester_user_id(id, name, email, role, staff_id),
           approver:users!approved_user_id(id, name, email)
         `);
 

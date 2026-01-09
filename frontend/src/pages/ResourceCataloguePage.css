@@ -127,6 +127,62 @@
   gap: 10px;
   margin-bottom: 20px;
   flex-shrink: 0;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.rcp-select-all-container {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+  align-items: center;
+}
+
+.rcp-selected-count {
+  font-weight: 600;
+  color: #667eea;
+  padding: 8px 12px;
+  background-color: #f0f4ff;
+  border-radius: 6px;
+  font-size: 0.9em;
+}
+
+.rcp-btn-success {
+  background-color: #4caf50;
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9em;
+  font-weight: 500;
+  transition: all 0.3s;
+  white-space: nowrap;
+}
+
+.rcp-btn-success:hover {
+  background-color: #45a049;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+}
+
+.rcp-btn-danger {
+  background-color: #f44336;
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9em;
+  font-weight: 500;
+  transition: all 0.3s;
+  white-space: nowrap;
+}
+
+.rcp-btn-danger:hover {
+  background-color: #da190b;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(244, 67, 54, 0.3);
 }
 
 .rcp-search-input {
@@ -261,7 +317,7 @@
 .rcp-data-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .rcp-data-table thead {
@@ -290,14 +346,6 @@
   padding: 12px;
 }
 
-.rcp-data-table code {
-  background: #f8f9fa;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-family: 'Courier New', monospace;
-  font-size: 13px;
-  color: #e83e8c;
-}
 
 /* Badges */
 .rcp-status-badge {

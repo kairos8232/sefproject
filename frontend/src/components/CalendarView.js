@@ -5,7 +5,7 @@ const CalendarView = ({
   type, // 'venue' or 'resource'
   bookings,
   venueBlocks = [], // Venue availability blocks (only for venue type)
-  faculties = [], // Faculties list (only for venue type)
+  faculties = [], // Faculties list
   selectedFaculty,
   setSelectedFaculty,
   selectedId,
@@ -16,11 +16,21 @@ const CalendarView = ({
   getStatusBadgeClass
 }) => {
   const [statusFilter, setStatusFilter] = React.useState('all'); // 'all', 'pending', 'approved', 'rejected', 'cancelled', 'blocked'
+  const [selectedCategory, setSelectedCategory] = React.useState(''); // For resource category filtering
   
-  // Filter items by faculty (for venues only)
-  const filteredItems = type === 'venue' && selectedFaculty && Array.isArray(items)
-    ? items.filter(item => item.faculty_id === selectedFaculty)
-    : Array.isArray(items) ? items : [];
+  // Get unique categories from resources
+  const resourceCategories = type === 'resource' && Array.isArray(items)
+    ? [...new Set(items.map(item => item.category_name).filter(Boolean))]
+    : [];
+  
+  // Filter items by faculty (for venues) or category (for resources)
+  let filteredItems = Array.isArray(items) ? items : [];
+  
+  if (type === 'venue' && selectedFaculty) {
+    filteredItems = filteredItems.filter(item => item.faculty_id === selectedFaculty);
+  } else if (type === 'resource' && selectedCategory) {
+    filteredItems = filteredItems.filter(item => item.category_name === selectedCategory);
+  }
 
   // Filter bookings by status
   const filteredBookings = statusFilter === 'all' 
@@ -193,13 +203,13 @@ const CalendarView = ({
   return (
     <div className="booking-requests-calendar-view">
       <div className="calendar-header">
-        {type === 'venue' && faculties && faculties.length > 0 && (
+        {type === 'venue' && Array.isArray(faculties) && faculties.length > 0 && (
           <div className="calendar-dropdown">
             <label>Faculty:</label>
             <select 
               value={selectedFaculty || ''} 
               onChange={(e) => {
-                const newFacultyId = parseInt(e.target.value);
+                const newFacultyId = e.target.value;
                 setSelectedFaculty(newFacultyId);
                 if (Array.isArray(items)) {
                   const facultyVenues = items.filter(v => v.faculty_id === newFacultyId);
@@ -209,9 +219,38 @@ const CalendarView = ({
                 }
               }}
             >
+              <option value="">All Faculties</option>
               {faculties.map(faculty => (
                 <option key={faculty.id} value={faculty.id}>
-                  {faculty.name}
+                  {faculty.code} - {faculty.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+        
+        {type === 'resource' && resourceCategories.length > 0 && (
+          <div className="calendar-dropdown">
+            <label>Category:</label>
+            <select 
+              value={selectedCategory || ''} 
+              onChange={(e) => {
+                const newCategory = e.target.value;
+                setSelectedCategory(newCategory);
+                if (Array.isArray(items)) {
+                  const categoryResources = newCategory 
+                    ? items.filter(r => r.category_name === newCategory)
+                    : items;
+                  if (categoryResources.length > 0) {
+                    setSelectedId(categoryResources[0].id);
+                  }
+                }
+              }}
+            >
+              <option value="">All Categories</option>
+              {resourceCategories.map((category, index) => (
+                <option key={index} value={category}>
+                  {category}
                 </option>
               ))}
             </select>
@@ -220,23 +259,29 @@ const CalendarView = ({
         
         <div className="calendar-dropdown">
           <label>{type === 'venue' ? 'Venue:' : 'Resource:'}</label>
-          <select 
-            value={selectedId || ''} 
+          <input
+            type="text"
+            list={`${type}-datalist`}
+            placeholder={`Search ${type}...`}
             onChange={(e) => {
-              const newId = parseInt(e.target.value);
-              setSelectedId(newId);
+              const searchValue = e.target.value;
+              // Try to find exact match
+              const match = filteredItems.find(item => 
+                (item.name === searchValue) || 
+                (item.code === searchValue) ||
+                (`${item.code} - ${item.name}` === searchValue)
+              );
+              if (match) {
+                setSelectedId(match.id);
+              }
             }}
-          >
-            {filteredItems.length > 0 ? (
-              filteredItems.map(item => (
-                <option key={item.id} value={item.id}>
-                  {item.name || item.resource_name}
-                </option>
-              ))
-            ) : (
-              <option value="">No {type === 'venue' ? 'venues' : 'resources'} available</option>
-            )}
-          </select>
+            style={{ width: '250px', padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc' }}
+          />
+          <datalist id={`${type}-datalist`}>
+            {filteredItems.map(item => (
+              <option key={item.id} value={`${item.code} - ${item.name}`} />
+            ))}
+          </datalist>
         </div>
         
         <div className="calendar-navigation">

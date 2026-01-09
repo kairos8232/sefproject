@@ -111,29 +111,13 @@ class ParticipationController {
     try {
       const { eventId } = req.params;
       const userId = req.user.userId;
-      const registeredCount = await Participation.getEventParticipationCount(eventId, 'registered');
 
-      // Get event with booking info for capacity
-      const event = await Event.getById(eventId);
-      const eventWithBookings = await Event.getByIdWithVenueBookings(eventId);
-      
-      let capacityLimit = null;
-      // Priority 1: Use event's registration_limit if set
-      if (event?.registration_limit) {
-        capacityLimit = event.registration_limit;
-      } else {
-        // Priority 2: Use venue capacity from approved booking
-        const approvedBooking = eventWithBookings?.venue_bookings?.find(b => b.status === 'approved');
-        if (approvedBooking?.venue?.capacity) {
-          capacityLimit = approvedBooking.venue.capacity;
-        }
-      }
       const participation = await Participation.getUserEventParticipation(eventId, userId);
 
       res.status(200).json({
-        registeredCount,
-        capacityLimit,
-        isFull: capacityLimit ? registeredCount >= capacityLimit : false
+        participation: participation || null,
+        isRegistered: participation?.status === 'registered',
+        status: participation?.status || null
       });
     } catch (error) {
       console.error('Error in getStatus:', error);

@@ -25,7 +25,7 @@ function ReportsAnalyticsPage() {
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
   const [selectedFaculty, setSelectedFaculty] = useState('');
-  const [selectedVenue, setSelectedVenue] = useState('');
+  const [venueSearch, setVenueSearch] = useState('');
   const [selectedEventType, setSelectedEventType] = useState('');
   const [selectedResourceType, setSelectedResourceType] = useState('');
   
@@ -50,7 +50,9 @@ function ReportsAnalyticsPage() {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
+      console.log('Faculties response:', data);
       if (data.success) {
+        console.log('Faculties loaded:', data.faculties);
         setFaculties(data.faculties || []);
       }
     } catch (err) {
@@ -65,7 +67,9 @@ function ReportsAnalyticsPage() {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
+      console.log('Venues response:', data);
       if (data.success) {
+        console.log('Venues loaded:', data.venues);
         setVenues(data.venues || []);
       }
     } catch (err) {
@@ -80,7 +84,9 @@ function ReportsAnalyticsPage() {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
+      console.log('Resource types response:', data);
       if (data.success) {
+        console.log('Resource types loaded:', data.resourceTypes);
         setResourceTypes(data.resourceTypes || []);
       }
     } catch (err) {
@@ -150,7 +156,20 @@ function ReportsAnalyticsPage() {
       });
       
       if (selectedFaculty) params.append('facultyId', selectedFaculty);
-      if (selectedVenue) params.append('venueId', selectedVenue);
+      
+      // Extract venue ID from search input
+      if (venueSearch) {
+        const selectedVenueObj = venues.find(v => 
+          `${v.code} - ${v.name}` === venueSearch ||
+          v.name.toLowerCase() === venueSearch.toLowerCase() ||
+          v.code.toLowerCase() === venueSearch.toLowerCase()
+        );
+        if (selectedVenueObj) {
+          params.append('venueId', selectedVenueObj.id);
+          console.log('Selected venue ID:', selectedVenueObj.id);
+        }
+      }
+      
       if (selectedEventType) params.append('eventType', selectedEventType);
       if (selectedResourceType) params.append('resourceTypeId', selectedResourceType);
       
@@ -171,11 +190,24 @@ function ReportsAnalyticsPage() {
         case 'participation-trends':
           endpoint = 'participation-trends';
           break;
+        case 'user-activity':
+          endpoint = 'user-activity';
+          break;
         default:
           endpoint = 'event-summary';
       }
       
       const apiUrl = `http://localhost:5001/api/reports/${endpoint}?${params.toString()}`;
+      
+      console.log('Generating report with URL:', apiUrl);
+      console.log('Parameters:', {
+        reportType,
+        selectedFaculty,
+        venueSearch,
+        selectedEventType,
+        selectedResourceType,
+        dateRange
+      });
       
       const response = await fetch(apiUrl, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -214,6 +246,9 @@ function ReportsAnalyticsPage() {
         break;
       case 'participation-trends':
         processParticipationTrends(data.participations || []);
+        break;
+      case 'user-activity':
+        processUserActivityAnalytics(data);
         break;
       default:
         break;
@@ -314,7 +349,8 @@ function ReportsAnalyticsPage() {
     const chartData = Object.entries(venueStats).map(([venue, stats]) => ({
       name: venue,
       bookings: stats.bookings,
-      hours: Math.round(stats.hours * 10) / 10
+      hours: Math.round(stats.hours * 10) / 10,
+      value: Math.round(stats.hours * 10) / 10 // For pie chart compatibility
     }));
     
     setChartData(chartData);
@@ -402,11 +438,30 @@ function ReportsAnalyticsPage() {
         value: count
       }));
     } else {
-      chartData = Object.entries(byFaculty).map(([faculty, count]) => ({
-        name: faculty,
-        value: count
-      }));
+      // For bar/line charts, show by status
+      chartData = [
+        { name: 'Approved', value: approved },
+        { name: 'Pending', value: pending },
+        { name: 'Rejected', value: rejected }
+      ].filter(item => item.value > 0); // Only show categories with data
     }
+    
+    setChartData(chartData);
+  };
+  
+  const processUserActivityAnalytics = (data) => {
+    setSummaryStats({
+      topCreators: data.topCreators || [],
+      highRejectionUsers: data.highRejectionUsers || [],
+      mostActiveRequesters: data.mostActiveRequesters || [],
+      cancellationStats: data.cancellationStats || []
+    });
+    
+    // For chart, show top event creators
+    const chartData = (data.topCreators || []).map(creator => ({
+      name: creator.name,
+      value: creator.eventCount
+    }));
     
     setChartData(chartData);
   };
@@ -536,6 +591,140 @@ function ReportsAnalyticsPage() {
   const renderSummaryStats = () => {
     if (!reportData) return null;
     
+    // Special rendering for user activity analytics
+    if (reportType === 'user-activity') {
+      return (
+        <div className="rap-summary-stats">
+          <h3>📊 User Activity Insights</h3>
+          
+          {/* Top Event Creators */}
+          <div className="rap-user-activity-section">
+            <h4>🏆 Top 5 Event Organizers</h4>
+            {summaryStats.topCreators && summaryStats.topCreators.length > 0 ? (
+              <table className="rap-activity-table">
+                <thead>
+                  <tr>
+                    <th>Rank</th>
+                    <th>Name</th>
+                    <th>ID</th>
+                    <th>Events Created</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {summaryStats.topCreators.map((creator, index) => (
+                    <tr key={index}>
+                      <td>{index + 1}</td>
+                      <td>{creator.name}</td>
+                      <td>{creator.staffId}</td>
+                      <td><strong>{creator.eventCount}</strong></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <p style={{ textAlign: 'center', color: '#888', padding: '20px' }}>No data available</p>
+            )}
+          </div>
+          
+          {/* High Rejection Rate Users */}
+          <div className="rap-user-activity-section">
+            <h4>⚠️ Users with High Rejection Rates (&gt;30%)</h4>
+            {summaryStats.highRejectionUsers && summaryStats.highRejectionUsers.length > 0 ? (
+              <table className="rap-activity-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>ID</th>
+                    <th>Total Requests</th>
+                    <th>Rejected</th>
+                    <th>Rejection Rate</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {summaryStats.highRejectionUsers.map((user, index) => (
+                    <tr key={index}>
+                      <td>{user.name}</td>
+                      <td>{user.staffId}</td>
+                      <td>{user.total}</td>
+                      <td>{user.rejected}</td>
+                      <td><span className="rap-rejection-rate">{user.rejectionRate}%</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <p style={{ textAlign: 'center', color: '#888', padding: '20px' }}>No users with rejection rates above 30%</p>
+            )}
+          </div>
+          
+          {/* Most Active Requesters */}
+          <div className="rap-user-activity-section">
+            <h4>📈 Top 5 Most Active Requesters</h4>
+            {summaryStats.mostActiveRequesters && summaryStats.mostActiveRequesters.length > 0 ? (
+              <table className="rap-activity-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>ID</th>
+                    <th>Total Requests</th>
+                    <th>Approved</th>
+                    <th>Pending</th>
+                    <th>Rejected</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {summaryStats.mostActiveRequesters.map((user, index) => (
+                    <tr key={index}>
+                      <td>{user.name}</td>
+                      <td>{user.staffId}</td>
+                      <td><strong>{user.totalRequests}</strong></td>
+                      <td><span className="rap-status-approved">{user.approved}</span></td>
+                      <td><span className="rap-status-pending">{user.pending}</span></td>
+                      <td><span className="rap-status-rejected">{user.rejected}</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <p style={{ textAlign: 'center', color: '#888', padding: '20px' }}>No data available</p>
+            )}
+          </div>
+          
+          {/* Cancellation Patterns */}
+          <div className="rap-user-activity-section">
+            <h4>🚫 Users with High Cancellation Rates (&gt;20%)</h4>
+            {summaryStats.cancellationStats && summaryStats.cancellationStats.length > 0 ? (
+              <table className="rap-activity-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>ID</th>
+                    <th>Cancelled</th>
+                    <th>Total Requests</th>
+                    <th>Cancellation Rate</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {summaryStats.cancellationStats.map((user, index) => (
+                    <tr key={index}>
+                      <td>{user.name}</td>
+                      <td>{user.staffId}</td>
+                      <td>{user.cancelled}</td>
+                      <td>{user.total}</td>
+                      <td><span className="rap-cancellation-rate">{user.cancellationRate}%</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <p style={{ textAlign: 'center', color: '#888', padding: '20px' }}>No users with cancellation rates above 20%</p>
+            )}
+          </div>
+        </div>
+      );
+    }
+    
+    // Original rendering for other report types
     return (
       <div className="rap-summary-stats">
         <h3>Summary Statistics</h3>
@@ -587,20 +776,23 @@ function ReportsAnalyticsPage() {
                 <option value="booking-statistics">Booking & Cancellation Statistics</option>
                 <option value="resource-usage">Resource Usage</option>
                 <option value="participation-trends">Participation Trends</option>
+                <option value="user-activity">User Activity Analytics</option>
               </select>
             </div>
             
-            <div className="rap-filter-group">
-              <label>Chart Type</label>
-              <select 
-                value={chartType} 
-                onChange={(e) => setChartType(e.target.value)}
-              >
-                <option value="bar">Bar Chart</option>
-                <option value="line">Line Chart</option>
-                <option value="pie">Pie Chart</option>
-              </select>
-            </div>
+            {reportType !== 'user-activity' && (
+              <div className="rap-filter-group">
+                <label>Chart Type</label>
+                <select 
+                  value={chartType} 
+                  onChange={(e) => setChartType(e.target.value)}
+                >
+                  <option value="bar">Bar Chart</option>
+                  <option value="line">Line Chart</option>
+                  <option value="pie">Pie Chart</option>
+                </select>
+              </div>
+            )}
           </div>
           
           <div className="rap-filter-row">
@@ -644,7 +836,15 @@ function ReportsAnalyticsPage() {
           
           <div className="rap-filter-row">
             <div className="rap-filter-group">
-              <label>Faculty (Optional)</label>
+              <label>
+                Faculty (Optional)
+                {reportType === 'venue-utilization' && ' - Venue'}
+                {reportType === 'user-activity' && ' - User'}
+                {reportType === 'event-summary' && ' - Organizer'}
+                {reportType === 'booking-statistics' && ' - Venue'}
+                {reportType === 'resource-usage' && ' - User'}
+                {reportType === 'participation-trends' && ' - Participant'}
+              </label>
               <select 
                 value={selectedFaculty} 
                 onChange={(e) => setSelectedFaculty(e.target.value)}
@@ -659,15 +859,24 @@ function ReportsAnalyticsPage() {
             {reportType === 'venue-utilization' && (
               <div className="rap-filter-group">
                 <label>Venue (Optional)</label>
-                <select 
-                  value={selectedVenue} 
-                  onChange={(e) => setSelectedVenue(e.target.value)}
-                >
-                  <option value="">All Venues</option>
-                  {venues.map(v => (
-                    <option key={v.id} value={v.id}>{v.code} - {v.name}</option>
-                  ))}
-                </select>
+                <input
+                  type="text"
+                  placeholder="Search venues..."
+                  value={venueSearch}
+                  onChange={(e) => setVenueSearch(e.target.value)}
+                  list="venue-options"
+                />
+                <datalist id="venue-options">
+                  {venues
+                    .filter(v => 
+                      venueSearch === '' ||
+                      v.name.toLowerCase().includes(venueSearch.toLowerCase()) ||
+                      v.code.toLowerCase().includes(venueSearch.toLowerCase())
+                    )
+                    .map(v => (
+                      <option key={v.id} value={`${v.code} - ${v.name}`} data-id={v.id} />
+                    ))}
+                </datalist>
               </div>
             )}
             
@@ -726,10 +935,12 @@ function ReportsAnalyticsPage() {
           <div className="rap-report-results">
             {renderSummaryStats()}
             
-            <div className="rap-chart-container">
-              <h3>Visual Analysis</h3>
-              {renderChart()}
-            </div>
+            {reportType !== 'user-activity' && (
+              <div className="rap-chart-container">
+                <h3>Visual Analysis</h3>
+                {renderChart()}
+              </div>
+            )}
           </div>
         )}
       </div>

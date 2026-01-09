@@ -16,7 +16,8 @@ function EventsPage() {
   const [myParticipations, setMyParticipations] = useState([]); // Store user's registrations
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [filter, setFilter] = useState(location.state?.filter || 'all');
+  const [filter] = useState(location.state?.filter || 'all');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [eventTypeFilter, setEventTypeFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [visibilityFilter, setVisibilityFilter] = useState('all');
@@ -24,6 +25,8 @@ function EventsPage() {
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
   const [showMyRegistrations, setShowMyRegistrations] = useState(location.state?.filter === 'registered' || false);
+
+  const userRole = currentUser?.role;
 
   const loadEvents = useCallback(async () => {
     try {
@@ -59,6 +62,15 @@ function EventsPage() {
     const applyFilter = () => {
       let filtered = [...allEvents];
       
+      // Filter by approved venue bookings for students only
+      // Admins, event organizers, and faculty managers can see all events
+      if (userRole === 'student') {
+        filtered = filtered.filter(e => {
+          // Event must have at least one approved venue booking
+          return e.venue_bookings && e.venue_bookings.some(b => b.status === 'approved');
+        });
+      }
+      
       // Apply search filter (event name)
       if (searchQuery.trim()) {
         filtered = filtered.filter(e => 
@@ -66,13 +78,10 @@ function EventsPage() {
         );
       }
       
-      // Apply status filter
-      if (filter === 'upcoming') {
-        filtered = filtered.filter(e => e.status === 'upcoming');
-      } else if (filter === 'ongoing') {
-        filtered = filtered.filter(e => e.status === 'ongoing');
+      // Apply status filter (new dropdown)
+      if (statusFilter !== 'all') {
+        filtered = filtered.filter(e => e.status === statusFilter);
       }
-      // 'all' shows everything
       
       // Apply event type filter
       if (eventTypeFilter !== 'all') {
@@ -154,7 +163,7 @@ function EventsPage() {
     };
     
     applyFilter();
-  }, [allEvents, filter, myParticipations, eventTypeFilter, searchQuery, visibilityFilter, periodFilter, customStartDate, customEndDate, showMyRegistrations]);
+  }, [allEvents, userRole, filter, myParticipations, statusFilter, eventTypeFilter, searchQuery, visibilityFilter, periodFilter, customStartDate, customEndDate, showMyRegistrations]);
 
   const handleEventClick = (eventId) => {
     navigate(`/events/${eventId}`, { state: { fromEventsPage: true, filter } });
@@ -164,9 +173,16 @@ function EventsPage() {
     navigate('/home');
   };
 
-  const formatVisibility = (visibility) => {
+  const formatVisibility = (visibility, event) => {
     if (visibility === 'campuswide') return 'Campus-Wide';
-    if (visibility === 'facultyonly') return 'Faculty Only';
+    if (visibility === 'facultyonly') {
+      // Show specific faculty for admin and event organizer
+      if (isAdmin || currentUser?.role === 'event_organizer') {
+        const facultyCode = event?.organizer?.faculty?.code;
+        return facultyCode ? `${facultyCode} only` : 'Faculty only';
+      }
+      return 'Faculty Only';
+    }
     if (visibility === 'inviteonly') return 'Invite Only';
     return visibility;
   };
@@ -193,7 +209,16 @@ function EventsPage() {
           style={{ padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc', marginRight: '15px', width: '200px' }}
         />
         
-        <label>Type: </label>
+        <label>Status: </label>
+        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+          <option value="all">All Status</option>
+          <option value="upcoming">Upcoming</option>
+          <option value="ongoing">Ongoing</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+        
+        <label style={{ marginLeft: '15px' }}>Type: </label>
         <select value={eventTypeFilter} onChange={(e) => setEventTypeFilter(e.target.value)}>
           <option value="all">All Types</option>
           <option value="seminar">Seminar</option>
@@ -269,7 +294,7 @@ function EventsPage() {
               className="ep-event-card"
               onClick={() => handleEventClick(event.id)}
             >
-              <div className="ep-event-status-badge">{event.status}</div>
+              <div className={`ep-event-status-badge ${event.status}`}>{event.status}</div>
               <h3>{event.event_name}</h3>
               <p className="ep-event-type">{event.event_type || 'General'}</p>
               <p className="ep-event-description">
@@ -278,7 +303,7 @@ function EventsPage() {
               </p>
               <div className="ep-event-details">
                 <p><strong>Start:</strong> {formatDateTime(event.start_datetime)}</p>
-                <p><strong>Visibility:</strong> {formatVisibility(event.visibility)}</p>
+                <p><strong>Visibility:</strong> {formatVisibility(event.visibility, event)}</p>
                 <p><strong>Organizer:</strong> {event.organizer?.name || event.organizer?.email || 'Unknown'}</p>
               </div>
             </div>

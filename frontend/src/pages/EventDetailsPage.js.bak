@@ -22,7 +22,6 @@ function EventDetailsPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const currentUser = authService.getCurrentUser();
-  const userId = currentUser?.id;
   
   // Check if user came from My Events page (management view)
   const isManagementView = location.state?.fromMyEvents;
@@ -38,7 +37,7 @@ function EventDetailsPage() {
       const data = await eventService.getEventById(id);
       setEvent(data.event);
       
-      const isCreator = userId && data.event.organizer_id === userId;
+      const isCreator = currentUser && data.event.organizer_id === currentUser.id;
       
       // If user is the creator, load venue booking and resources
       if (isCreator) {
@@ -73,7 +72,7 @@ function EventDetailsPage() {
     } finally {
       setLoading(false);
     }
-  }, [id, userId]);
+  }, [id]);
 
   useEffect(() => {
     loadEventDetails();
@@ -101,12 +100,8 @@ function EventDetailsPage() {
         setParticipationStatus(statusData);
       }
     } catch (err) {
-      // Check if event is full
-      if (err && typeof err === 'string' && err.toLowerCase().includes('full')) {
-        setActionMessage('This event is full. Registration capacity has been reached.');
-      } else {
       setActionMessage(err);
-      }
+    } finally {
       setActionLoading(false);
     }
   };

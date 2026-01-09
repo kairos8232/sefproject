@@ -41,6 +41,9 @@ const BookingRequestsManagementPage = () => {
   const [venueCustomStartDate, setVenueCustomStartDate] = useState('');
   const [venueCustomEndDate, setVenueCustomEndDate] = useState('');
   const [venueStatusFilter, setVenueStatusFilter] = useState('all');
+  const [venueFacultyFilter, setVenueFacultyFilter] = useState('all');
+  const [venueOrganizerFilter, setVenueOrganizerFilter] = useState('');
+  const [venueRoleFilter, setVenueRoleFilter] = useState('all');
   
   // Resource-specific filters
   const [resourceEventSearch, setResourceEventSearch] = useState('');
@@ -50,6 +53,9 @@ const BookingRequestsManagementPage = () => {
   const [resourceCustomStartDate, setResourceCustomStartDate] = useState('');
   const [resourceCustomEndDate, setResourceCustomEndDate] = useState('');
   const [resourceStatusFilter, setResourceStatusFilter] = useState('all');
+  const [resourceFacultyFilter, setResourceFacultyFilter] = useState('all');
+  const [resourceOrganizerFilter, setResourceOrganizerFilter] = useState('');
+  const [resourceRoleFilter, setResourceRoleFilter] = useState('all');
 
   // Modal state
   const [selectedItem, setSelectedItem] = useState(null);
@@ -108,9 +114,10 @@ const BookingRequestsManagementPage = () => {
           }
         });
         const facultiesData = await facultiesResponse.json();
-        setFaculties(facultiesData || []);
-        if (facultiesData && facultiesData.length > 0 && !selectedFaculty) {
-          setSelectedFaculty(facultiesData[0].id);
+        const facultiesArray = facultiesData.faculties || [];
+        setFaculties(facultiesArray);
+        if (facultiesArray.length > 0 && !selectedFaculty) {
+          setSelectedFaculty(facultiesArray[0].id);
         }
         
         const venuesResponse = await fetch('http://localhost:5001/api/venues', {
@@ -279,41 +286,41 @@ const BookingRequestsManagementPage = () => {
 
   const getStatusBadgeClass = (status) => {
     switch (status) {
-      case 'pending': return 'status-pending';
-      case 'approved': return 'status-approved';
-      case 'rejected': return 'status-rejected';
-      case 'cancelled': return 'status-cancelled';
+      case 'pending': return 'brm-status-pending';
+      case 'approved': return 'brm-status-approved';
+      case 'rejected': return 'brm-status-rejected';
+      case 'cancelled': return 'brm-status-cancelled';
       default: return '';
     }
   };
 
   return (
-    <div className="booking-mgmt-container">
-      <div className="booking-mgmt-header">
+    <div className="brm-booking-mgmt-container">
+      <div className="brm-booking-mgmt-header">
         <div>
           <h1>📋 Booking & Requests Management</h1>
           <p>Review and override venue bookings and resource requests</p>
         </div>
-        <div className="header-actions">
-          <button className="back-button" onClick={() => navigate('/home')}>
+        <div className="brm-header-actions">
+          <button className="brm-back-button" onClick={() => navigate('/home')}>
             Back to Home
           </button>
         </div>
       </div>
 
-      {error && <div className="error-message">{error}</div>}
-      {success && <div className="success-message">{success}</div>}
+      {error && <div className="brm-error-message">{error}</div>}
+      {success && <div className="brm-success-message">{success}</div>}
 
       {/* Tabs */}
-      <div className="tabs">
+      <div className="brm-tabs">
         <button
-          className={`tab ${activeTab === 'venue' ? 'active' : ''}`}
+          className={`brm-tab ${activeTab === 'venue' ? 'active' : ''}`}
           onClick={() => setActiveTab('venue')}
         >
           🏛️ Venue Bookings
         </button>
         <button
-          className={`tab ${activeTab === 'resource' ? 'active' : ''}`}
+          className={`brm-tab ${activeTab === 'resource' ? 'active' : ''}`}
           onClick={() => setActiveTab('resource')}
         >
           📦 Resource Requests
@@ -321,15 +328,15 @@ const BookingRequestsManagementPage = () => {
       </div>
 
       {/* View Mode Toggle */}
-      <div className="view-mode-toggle">
+      <div className="brm-view-mode-toggle">
         <button
-          className={`view-btn ${viewMode === 'table' ? 'active' : ''}`}
+          className={`brm-view-btn ${viewMode === 'table' ? 'active' : ''}`}
           onClick={() => setViewMode('table')}
         >
           📋 Table View
         </button>
         <button
-          className={`view-btn ${viewMode === 'calendar' ? 'active' : ''}`}
+          className={`brm-view-btn ${viewMode === 'calendar' ? 'active' : ''}`}
           onClick={() => setViewMode('calendar')}
         >
           📅 Calendar View
@@ -338,11 +345,11 @@ const BookingRequestsManagementPage = () => {
 
       {/* Filters - only show in table view */}
       {viewMode === 'table' && (
-        <div className="filters-section">
+        <div className="brm-filters-section">
           {activeTab === 'venue' ? (
             // Venue Booking Filters
             <>
-              <div className="filter-group">
+              <div className="brm-filter-group">
                 <label>Event Name:</label>
                 <input
                   type="text"
@@ -353,7 +360,7 @@ const BookingRequestsManagementPage = () => {
                 />
               </div>
               
-              <div className="filter-group">
+              <div className="brm-filter-group">
                 <label>Venue:</label>
                 <input
                   type="text"
@@ -363,8 +370,45 @@ const BookingRequestsManagementPage = () => {
                   style={{ padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc', width: '150px' }}
                 />
               </div>
+
+              <div className="brm-filter-group">
+                <label>Faculty:</label>
+                <select
+                  value={venueFacultyFilter}
+                  onChange={(e) => setVenueFacultyFilter(e.target.value)}
+                >
+                  <option value="all">All Faculties</option>
+                  {Array.isArray(faculties) && faculties.map(f => (
+                    <option key={f.id} value={f.id}>{f.code} - {f.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="brm-filter-group">
+                <label>Organizer:</label>
+                <input
+                  type="text"
+                  placeholder="Name/ID/Email..."
+                  value={venueOrganizerFilter}
+                  onChange={(e) => setVenueOrganizerFilter(e.target.value)}
+                  style={{ padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc', width: '180px' }}
+                />
+              </div>
+
+              <div className="brm-filter-group">
+                <label>Role:</label>
+                <select
+                  value={venueRoleFilter}
+                  onChange={(e) => setVenueRoleFilter(e.target.value)}
+                >
+                  <option value="all">All Roles</option>
+                  <option value="student">Student</option>
+                  <option value="faculty">Faculty</option>
+                  <option value="organizer">Organizer</option>
+                </select>
+              </div>
               
-              <div className="filter-group">
+              <div className="brm-filter-group">
                 <label>Period:</label>
                 <select
                   value={venuePeriodFilter}
@@ -380,7 +424,7 @@ const BookingRequestsManagementPage = () => {
               
               {venuePeriodFilter === 'custom' && (
                 <>
-                  <div className="filter-group">
+                  <div className="brm-filter-group">
                     <label>From:</label>
                     <input
                       type="date"
@@ -389,7 +433,7 @@ const BookingRequestsManagementPage = () => {
                       style={{ padding: '5px' }}
                     />
                   </div>
-                  <div className="filter-group">
+                  <div className="brm-filter-group">
                     <label>To:</label>
                     <input
                       type="date"
@@ -401,7 +445,7 @@ const BookingRequestsManagementPage = () => {
                 </>
               )}
               
-              <div className="filter-group">
+              <div className="brm-filter-group">
                 <label>Status:</label>
                 <select
                   value={venueStatusFilter}
@@ -418,7 +462,7 @@ const BookingRequestsManagementPage = () => {
           ) : (
             // Resource Request Filters
             <>
-              <div className="filter-group">
+              <div className="brm-filter-group">
                 <label>Event Name:</label>
                 <input
                   type="text"
@@ -429,20 +473,7 @@ const BookingRequestsManagementPage = () => {
                 />
               </div>
               
-              <div className="filter-group">
-                <label>Type:</label>
-                <select
-                  value={resourceTypeFilter}
-                  onChange={(e) => setResourceTypeFilter(e.target.value)}
-                >
-                  <option value="all">All Types</option>
-                  {resources.map(r => (
-                    <option key={r.id} value={r.id}>{r.name}</option>
-                  ))}
-                </select>
-              </div>
-              
-              <div className="filter-group">
+              <div className="brm-filter-group">
                 <label>Resource:</label>
                 <input
                   type="text"
@@ -452,8 +483,45 @@ const BookingRequestsManagementPage = () => {
                   style={{ padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc', width: '150px' }}
                 />
               </div>
+
+              <div className="brm-filter-group">
+                <label>Faculty:</label>
+                <select
+                  value={resourceFacultyFilter}
+                  onChange={(e) => setResourceFacultyFilter(e.target.value)}
+                >
+                  <option value="all">All Faculties</option>
+                  {Array.isArray(faculties) && faculties.map(f => (
+                    <option key={f.id} value={f.id}>{f.code} - {f.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="brm-filter-group">
+                <label>Organizer:</label>
+                <input
+                  type="text"
+                  placeholder="Name/ID/Email..."
+                  value={resourceOrganizerFilter}
+                  onChange={(e) => setResourceOrganizerFilter(e.target.value)}
+                  style={{ padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc', width: '180px' }}
+                />
+              </div>
+
+              <div className="brm-filter-group">
+                <label>Role:</label>
+                <select
+                  value={resourceRoleFilter}
+                  onChange={(e) => setResourceRoleFilter(e.target.value)}
+                >
+                  <option value="all">All Roles</option>
+                  <option value="student">Student</option>
+                  <option value="faculty">Faculty</option>
+                  <option value="organizer">Organizer</option>
+                </select>
+              </div>
               
-              <div className="filter-group">
+              <div className="brm-filter-group">
                 <label>Period:</label>
                 <select
                   value={resourcePeriodFilter}
@@ -469,7 +537,7 @@ const BookingRequestsManagementPage = () => {
               
               {resourcePeriodFilter === 'custom' && (
                 <>
-                  <div className="filter-group">
+                  <div className="brm-filter-group">
                     <label>From:</label>
                     <input
                       type="date"
@@ -478,7 +546,7 @@ const BookingRequestsManagementPage = () => {
                       style={{ padding: '5px' }}
                     />
                   </div>
-                  <div className="filter-group">
+                  <div className="brm-filter-group">
                     <label>To:</label>
                     <input
                       type="date"
@@ -490,7 +558,7 @@ const BookingRequestsManagementPage = () => {
                 </>
               )}
               
-              <div className="filter-group">
+              <div className="brm-filter-group">
                 <label>Status:</label>
                 <select
                   value={resourceStatusFilter}
@@ -510,7 +578,7 @@ const BookingRequestsManagementPage = () => {
 
       {/* Content */}
       {loading ? (
-        <div className="loading">Loading...</div>
+        <div className="brm-loading">Loading...</div>
       ) : viewMode === 'table' ? (
         <>
           {activeTab === 'venue' ? (
@@ -522,7 +590,29 @@ const BookingRequestsManagementPage = () => {
                 }
                 
                 // Venue filter
-                if (venueSearchQuery && !b.venue?.name?.toLowerCase().includes(venueSearchQuery.toLowerCase())) {
+                if (venueSearchQuery && !b.venue?.name?.toLowerCase().includes(venueSearchQuery.toLowerCase()) && !b.venue?.code?.toLowerCase().includes(venueSearchQuery.toLowerCase())) {
+                  return false;
+                }
+
+                // Faculty filter
+                if (venueFacultyFilter !== 'all' && b.venue?.faculty?.id !== venueFacultyFilter) {
+                  return false;
+                }
+
+                // Organizer filter (name, email, or staff ID)
+                if (venueOrganizerFilter) {
+                  const organizer = b.requester;
+                  const searchLower = venueOrganizerFilter.toLowerCase();
+                  const matchesName = organizer?.name?.toLowerCase().includes(searchLower);
+                  const matchesEmail = organizer?.email?.toLowerCase().includes(searchLower);
+                  const matchesStaffId = organizer?.staff_id?.toLowerCase().includes(searchLower);
+                  if (!(matchesName || matchesEmail || matchesStaffId)) {
+                    return false;
+                  }
+                }
+
+                // Role filter
+                if (venueRoleFilter !== 'all' && !b.requester?.role?.toLowerCase().includes(venueRoleFilter.toLowerCase())) {
                   return false;
                 }
                 
@@ -583,13 +673,30 @@ const BookingRequestsManagementPage = () => {
                   return false;
                 }
                 
-                // Resource type filter
-                if (resourceTypeFilter !== 'all' && r.resource_type_id !== parseInt(resourceTypeFilter)) {
+                // Resource search filter (search by name or code)
+                if (resourceSearchQuery && !r.resource?.name?.toLowerCase().includes(resourceSearchQuery.toLowerCase()) && !r.resource?.code?.toLowerCase().includes(resourceSearchQuery.toLowerCase())) {
                   return false;
                 }
-                
-                // Resource search filter
-                if (resourceSearchQuery && !r.resource_type?.name?.toLowerCase().includes(resourceSearchQuery.toLowerCase())) {
+
+                // Faculty filter
+                if (resourceFacultyFilter !== 'all' && r.venue_booking?.venue?.faculty?.id !== resourceFacultyFilter) {
+                  return false;
+                }
+
+                // Organizer filter (name, email, or staff ID)
+                if (resourceOrganizerFilter) {
+                  const organizer = r.requester;
+                  const searchLower = resourceOrganizerFilter.toLowerCase();
+                  const matchesName = organizer?.name?.toLowerCase().includes(searchLower);
+                  const matchesEmail = organizer?.email?.toLowerCase().includes(searchLower);
+                  const matchesStaffId = organizer?.staff_id?.toLowerCase().includes(searchLower);
+                  if (!(matchesName || matchesEmail || matchesStaffId)) {
+                    return false;
+                  }
+                }
+
+                // Role filter
+                if (resourceRoleFilter !== 'all' && !r.requester?.role?.toLowerCase().includes(resourceRoleFilter.toLowerCase())) {
                   return false;
                 }
                 
@@ -666,6 +773,7 @@ const BookingRequestsManagementPage = () => {
               type="resource"
               bookings={resourceRequests.filter(r => r.resource_id === selectedResource)}
               venueBlocks={venueBlocks}
+              faculties={faculties}
               selectedId={selectedResource}
               setSelectedId={setSelectedResource}
               items={resources}
@@ -696,57 +804,97 @@ const BookingRequestsManagementPage = () => {
 // Venue Bookings Table Component
 const VenueBookingsTable = ({ bookings, onAction, getStatusBadgeClass }) => {
   if (bookings.length === 0) {
-    return <div className="no-data">No venue bookings found</div>;
+    return <div className="brm-no-data">No venue bookings found</div>;
   }
 
   return (
-    <div className="table-container">
-      <table className="data-table">
+    <div className="brm-table-container">
+      <table className="brm-data-table">
         <thead>
           <tr>
             <th>Event</th>
+            <th>Faculty</th>
             <th>Venue</th>
-            <th>Requested By</th>
+            <th>Organiser</th>
             <th>Requested Time</th>
             <th>Status</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          {bookings.map(booking => (
+          {bookings.map(booking => {
+            // Helper function to get role class
+            const getRoleClass = (role) => {
+              if (!role) return 'brm-role-default';
+              const roleLower = role.toLowerCase();
+              if (roleLower.includes('student')) return 'brm-role-student';
+              if (roleLower.includes('faculty')) return 'brm-role-faculty';
+              if (roleLower.includes('organizer')) return 'brm-role-organizer';
+              return 'brm-role-default';
+            };
+
+            // Get faculty code from venue, not event organizer
+            const facultyCode = booking.venue?.faculty?.code || 'N/A';
+
+            // Calculate start/end time including setup/teardown
+            const setupMinutes = booking.setup_time || 0;
+            const teardownMinutes = booking.teardown_time || 0;
+            const startDate = new Date(booking.requested_start_datetime);
+            const endDate = new Date(booking.requested_end_datetime);
+            
+            // Subtract setup time from start
+            const displayStartDate = new Date(startDate.getTime() - (setupMinutes * 60 * 1000));
+            // Add teardown time to end
+            const displayEndDate = new Date(endDate.getTime() + (teardownMinutes * 60 * 1000));
+
+            return (
             <tr key={booking.id}>
               <td>
-                <strong>{booking.event?.event_name}</strong>
-              </td>
-              <td>
-                {booking.venue?.name}<br />
-                <small>{booking.venue?.faculty?.name}</small>
-              </td>
-              <td>{booking.requester?.name}</td>
-              <td>
-                {formatDateTime(booking.requested_start_datetime)}
-                <br />
-                to
-                <br />
-                {formatDateTime(booking.requested_end_datetime)}
-                {(booking.setup_time || booking.teardown_time) && (
-                  <>
-                    <br />
-                    <small>
-                      ({booking.setup_time || 0}min setup, {booking.teardown_time || 0}min teardown)
-                    </small>
-                  </>
+                <div className="brm-event-name">{booking.event?.event_name || 'N/A'}</div>
+                {(booking.event?.description || booking.event?.event_description) && (
+                  <div className="brm-event-description">
+                    {(booking.event?.description || booking.event?.event_description).substring(0, 50)}
+                    {(booking.event?.description || booking.event?.event_description).length > 50 ? '...' : ''}
+                  </div>
                 )}
               </td>
               <td>
-                <span className={`status-badge ${getStatusBadgeClass(booking.status)}`}>
+                <div className="brm-faculty-badge">{facultyCode}</div>
+              </td>
+              <td>
+                <div className="brm-venue-info">
+                  <div className="brm-venue-name">{booking.venue?.name || 'N/A'}</div>
+                  <div className="brm-venue-code">{booking.venue?.code || 'N/A'}</div>
+                </div>
+              </td>
+              <td>
+                <div className="brm-organizer-info">
+                  <div className="brm-organizer-name">{booking.requester?.name || 'N/A'}</div>
+                  {booking.requester?.role && (
+                    <div className={`brm-organizer-role ${getRoleClass(booking.requester.role)}`}>
+                      {booking.requester.role.replace('_', ' ').split(' ').map(word => 
+                        word.charAt(0).toUpperCase() + word.slice(1)
+                      ).join(' ')}
+                    </div>
+                  )}
+                </div>
+              </td>
+              <td>
+                <div className="brm-datetime-info">
+                  <div>{formatDateTime(displayStartDate)}</div>
+                  <div className="brm-datetime-to">to</div>
+                  <div>{formatDateTime(displayEndDate)}</div>
+                </div>
+              </td>
+              <td>
+                <span className={`brm-status-badge ${getStatusBadgeClass(booking.status)}`}>
                   {booking.status}
                 </span>
               </td>
-              <td className="actions-cell">
-                <div className="action-buttons">
+              <td className="brm-actions-cell">
+                <div className="brm-action-buttons">
                   <button
-                    className="btn-approve"
+                    className="brm-btn-approve"
                     onClick={() => onAction(booking, 'approve')}
                     disabled={booking.status === 'cancelled'}
                     title="Approve"
@@ -754,7 +902,7 @@ const VenueBookingsTable = ({ bookings, onAction, getStatusBadgeClass }) => {
                     ✅
                   </button>
                   <button
-                    className="btn-reject"
+                    className="brm-btn-reject"
                     onClick={() => onAction(booking, 'reject')}
                     disabled={booking.status === 'cancelled'}
                     title="Reject"
@@ -762,7 +910,7 @@ const VenueBookingsTable = ({ bookings, onAction, getStatusBadgeClass }) => {
                     ❌
                   </button>
                   <button
-                    className="btn-modify"
+                    className="brm-btn-modify"
                     onClick={() => onAction(booking, 'modify')}
                     disabled={booking.status === 'cancelled'}
                     title="Modify"
@@ -772,7 +920,7 @@ const VenueBookingsTable = ({ bookings, onAction, getStatusBadgeClass }) => {
                 </div>
               </td>
             </tr>
-          ))}
+          )})}
         </tbody>
       </table>
     </div>
@@ -782,51 +930,86 @@ const VenueBookingsTable = ({ bookings, onAction, getStatusBadgeClass }) => {
 // Resource Requests Table Component
 const ResourceRequestsTable = ({ requests, onAction, getStatusBadgeClass }) => {
   if (requests.length === 0) {
-    return <div className="no-data">No resource requests found</div>;
+    return <div className="brm-no-data">No resource requests found</div>;
   }
 
   return (
-    <div className="table-container">
-      <table className="data-table">
+    <div className="brm-table-container">
+      <table className="brm-data-table">
         <thead>
           <tr>
             <th>Event</th>
+            <th>Faculty</th>
             <th>Resource</th>
             <th>Quantity</th>
-            <th>Requested By</th>
+            <th>Organiser</th>
             <th>Usage Time</th>
             <th>Status</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          {requests.map(request => (
+          {requests.map(request => {
+            // Helper function to get role class
+            const getRoleClass = (role) => {
+              if (!role) return 'brm-role-default';
+              const roleLower = role.toLowerCase();
+              if (roleLower.includes('student')) return 'brm-role-student';
+              if (roleLower.includes('faculty')) return 'brm-role-faculty';
+              if (roleLower.includes('organizer')) return 'brm-role-organizer';
+              return 'brm-role-default';
+            };
+
+            // Get faculty code from venue booking associated with this request, not event organizer
+            const facultyCode = request.venue_booking?.venue?.faculty?.code || 'N/A';
+
+            return (
             <tr key={request.id}>
               <td>
-                <strong>{request.event?.event_name}</strong>
+                <div className="brm-event-name">{request.event?.event_name || 'N/A'}</div>
+                {(request.event?.description || request.event?.event_description) && (
+                  <div className="brm-event-description">
+                    {(request.event?.description || request.event?.event_description).substring(0, 50)}
+                    {(request.event?.description || request.event?.event_description).length > 50 ? '...' : ''}
+                  </div>
+                )}
               </td>
               <td>
-                {request.resource?.name}<br />
-                <small>{request.resource?.category?.name}</small>
-              </td>
-              <td>{request.requested_quantity}</td>
-              <td>{request.requester?.name}</td>
-              <td>
-                {formatDateTime(request.usage_start_datetime)}
-                <br />
-                to 
-                <br />
-                {formatDateTime(request.usage_end_datetime)}
+                <div className="brm-faculty-badge">{facultyCode}</div>
               </td>
               <td>
-                <span className={`status-badge ${getStatusBadgeClass(request.status)}`}>
+                {request.resource?.name || 'N/A'}<br />
+                <small>{request.resource?.category?.name || ''}</small>
+              </td>
+              <td>{request.requested_quantity} {request.resource?.unit ? `${request.resource.unit}` : ''}</td>
+              <td>
+                <div className="brm-organizer-info">
+                  <div className="brm-organizer-name">{request.requester?.name || 'N/A'}</div>
+                  {request.requester?.role && (
+                    <div className={`brm-organizer-role ${getRoleClass(request.requester.role)}`}>
+                      {request.requester.role.replace('_', ' ').split(' ').map(word => 
+                        word.charAt(0).toUpperCase() + word.slice(1)
+                      ).join(' ')}
+                    </div>
+                  )}
+                </div>
+              </td>
+              <td>
+                <div className="brm-datetime-info">
+                  <div>{formatDateTime(request.usage_start_datetime)}</div>
+                  <div className="brm-datetime-to">to</div>
+                  <div>{formatDateTime(request.usage_end_datetime)}</div>
+                </div>
+              </td>
+              <td>
+                <span className={`brm-status-badge ${getStatusBadgeClass(request.status)}`}>
                   {request.status}
                 </span>
               </td>
-              <td className="actions-cell">
-                <div className="action-buttons">
+              <td className="brm-actions-cell">
+                <div className="brm-action-buttons">
                   <button
-                    className="btn-approve"
+                    className="brm-btn-approve"
                     onClick={() => onAction(request, 'approve')}
                     disabled={request.status === 'cancelled'}
                     title="Approve"
@@ -834,7 +1017,7 @@ const ResourceRequestsTable = ({ requests, onAction, getStatusBadgeClass }) => {
                     ✅
                   </button>
                   <button
-                    className="btn-reject"
+                    className="brm-btn-reject"
                     onClick={() => onAction(request, 'reject')}
                     disabled={request.status === 'cancelled'}
                     title="Reject"
@@ -842,7 +1025,7 @@ const ResourceRequestsTable = ({ requests, onAction, getStatusBadgeClass }) => {
                     ❌
                   </button>
                   <button
-                    className="btn-modify"
+                    className="brm-btn-modify"
                     onClick={() => onAction(request, 'modify')}
                     disabled={request.status === 'cancelled'}
                     title="Modify"
@@ -852,7 +1035,7 @@ const ResourceRequestsTable = ({ requests, onAction, getStatusBadgeClass }) => {
                 </div>
               </td>
             </tr>
-          ))}
+          )})}
         </tbody>
       </table>
     </div>
@@ -862,21 +1045,21 @@ const ResourceRequestsTable = ({ requests, onAction, getStatusBadgeClass }) => {
 // Override Modal Component
 const OverrideModal = ({ item, action, type, data, setData, onSubmit, onClose }) => {
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
+    <div className="brm-modal-overlay" onClick={onClose}>
+      <div className="brm-modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="brm-modal-header">
           <h2>
             {action === 'approve' && '✓ Approve Request'}
             {action === 'reject' && '✗ Reject Request'}
             {action === 'modify' && '✎ Modify Request'}
           </h2>
-          <button className="close-button" onClick={onClose}>×</button>
+          <button className="brm-close-button" onClick={onClose}>×</button>
         </div>
 
         <form onSubmit={onSubmit}>
-          <div className="modal-body">
+          <div className="brm-modal-body">
             {/* Display item details */}
-            <div className="item-details">
+            <div className="brm-item-details">
               <h3>Request Details</h3>
               {type === 'venue' ? (
                 <>
@@ -899,7 +1082,7 @@ const OverrideModal = ({ item, action, type, data, setData, onSubmit, onClose })
             {/* Action-specific fields */}
             {action === 'approve' && (
               <>
-                <div className="form-group">
+                <div className="brm-form-group">
                   <label>Approval Notes (Optional)</label>
                   <textarea
                     rows="3"
@@ -911,7 +1094,7 @@ const OverrideModal = ({ item, action, type, data, setData, onSubmit, onClose })
 
                 {type === 'venue' && (
                   <>
-                    <div className="form-group">
+                    <div className="brm-form-group">
                       <label>Approved Start Time</label>
                       <input
                         type="datetime-local"
@@ -921,7 +1104,7 @@ const OverrideModal = ({ item, action, type, data, setData, onSubmit, onClose })
                       />
                     </div>
 
-                    <div className="form-group">
+                    <div className="brm-form-group">
                       <label>Approved End Time</label>
                       <input
                         type="datetime-local"
@@ -931,7 +1114,7 @@ const OverrideModal = ({ item, action, type, data, setData, onSubmit, onClose })
                       />
                     </div>
 
-                    <div className="form-group">
+                    <div className="brm-form-group">
                       <label>Setup Time (minutes)</label>
                       <input
                         type="number"
@@ -941,7 +1124,7 @@ const OverrideModal = ({ item, action, type, data, setData, onSubmit, onClose })
                       />
                     </div>
 
-                    <div className="form-group">
+                    <div className="brm-form-group">
                       <label>Teardown Time (minutes)</label>
                       <input
                         type="number"
@@ -951,7 +1134,7 @@ const OverrideModal = ({ item, action, type, data, setData, onSubmit, onClose })
                       />
                     </div>
 
-                    <div className="form-group">
+                    <div className="brm-form-group">
                       <label>Expected Attendees</label>
                       <input
                         type="number"
@@ -966,7 +1149,7 @@ const OverrideModal = ({ item, action, type, data, setData, onSubmit, onClose })
             )}
 
             {action === 'reject' && (
-              <div className="form-group">
+              <div className="brm-form-group">
                 <label>Rejection Reason *</label>
                 <textarea
                   rows="4"
@@ -980,7 +1163,7 @@ const OverrideModal = ({ item, action, type, data, setData, onSubmit, onClose })
 
             {action === 'modify' && (
               <>
-                <div className="form-group">
+                <div className="brm-form-group">
                   <label>Status</label>
                   <select
                     value={data.status || ''}
@@ -992,7 +1175,7 @@ const OverrideModal = ({ item, action, type, data, setData, onSubmit, onClose })
                   </select>
                 </div>
 
-                <div className="form-group">
+                <div className="brm-form-group">
                   <label>Notes</label>
                   <textarea
                     rows="3"
@@ -1003,8 +1186,8 @@ const OverrideModal = ({ item, action, type, data, setData, onSubmit, onClose })
 
                 {type === 'venue' ? (
                   <>
-                    <div className="form-row">
-                      <div className="form-group">
+                    <div className="brm-form-row">
+                      <div className="brm-form-group">
                         <label>Setup Time (minutes)</label>
                         <input
                           type="number"
@@ -1014,7 +1197,7 @@ const OverrideModal = ({ item, action, type, data, setData, onSubmit, onClose })
                         />
                       </div>
 
-                      <div className="form-group">
+                      <div className="brm-form-group">
                         <label>Teardown Time (minutes)</label>
                         <input
                           type="number"
@@ -1025,7 +1208,7 @@ const OverrideModal = ({ item, action, type, data, setData, onSubmit, onClose })
                       </div>
                     </div>
 
-                    <div className="form-group">
+                    <div className="brm-form-group">
                       <label>Expected Attendees</label>
                       <input
                         type="number"
@@ -1036,7 +1219,7 @@ const OverrideModal = ({ item, action, type, data, setData, onSubmit, onClose })
                     </div>
                   </>
                 ) : (
-                  <div className="form-group">
+                  <div className="brm-form-group">
                     <label>Quantity</label>
                     <input
                       type="number"
@@ -1050,11 +1233,11 @@ const OverrideModal = ({ item, action, type, data, setData, onSubmit, onClose })
             )}
           </div>
 
-          <div className="modal-footer">
-            <button type="button" className="btn-cancel" onClick={onClose}>
+          <div className="brm-modal-footer">
+            <button type="button" className="brm-btn-cancel" onClick={onClose}>
               Cancel
             </button>
-            <button type="submit" className="btn-submit">
+            <button type="submit" className="brm-btn-submit">
               {action === 'approve' && 'Approve'}
               {action === 'reject' && 'Reject'}
               {action === 'modify' && 'Save Changes'}

@@ -19,6 +19,15 @@ class Event {
               code,
               name
             )
+          ),
+          venue_bookings (
+            id,
+            status,
+            venue:venue_id (
+              id,
+              name,
+              capacity
+            )
           )
         `)
         .in('status', ['upcoming', 'ongoing'])
@@ -68,6 +77,41 @@ class Event {
       throw error;
     }
   }
+
+  // Get event by ID with venue bookings (for capacity checks)
+  static async getByIdWithVenueBookings(id) {
+    try {
+      const { data, error } = await supabase
+        .from('events')
+        .select(`
+          *,
+          venue_bookings (
+            id,
+            status,
+            venue:venue_id (
+              id,
+              name,
+              capacity
+            )
+          )
+        `)
+        .eq('id', id)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          return null;
+        }
+        throw error;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error fetching event with venue bookings:', error);
+      throw error;
+    }
+  }
+
 
   // Get events by status
   static async getByStatus(status) {

@@ -9,5 +9,6 @@ router.get('/venue-utilization', AuthController.verifyToken, ReportController.ge
 router.get('/booking-statistics', AuthController.verifyToken, ReportController.getBookingStatistics);
 router.get('/resource-usage', AuthController.verifyToken, ReportController.getResourceUsage);
 router.get('/participation-trends', AuthController.verifyToken, ReportController.getParticipationTrends);
+router.get('/user-activity', AuthController.verifyToken, ReportController.getUserActivityAnalytics);
 
 module.exports = router;

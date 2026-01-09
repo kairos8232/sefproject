@@ -18,8 +18,13 @@ function UserManagementPage() {
   const [filters, setFilters] = useState({
     role: '',
     status: '',
+    faculty_id: '',
     search: ''
   });
+
+  // Bulk selection
+  const [selectedUsers, setSelectedUsers] = useState([]);
+  const [selectAll, setSelectAll] = useState(false);
 
   // Modals
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -33,7 +38,8 @@ function UserManagementPage() {
     email: '',
     password: '',
     role: 'student',
-    faculty_id: ''
+    faculty_id: '',
+    staff_id: ''
   });
 
   const [originalRole, setOriginalRole] = useState('');
@@ -49,16 +55,20 @@ function UserManagementPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Client-side filtering when search/role/status changes
+  // Client-side filtering when search/role/status/faculty changes
   useEffect(() => {
     const filtered = allUsers.filter(user =>
       (filters.role === '' || user.role === filters.role) &&
       (filters.status === '' || user.status === filters.status) &&
+      (filters.faculty_id === '' || user.faculty_id === filters.faculty_id) &&
       (filters.search === '' ||
         user.name.toLowerCase().includes(filters.search.toLowerCase()) ||
-        user.email.toLowerCase().includes(filters.search.toLowerCase()))
+        user.email.toLowerCase().includes(filters.search.toLowerCase()) ||
+        (user.staff_id && user.staff_id.toLowerCase().includes(filters.search.toLowerCase())))
     );
     setUsers(filtered);
+    setSelectedUsers([]); // Clear selection when filters change
+    setSelectAll(false);
   }, [allUsers, filters]);
 
   const loadData = async () => {
@@ -87,7 +97,7 @@ function UserManagementPage() {
       ]);
 
       setAllUsers(usersData);
-      setFaculties(facultiesData);
+      setFaculties(facultiesData.faculties || []);
     } catch (err) {
       console.error('Error loading data:', err);
       setError(err.response?.data?.message || 'Failed to load users');
@@ -98,6 +108,57 @@ function UserManagementPage() {
 
   const handleFilterChange = (field, value) => {
     setFilters(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSelectAll = (e) => {
+    const checked = e.target.checked;
+    setSelectAll(checked);
+    if (checked) {
+      // Select all non-admin users (can't modify admins)
+      const selectableUsers = users.filter(u => u.role !== 'administrator' && u.id !== currentUser.id);
+      setSelectedUsers(selectableUsers.map(u => u.id));
+    } else {
+      setSelectedUsers([]);
+    }
+  };
+
+  const handleSelectUser = (userId) => {
+    setSelectedUsers(prev => {
+      if (prev.includes(userId)) {
+        return prev.filter(id => id !== userId);
+      } else {
+        return [...prev, userId];
+      }
+    });
+  };
+
+  const handleBulkStatusChange = async (newStatus) => {
+    if (selectedUsers.length === 0) {
+      setError('Please select at least one user');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError('');
+      
+      // Update all selected users
+      await Promise.all(
+        selectedUsers.map(userId => 
+          userService.updateUserStatus(userId, newStatus)
+        )
+      );
+      
+      setSuccess(`Successfully ${newStatus === 'active' ? 'activated' : 'deactivated'} ${selectedUsers.length} user(s)`);
+      setSelectedUsers([]);
+      setSelectAll(false);
+      await loadData();
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to update users');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCreateUser = async (e) => {
@@ -112,10 +173,19 @@ function UserManagementPage() {
         return;
       }
 
+      // Check staff_id uniqueness
+      if (formData.staff_id) {
+        const existingUser = allUsers.find(u => u.staff_id && u.staff_id.toLowerCase() === formData.staff_id.toLowerCase());
+        if (existingUser) {
+          setError(`ID "${formData.staff_id}" is already in use by ${existingUser.name}`);
+          return;
+        }
+      }
+
       await userService.createUser(formData);
       setSuccess('User created successfully!');
       setShowCreateModal(false);
-      setFormData({ name: '', email: '', password: '', role: 'student', faculty_id: '' });
+      setFormData({ name: '', email: '', password: '', role: 'student', faculty_id: '', staff_id: '' });
       loadData();
     } catch (err) {
       console.error('Error creating user:', err);
@@ -135,11 +205,25 @@ function UserManagementPage() {
         return;
       }
 
+      // Check staff_id uniqueness (exclude current user)
+      if (formData.staff_id) {
+        const existingUser = allUsers.find(u => 
+          u.id !== selectedUser.id && 
+          u.staff_id && 
+          u.staff_id.toLowerCase() === formData.staff_id.toLowerCase()
+        );
+        if (existingUser) {
+          setError(`ID "${formData.staff_id}" is already in use by ${existingUser.name}`);
+          return;
+        }
+      }
+
       // Update basic info first
       await userService.updateUser(selectedUser.id, {
         name: formData.name,
         email: formData.email,
-        faculty_id: formData.faculty_id || null
+        faculty_id: formData.faculty_id || null,
+        staff_id: formData.staff_id || null
       });
 
       // If role changed, update role separately
@@ -208,7 +292,8 @@ function UserManagementPage() {
       name: user.name,
       email: user.email,
       role: user.role,
-      faculty_id: user.faculty?.id || user.faculty_id || ''
+      faculty_id: user.faculty?.id || user.faculty_id || '',
+      staff_id: user.staff_id || ''
     });
     setShowEditModal(true);
   };
@@ -280,7 +365,7 @@ function UserManagementPage() {
         <input
           type="text"
           className="search-input"
-          placeholder="🔍 Search by name or email..."
+          placeholder="🔍 Search by name, email or ID..."
           value={filters.search}
           onChange={(e) => handleFilterChange('search', e.target.value)}
         />
@@ -299,6 +384,19 @@ function UserManagementPage() {
 
         <select
           className="filter-select"
+          value={filters.faculty_id}
+          onChange={(e) => handleFilterChange('faculty_id', e.target.value)}
+        >
+          <option value="">All Faculties</option>
+          {Array.isArray(faculties) && faculties.map(faculty => (
+            <option key={faculty.id} value={faculty.id}>
+              {faculty.code} - {faculty.name}
+            </option>
+          ))}
+        </select>
+
+        <select
+          className="filter-select"
           value={filters.status}
           onChange={(e) => handleFilterChange('status', e.target.value)}
         >
@@ -308,13 +406,43 @@ function UserManagementPage() {
         </select>
       </div>
 
+      {/* Bulk Actions */}
+      {selectedUsers.length > 0 && (
+        <div className="bulk-actions-bar">
+          <span>{selectedUsers.length} user(s) selected</span>
+          <div className="bulk-action-buttons">
+            <button 
+              className="bulk-btn activate"
+              onClick={() => handleBulkStatusChange('active')}
+            >
+              ✅ Activate Selected
+            </button>
+            <button 
+              className="bulk-btn deactivate"
+              onClick={() => handleBulkStatusChange('inactive')}
+            >
+              🚫 Deactivate Selected
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Users Table */}
       <div className="users-table-container">
         <table className="users-table">
           <thead>
             <tr>
+              <th>
+                <input 
+                  type="checkbox" 
+                  checked={selectAll}
+                  onChange={handleSelectAll}
+                  title="Select all"
+                />
+              </th>
               <th>Name</th>
               <th>Email</th>
+              <th>ID</th>
               <th>Role</th>
               <th>Faculty</th>
               <th>Status</th>
@@ -324,19 +452,28 @@ function UserManagementPage() {
           <tbody>
             {users.length === 0 ? (
               <tr>
-                <td colSpan="6" className="no-data">No users found</td>
+                <td colSpan="8" className="no-data">No users found</td>
               </tr>
             ) : (
               users.map(user => (
                 <tr key={user.id}>
+                  <td>
+                    <input 
+                      type="checkbox"
+                      checked={selectedUsers.includes(user.id)}
+                      onChange={() => handleSelectUser(user.id)}
+                      disabled={user.role === 'administrator' || user.id === currentUser.id}
+                    />
+                  </td>
                   <td>{user.name}</td>
                   <td>{user.email}</td>
+                  <td>{user.staff_id || '-'}</td>
                   <td>
                     <span className={getRoleBadgeClass(user.role)}>
                       {getRoleDisplayName(user.role)}
                     </span>
                   </td>
-                  <td>{user.faculty ? user.faculty.name : '-'}</td>
+                  <td>{user.faculty ? user.faculty.code : '-'}</td>
                   <td>
                     <span className={getStatusBadgeClass(user.status)}>
                       {user.status === 'active' ? 'Active' : 'Inactive'}
@@ -381,6 +518,17 @@ function UserManagementPage() {
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <h2>Create New User</h2>
             <form onSubmit={handleCreateUser}>
+
+              <div className="form-group">
+                <label>ID *</label>
+                <input
+                  type="text"
+                  value={formData.staff_id || ''}
+                  onChange={(e) => setFormData({ ...formData, staff_id: e.target.value })}
+                  required
+                />
+              </div>
+
               <div className="form-group">
                 <label>Name *</label>
                 <input
@@ -435,7 +583,7 @@ function UserManagementPage() {
                     required
                   >
                     <option value="">Select Faculty</option>
-                    {faculties.map(faculty => (
+                    {Array.isArray(faculties) && faculties.map(faculty => (
                       <option key={faculty.id} value={faculty.id}>
                         {faculty.name} ({faculty.code})
                       </option>
@@ -484,6 +632,16 @@ function UserManagementPage() {
               </div>
 
               <div className="form-group">
+                <label>ID *</label>
+                <input
+                  type="text"
+                  value={formData.staff_id || ''}
+                  onChange={(e) => setFormData({ ...formData, staff_id: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
                 <label>Role *</label>
                 <select
                   value={formData.role}
@@ -510,7 +668,7 @@ function UserManagementPage() {
                     required
                   >
                     <option value="">Select Faculty</option>
-                    {faculties.map(faculty => (
+                    {Array.isArray(faculties) && faculties.map(faculty => (
                       <option key={faculty.id} value={faculty.id}>
                         {faculty.name} ({faculty.code})
                       </option>

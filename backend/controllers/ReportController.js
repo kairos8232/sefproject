@@ -138,6 +138,32 @@ class ReportController {
       res.status(500).json({ error: 'Failed to fetch participation trends' });
     }
   };
+
+  // Get User Activity Analytics
+  getUserActivityAnalytics = async (req, res) => {
+    try {
+      const { role } = req.user;
+      
+      if (role !== 'administrator') {
+        return res.status(403).json({
+          error: 'Only administrators can access reports'
+        });
+      }
+      
+      const { startDate, endDate, facultyId } = req.query;
+      
+      const analytics = await Report.getUserActivityAnalytics({
+        startDate,
+        endDate,
+        facultyId
+      });
+      
+      res.json({ success: true, ...analytics });
+    } catch (error) {
+      console.error('Error fetching user activity analytics:', error);
+      res.status(500).json({ error: 'Failed to fetch user activity analytics' });
+    }
+  };
 }
 
 module.exports = new ReportController();

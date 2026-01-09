@@ -221,10 +221,10 @@ class ResourceRequest {
         .from('resource_requests')
         .select(`
           *,
-          event:events(id, event_name, start_datetime, organizer:users(id, name, email)),
-          venue_booking:venue_bookings(id, venue:venues(id, code, name)),
-          resource:resource_types(id, code, name, category:resource_categories(id, code, name)),
-          requester:users!requester_user_id(id, name, email),
+          event:events(id, event_name, description, start_datetime, organizer:users(id, name, email, staff_id)),
+          venue_booking:venue_bookings(id, venue:venues(id, code, name, faculty:faculties(id, code, name))),
+          resource:resource_types(id, code, name, unit, category:resource_categories(id, code, name)),
+          requester:users!requester_user_id(id, name, email, role, staff_id),
           approver:users!approved_by(id, name, email)
         `);
 
