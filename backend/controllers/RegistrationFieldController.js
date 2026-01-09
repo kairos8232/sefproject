@@ -1,5 +1,6 @@
 const RegistrationField = require('../models/RegistrationField');
 const Event = require('../models/Event');
+const supabase = require('../config/supabase');
 
 class RegistrationFieldController {
   // Get all custom fields for an event
@@ -14,7 +15,7 @@ class RegistrationFieldController {
       }
 
       // Only event organizer can view custom fields configuration
-      if (event.created_by !== req.userId && req.role !== 'administrator') {
+      if (event.created_by !== req.user.userId && req.user.role !== 'administrator') {
         return res.status(403).json({ error: 'Not authorized to view this event\'s registration fields' });
       }
 
@@ -83,7 +84,7 @@ class RegistrationFieldController {
         return res.status(404).json({ error: 'Event not found' });
       }
 
-      if (event.created_by !== req.userId && req.role !== 'administrator') {
+      if (event.created_by !== req.user.userId && req.user.role !== 'administrator') {
         return res.status(403).json({ error: 'Not authorized to modify this event' });
       }
 
@@ -121,7 +122,7 @@ class RegistrationFieldController {
         return res.status(404).json({ error: 'Event not found' });
       }
 
-      if (event.created_by !== req.userId && req.role !== 'administrator') {
+      if (event.created_by !== req.user.userId && req.user.role !== 'administrator') {
         return res.status(403).json({ error: 'Not authorized to modify this event' });
       }
 
@@ -166,7 +167,7 @@ class RegistrationFieldController {
         return res.status(404).json({ error: 'Event not found' });
       }
 
-      if (event.created_by !== req.userId && req.role !== 'administrator') {
+      if (event.created_by !== req.user.userId && req.user.role !== 'administrator') {
         return res.status(403).json({ error: 'Not authorized to modify this event' });
       }
 
@@ -200,7 +201,7 @@ class RegistrationFieldController {
         return res.status(404).json({ error: 'Event not found' });
       }
 
-      if (event.created_by !== req.userId && req.role !== 'administrator') {
+      if (event.created_by !== req.user.userId && req.user.role !== 'administrator') {
         return res.status(403).json({ error: 'Not authorized to modify this event' });
       }
 
@@ -222,16 +223,33 @@ class RegistrationFieldController {
         return res.status(400).json({ error: 'Participation ID and responses array are required' });
       }
 
+      console.log('[RegistrationField] Verifying participation:', { participationId, userId: req.user.userId, eventId });
+      console.log('[RegistrationField] Request body:', req.body);
+
       // Verify the participation belongs to the current user
-      const { data: participation, error: participationError } = await require('../config/supabase')
+      const { data: participation, error: participationError } = await supabase
         .from('event_participation')
         .select('*')
         .eq('id', participationId)
-        .eq('user_id', req.userId)
+        .eq('user_id', req.user.userId)
         .eq('event_id', eventId)
         .single();
 
+      console.log('[RegistrationField] Participation query result:', { 
+        participation, 
+        error: participationError,
+        hasParticipation: !!participation,
+        errorMessage: participationError?.message,
+        errorDetails: participationError?.details
+      });
+
       if (participationError || !participation) {
+        console.error('[RegistrationField] Participation not found:', {
+          participationError,
+          participationId,
+          userId: req.user.userId,
+          eventId
+        });
         return res.status(404).json({ error: 'Participation not found or unauthorized' });
       }
 
@@ -262,11 +280,11 @@ class RegistrationFieldController {
       const { eventId } = req.params;
 
       // Find user's participation
-      const { data: participation, error } = await require('../config/supabase')
+      const { data: participation, error } = await supabase
         .from('event_participation')
         .select('id')
         .eq('event_id', eventId)
-        .eq('user_id', req.userId)
+        .eq('user_id', req.user.userId)
         .single();
 
       if (error || !participation) {
@@ -292,7 +310,7 @@ class RegistrationFieldController {
         return res.status(404).json({ error: 'Event not found' });
       }
 
-      if (event.created_by !== req.userId && req.role !== 'administrator') {
+      if (event.created_by !== req.user.userId && req.user.role !== 'administrator') {
         return res.status(403).json({ error: 'Not authorized to view responses' });
       }
 

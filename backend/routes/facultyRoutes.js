@@ -3,6 +3,9 @@ const router = express.Router();
 const FacultyController = require('../controllers/FacultyController');
 const AuthController = require('../controllers/AuthController');
 
+// Public route - Get all faculties (no auth required)
+router.get('/public', FacultyController.getPublicFaculties);
+
 // Admin routes (authentication required)
 router.get('/', AuthController.verifyToken, FacultyController.getAllFaculties);
 router.post('/', AuthController.verifyToken, FacultyController.createFaculty);

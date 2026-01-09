@@ -137,8 +137,10 @@ class Resource {
   }
 
   // Get available resource types for a specific time range with quantities
-  static async getAvailableResources(startDatetime, endDatetime, categoryId = null) {
+  static async getAvailableResources(startDatetime, endDatetime, categoryCodeOrId = null) {
     try {
+      console.log('[Resource] getAvailableResources called with:', { startDatetime, endDatetime, categoryCodeOrId });
+      
       // Get all active resource types
       let query = supabase
         .from('resource_types')
@@ -149,21 +151,50 @@ class Resource {
         `)
         .eq('status', 'active');
 
-      if (categoryId) {
-        query = query.eq('category_id', categoryId);
+      // First check if filtering by UUID (can be done in query)
+      let filterByCode = null;
+      if (categoryCodeOrId) {
+        console.log('[Resource] Filtering by category:', categoryCodeOrId);
+        const isUUID = categoryCodeOrId.includes('-');
+        if (isUUID) {
+          query = query.eq('category_id', categoryCodeOrId);
+        } else {
+          // For category code, we'll filter after fetching
+          filterByCode = categoryCodeOrId;
+        }
       }
 
       const { data: resources, error } = await query.order('name', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching resources:', error);
+        throw error;
+      }
 
-      if (!resources || resources.length === 0) {
+      // Filter by category code if needed (after query)
+      let filteredResources = resources;
+      if (filterByCode && resources) {
+        // Debug: Log all category codes to see what we have
+        const categoryCodes = resources.map(r => r.category?.code).filter(Boolean);
+        console.log(`[Resource] Available category codes in results:`, categoryCodes);
+        console.log(`[Resource] Looking for category code:`, filterByCode);
+        
+        filteredResources = resources.filter(r => r.category?.code === filterByCode);
+        console.log(`[Resource] Filtered ${resources.length} resources to ${filteredResources.length} matching code: ${filterByCode}`);
+        
+        // If no matches, show first resource's category for debugging
+        if (filteredResources.length === 0 && resources.length > 0) {
+          console.log(`[Resource] Sample resource category:`, resources[0].category);
+        }
+      }
+
+      if (!filteredResources || filteredResources.length === 0) {
         return [];
       }
 
       // Check availability for each resource
       const availabilityChecks = await Promise.all(
-        resources.map(async (resource) => {
+        filteredResources.map(async (resource) => {
           const availability = await this.checkAvailableQuantity(resource.id, startDatetime, endDatetime);
           return { 
             ...resource,

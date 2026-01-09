@@ -83,22 +83,30 @@ function EventDetailsPage() {
     try {
       setActionLoading(true);
       setActionMessage('');
-      const result = await participationService.register(id);
       
-      // Check if there are custom registration fields
+      // Check if user is already registered
+      const statusData = await participationService.getEventStatus(id);
+      if (statusData.isRegistered) {
+        setActionMessage('You are already registered for this event');
+        setActionLoading(false);
+        return;
+      }
+      
+      // Check if there are custom registration fields FIRST
       const fieldsData = await registrationFieldService.getPublicEventFields(id);
       
       if (fieldsData.fields && fieldsData.fields.length > 0) {
-        // Redirect to custom registration form
+        // Navigate to custom registration form WITHOUT creating participation yet
         navigate(`/events/${id}/register-form`, {
-          state: { participationId: result.participation?.id }
+          state: { requiresRegistration: true }
         });
       } else {
-        // No custom fields, just show success message
+        // No custom fields, create participation immediately
+        await participationService.register(id);
         setActionMessage('Successfully registered for event!');
         // Reload participation status
-        const statusData = await participationService.getEventStatus(id);
-        setParticipationStatus(statusData);
+        const newStatusData = await participationService.getEventStatus(id);
+        setParticipationStatus(newStatusData);
       }
     } catch (err) {
       // Check if event is full
@@ -301,10 +309,12 @@ function EventDetailsPage() {
           </div>
         </div>
 
-        <div className="ed-event-meta">
-          <p><strong>Event ID:</strong> {event.id}</p>
-          <p><strong>Created:</strong> {formatDateTime(event.created_at)}</p>
-        </div>
+        {/* Show created date only to event creator */}
+        {isManagementView && (
+          <div className="ed-event-meta">
+            <p><strong>Created:</strong> {formatDateTime(event.created_at)}</p>
+          </div>
+        )}
 
         {/* Venue and Resources Section - Only for event creator */}
         {isManagementView && venueBooking && (

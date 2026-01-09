@@ -309,70 +309,84 @@ function MyEventsPage() {
       )}
 
       <div className="me-filter-section">
-        <label>Event Name: </label>
-        <input
-          type="text"
-          placeholder="Search by event name..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          style={{ padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc', marginRight: '15px', width: '200px' }}
-        />
+        <div className="me-filter-group">
+          <label>Event Name:</label>
+          <input
+            type="text"
+            placeholder="Search by event name..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{ padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc', width: '180px' }}
+          />
+        </div>
         
-        <label>Type: </label>
-        <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
-          <option value="all">All Types</option>
-          <option value="seminar">Seminar</option>
-          <option value="workshop">Workshop</option>
-          <option value="sports">Sports</option>
-          <option value="cultural">Cultural</option>
-          <option value="career">Career</option>
-          <option value="orientation">Orientation</option>
-          <option value="networking">Networking</option>
-          <option value="general">General</option>
-        </select>
+        <div className="me-filter-group">
+          <label>Type:</label>
+          <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
+            <option value="all">All Types</option>
+            <option value="seminar">Seminar</option>
+            <option value="workshop">Workshop</option>
+            <option value="sports">Sports</option>
+            <option value="cultural">Cultural</option>
+            <option value="career">Career</option>
+            <option value="orientation">Orientation</option>
+            <option value="networking">Networking</option>
+            <option value="general">General</option>
+          </select>
+        </div>
         
-        <label style={{ marginLeft: '15px' }}>Status: </label>
-        <select value={filter} onChange={(e) => setFilter(e.target.value)}>
-          <option value="all">All Status</option>
-          <option value="upcoming">Upcoming</option>
-          <option value="ongoing">Ongoing</option>
-          <option value="completed">Completed</option>
-          <option value="cancelled">Cancelled</option>
-        </select>
+        <div className="me-filter-group">
+          <label>Status:</label>
+          <select value={filter} onChange={(e) => setFilter(e.target.value)}>
+            <option value="all">All Status</option>
+            <option value="upcoming">Upcoming</option>
+            <option value="ongoing">Ongoing</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
         
-        <label style={{ marginLeft: '15px' }}>Visibility: </label>
-        <select value={visibilityFilter} onChange={(e) => setVisibilityFilter(e.target.value)}>
-          <option value="all">All Visibility</option>
-          <option value="campuswide">Campus-Wide</option>
-          <option value="facultyonly">Faculty Only</option>
-          <option value="inviteonly">Invite Only</option>
-        </select>
+        <div className="me-filter-group">
+          <label>Visibility:</label>
+          <select value={visibilityFilter} onChange={(e) => setVisibilityFilter(e.target.value)}>
+            <option value="all">All Visibility</option>
+            <option value="campuswide">Campus-Wide</option>
+            <option value="facultyonly">Faculty Only</option>
+            <option value="inviteonly">Invite Only</option>
+          </select>
+        </div>
         
-        <label style={{ marginLeft: '15px' }}>Period: </label>
-        <select value={periodFilter} onChange={(e) => setPeriodFilter(e.target.value)}>
-          <option value="all">All Time</option>
-          <option value="today">Today</option>
-          <option value="this-week">This Week</option>
-          <option value="this-month">This Month</option>
-          <option value="custom">Custom Range</option>
-        </select>
+        <div className="me-filter-group">
+          <label>Period:</label>
+          <select value={periodFilter} onChange={(e) => setPeriodFilter(e.target.value)}>
+            <option value="all">All Time</option>
+            <option value="today">Today</option>
+            <option value="this-week">This Week</option>
+            <option value="this-month">This Month</option>
+            <option value="custom">Custom Range</option>
+          </select>
+        </div>
         
         {periodFilter === 'custom' && (
           <>
-            <label style={{ marginLeft: '15px' }}>From: </label>
-            <input
-              type="date"
-              value={customStartDate}
-              onChange={(e) => setCustomStartDate(e.target.value)}
-              style={{ padding: '5px', borderRadius: '4px', border: '1px solid #ccc' }}
-            />
-            <label style={{ marginLeft: '10px' }}>To: </label>
-            <input
-              type="date"
-              value={customEndDate}
-              onChange={(e) => setCustomEndDate(e.target.value)}
-              style={{ padding: '5px', borderRadius: '4px', border: '1px solid #ccc' }}
-            />
+            <div className="me-filter-group">
+              <label>From:</label>
+              <input
+                type="date"
+                value={customStartDate}
+                onChange={(e) => setCustomStartDate(e.target.value)}
+                style={{ padding: '5px', borderRadius: '4px', border: '1px solid #ccc' }}
+              />
+            </div>
+            <div className="me-filter-group">
+              <label>To:</label>
+              <input
+                type="date"
+                value={customEndDate}
+                onChange={(e) => setCustomEndDate(e.target.value)}
+                style={{ padding: '5px', borderRadius: '4px', border: '1px solid #ccc' }}
+              />
+            </div>
           </>
         )}
       </div>
@@ -403,7 +417,7 @@ function MyEventsPage() {
             <table className="events-table">
               <thead>
                 <tr>
-                  <th>Event Name</th>
+                  <th>Event</th>
                   <th>Type</th>
                   <th>Status</th>
                   <th>Visibility</th>
@@ -476,15 +490,13 @@ function MyEventsPage() {
                           📋
                         </button>
                       )}
-                      {user?.role === 'organizer' && (
-                        <button 
-                          onClick={() => navigate(`/my-events/${event.id}/customize-form`)}
-                          className="action-button customize-form-button"
-                          title="Customize Registration Form"
-                        >
-                          📝
-                        </button>
-                      )}
+                      <button 
+                        onClick={() => navigate(`/my-events/${event.id}/customize-form`)}
+                        className="action-button customize-form-button"
+                        title="Customize Registration Form"
+                      >
+                        📝
+                      </button>
                       <button 
                         onClick={() => handleEditEvent(event.id)}
                         className="action-button edit-button"

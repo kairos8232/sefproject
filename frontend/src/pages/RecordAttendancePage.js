@@ -160,6 +160,7 @@ const RecordAttendancePage = () => {
     const searchLower = searchQuery.toLowerCase();
     return (
       participant.user?.name?.toLowerCase().includes(searchLower) ||
+      participant.user?.staff_id?.toLowerCase().includes(searchLower) ||
       participant.user?.email?.toLowerCase().includes(searchLower) ||
       participant.user?.role?.toLowerCase().includes(searchLower)
     );
@@ -246,7 +247,7 @@ const RecordAttendancePage = () => {
         <div className="ra-search-box">
           <input
             type="text"
-            placeholder="Search by name, email, or role..."
+            placeholder="Search by name, ID, email, or role..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -274,6 +275,7 @@ const RecordAttendancePage = () => {
                 <tr>
                   <th style={{ width: '60px' }}>Present</th>
                   <th>Name</th>
+                  <th>ID</th>
                   <th>Email</th>
                   <th>Role</th>
                   <th>Registered At</th>
@@ -291,6 +293,7 @@ const RecordAttendancePage = () => {
                       />
                     </td>
                     <td className="ra-participant-name">{participant.user?.name || 'N/A'}</td>
+                    <td className="ra-participant-id">{participant.user?.staff_id || 'N/A'}</td>
                     <td className="ra-participant-email">{participant.user?.email || 'N/A'}</td>
                     <td>
                       <span className="ra-role-badge">{participant.user?.role || 'N/A'}</span>

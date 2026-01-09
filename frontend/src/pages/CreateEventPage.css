@@ -88,6 +88,7 @@
 }
 
 .ce-form-group input[type="text"],
+.ce-form-group input[type="number"],
 .ce-form-group input[type="datetime-local"],
 .ce-form-group select,
 .ce-form-group textarea {
@@ -102,6 +103,7 @@
 }
 
 .ce-form-group input[type="text"]:focus,
+.ce-form-group input[type="number"]:focus,
 .ce-form-group input[type="datetime-local"]:focus,
 .ce-form-group select:focus,
 .ce-form-group textarea:focus {

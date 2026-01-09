@@ -310,37 +310,39 @@ function EditEventPage() {
         <div className="ee-form-section">
           <h2>Registration Settings</h2>
           
-          <div className="ee-form-group">
-            <label htmlFor="expected_attendees">Expected Attendees *</label>
-            <input
-              type="number"
-              id="expected_attendees"
-              name="expected_attendees"
-              value={formData.expected_attendees}
-              onChange={handleChange}
-              min="1"
-              required
-              placeholder="Enter expected number of attendees"
-            />
-            <span className="ee-helper-text">
-              This helps filter suitable venues when booking. Required for venue booking.
-            </span>
-          </div>
+          <div className="ee-form-row">
+            <div className="ee-form-group">
+              <label htmlFor="expected_attendees">Expected Attendees *</label>
+              <input
+                type="number"
+                id="expected_attendees"
+                name="expected_attendees"
+                value={formData.expected_attendees}
+                onChange={handleChange}
+                min="1"
+                required
+                placeholder="Enter expected number of attendees"
+              />
+              <span className="ee-helper-text">
+                This helps filter suitable venues when booking. Required for venue booking.
+              </span>
+            </div>
 
-          <div className="ee-form-group">
-            <label htmlFor="registration_limit">Registration Limit (Optional)</label>
-            <input
-              type="number"
-              id="registration_limit"
-              name="registration_limit"
-              value={formData.registration_limit}
-              onChange={handleChange}
-              min="1"
-              placeholder="Leave empty to use venue capacity"
-            />
-            <span className="ee-helper-text">
-              Maximum number of participants allowed to register. If left empty, the system will use the venue's capacity from your booking request.
-            </span>
+            <div className="ee-form-group">
+              <label htmlFor="registration_limit">Registration Limit (Optional)</label>
+              <input
+                type="number"
+                id="registration_limit"
+                name="registration_limit"
+                value={formData.registration_limit}
+                onChange={handleChange}
+                min="1"
+                placeholder="Leave empty to use venue capacity"
+              />
+              <span className="ee-helper-text">
+                Maximum number of participants allowed to register. If left empty, the system will use the venue's capacity from your booking request.
+              </span>
+            </div>
           </div>
         </div>
 

@@ -25,11 +25,18 @@ function RequestResourcesPage() {
       setLoading(true);
       setError('');
 
+      // Only pass category if it's not 'all' and is a valid category name
+      const categoryParam = (categoryFilter && categoryFilter !== 'all') ? categoryFilter : null;
+      
+      console.log('[RequestResources] Checking availability with category:', categoryParam);
+
       const response = await resourceRequestService.checkAvailability(
         venueBooking.approved_start_datetime || venueBooking.requested_start_datetime,
         venueBooking.approved_end_datetime || venueBooking.requested_end_datetime,
-        categoryFilter === 'all' ? null : categoryFilter
+        categoryParam
       );
+      
+      console.log('[RequestResources] Available resources:', response.resources?.length || 0);
 
       setResources(response.resources || []);
     } catch (err) {
@@ -90,8 +97,8 @@ function RequestResourcesPage() {
 
       await resourceRequestService.create(requestData);
 
-      // Show success message and navigate
-      navigate('/my-resource-requests', {
+      // Show success message and navigate back to my events
+      navigate('/my-events', {
         state: { message: 'Resource request submitted successfully!' }
       });
     } catch (err) {
@@ -104,6 +111,12 @@ function RequestResourcesPage() {
 
   const getCategoryLabel = (category) => {
     const labels = {
+      AV: 'Audio/Visual',
+      FURN: 'Furniture',
+      IT: 'IT Equipment',
+      CATER: 'Catering',
+      OTHER: 'Other',
+      // Legacy support for old codes
       audio_visual: 'Audio/Visual',
       furniture: 'Furniture',
       it_equipment: 'IT Equipment',
@@ -153,11 +166,11 @@ function RequestResourcesPage() {
             <label>Filter by category:</label>
             <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
               <option value="all">All Categories</option>
-              <option value="audio_visual">Audio/Visual</option>
-              <option value="furniture">Furniture</option>
-              <option value="it_equipment">IT Equipment</option>
-              <option value="catering">Catering</option>
-              <option value="other">Other</option>
+              <option value="AV">Audio/Visual</option>
+              <option value="FURN">Furniture</option>
+              <option value="IT">IT Equipment</option>
+              <option value="CATER">Catering</option>
+              <option value="OTHER">Other</option>
             </select>
           </div>
 

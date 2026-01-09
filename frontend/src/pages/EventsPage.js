@@ -200,83 +200,100 @@ function EventsPage() {
       </div>
 
       <div className="ep-filter-section">
-        <label>Event Name: </label>
-        <input
-          type="text"
-          placeholder="Search by event name..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          style={{ padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc', marginRight: '15px', width: '200px' }}
-        />
+        <div className="ep-filter-group">
+          <label>Event Name:</label>
+          <input
+            type="text"
+            placeholder="Search by event name..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{ padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc', width: '180px' }}
+          />
+        </div>
         
-        <label>Status: </label>
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-          <option value="all">All Status</option>
-          <option value="upcoming">Upcoming</option>
-          <option value="ongoing">Ongoing</option>
-          <option value="completed">Completed</option>
-          <option value="cancelled">Cancelled</option>
-        </select>
+        <div className="ep-filter-group">
+          <label>Status:</label>
+          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+            <option value="all">All Status</option>
+            <option value="upcoming">Upcoming</option>
+            <option value="ongoing">Ongoing</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
         
-        <label style={{ marginLeft: '15px' }}>Type: </label>
-        <select value={eventTypeFilter} onChange={(e) => setEventTypeFilter(e.target.value)}>
-          <option value="all">All Types</option>
-          <option value="seminar">Seminar</option>
-          <option value="workshop">Workshop</option>
-          <option value="sports">Sports</option>
-          <option value="cultural">Cultural</option>
-          <option value="career">Career</option>
-          <option value="orientation">Orientation</option>
-          <option value="networking">Networking</option>
-          <option value="general">General</option>
-        </select>
+        <div className="ep-filter-group">
+          <label>Type:</label>
+          <select value={eventTypeFilter} onChange={(e) => setEventTypeFilter(e.target.value)}>
+            <option value="all">All Types</option>
+            <option value="seminar">Seminar</option>
+            <option value="workshop">Workshop</option>
+            <option value="sports">Sports</option>
+            <option value="cultural">Cultural</option>
+            <option value="career">Career</option>
+            <option value="orientation">Orientation</option>
+            <option value="networking">Networking</option>
+            <option value="general">General</option>
+          </select>
+        </div>
         
-        <label style={{ marginLeft: '15px' }}>Period: </label>
-        <select value={periodFilter} onChange={(e) => setPeriodFilter(e.target.value)}>
-          <option value="all">All Time</option>
-          <option value="today">Today</option>
-          <option value="this-week">This Week</option>
-          <option value="this-month">This Month</option>
-          <option value="custom">Custom Range</option>
-        </select>
+        <div className="ep-filter-group">
+          <label>Period:</label>
+          <select value={periodFilter} onChange={(e) => setPeriodFilter(e.target.value)}>
+            <option value="all">All Time</option>
+            <option value="today">Today</option>
+            <option value="this-week">This Week</option>
+            <option value="this-month">This Month</option>
+            <option value="custom">Custom Range</option>
+          </select>
+        </div>
         
         {periodFilter === 'custom' && (
           <>
-            <label style={{ marginLeft: '15px' }}>From: </label>
-            <input
-              type="date"
-              value={customStartDate}
-              onChange={(e) => setCustomStartDate(e.target.value)}
-              style={{ padding: '5px', borderRadius: '4px', border: '1px solid #ccc' }}
-            />
-            <label style={{ marginLeft: '10px' }}>To: </label>
-            <input
-              type="date"
-              value={customEndDate}
-              onChange={(e) => setCustomEndDate(e.target.value)}
-              style={{ padding: '5px', borderRadius: '4px', border: '1px solid #ccc' }}
-            />
+            <div className="ep-filter-group">
+              <label>From:</label>
+              <input
+                type="date"
+                value={customStartDate}
+                onChange={(e) => setCustomStartDate(e.target.value)}
+                style={{ padding: '5px', borderRadius: '4px', border: '1px solid #ccc' }}
+              />
+            </div>
+            <div className="ep-filter-group">
+              <label>To:</label>
+              <input
+                type="date"
+                value={customEndDate}
+                onChange={(e) => setCustomEndDate(e.target.value)}
+                style={{ padding: '5px', borderRadius: '4px', border: '1px solid #ccc' }}
+              />
+            </div>
           </>
         )}
         
-        <label style={{ marginLeft: '15px' }}>Visibility: </label>
-        <select value={visibilityFilter} onChange={(e) => setVisibilityFilter(e.target.value)}>
-          <option value="all">All Visibility</option>
-          <option value="campuswide">Campus-Wide</option>
-          <option value="facultyonly">Faculty Only</option>
-          <option value="inviteonly">Invite Only</option>
-        </select>
+        <div className="ep-filter-group">
+          <label>Visibility:</label>
+          <select value={visibilityFilter} onChange={(e) => setVisibilityFilter(e.target.value)}>
+            <option value="all">All Visibility</option>
+            <option value="campuswide">Campus-Wide</option>
+            <option value="facultyonly">Faculty Only</option>
+            <option value="inviteonly">Invite Only</option>
+          </select>
+        </div>
         
         {!isAdmin && (
-          <label style={{ marginLeft: '20px', display: 'inline-flex', alignItems: 'center', cursor: 'pointer' }}>
-            <input
-              type="checkbox"
-              checked={showMyRegistrations}
-              onChange={(e) => setShowMyRegistrations(e.target.checked)}
-              style={{ marginRight: '5px', cursor: 'pointer' }}
-            />
-            My Registrations
-          </label>
+          <div className="ep-filter-group">
+            <label style={{ visibility: 'hidden' }}>_</label>
+            <label style={{ display: 'inline-flex', alignItems: 'center', cursor: 'pointer', margin: 0 }}>
+              <input
+                type="checkbox"
+                checked={showMyRegistrations}
+                onChange={(e) => setShowMyRegistrations(e.target.checked)}
+                style={{ marginRight: '5px', cursor: 'pointer' }}
+              />
+              My Registrations
+            </label>
+          </div>
         )}
       </div>
 

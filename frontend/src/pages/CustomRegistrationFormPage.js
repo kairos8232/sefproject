@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import registrationFieldService from '../services/registrationFieldService';
+import participationService from '../services/participationService';
 import eventService from '../services/eventService';
 import './CustomRegistrationFormPage.css';
 
@@ -16,6 +17,7 @@ function CustomRegistrationFormPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [participationId, setParticipationId] = useState(null);
+  const [requiresRegistration, setRequiresRegistration] = useState(false);
 
   const loadData = useCallback(async () => {
     document.title = 'Event Registration - CESMS';
@@ -29,8 +31,11 @@ function CustomRegistrationFormPage() {
       setEvent(eventData.event);
       setFields(fieldsData.fields || []);
       
-      // Get participation ID from location state (passed from event registration)
-      if (location.state?.participationId) {
+      // Check if we need to create participation (user hasn't registered yet)
+      if (location.state?.requiresRegistration) {
+        setRequiresRegistration(true);
+      } else if (location.state?.participationId) {
+        // Legacy: participation already created
         setParticipationId(location.state.participationId);
       }
       
@@ -112,14 +117,34 @@ function CustomRegistrationFormPage() {
     if (!validateForm()) {
       return;
     }
-    
-    if (!participationId) {
-      setError('No participation ID found. Please register for the event first.');
-      return;
-    }
 
     try {
       setSubmitting(true);
+      
+      let finalParticipationId = participationId;
+      
+      // If we need to create participation first, do it now
+      if (requiresRegistration && !participationId) {
+        try {
+          console.log('[CustomRegistrationForm] Creating participation for event:', eventId);
+          const result = await participationService.register(eventId);
+          console.log('[CustomRegistrationForm] Participation created:', result);
+          finalParticipationId = result.participation?.id;
+          setParticipationId(finalParticipationId);
+        } catch (regError) {
+          console.error('[CustomRegistrationForm] Registration error:', regError);
+          const errorMsg = regError?.response?.data?.error || regError?.message || 'Failed to register for event. Please try again.';
+          setError(errorMsg);
+          setSubmitting(false);
+          return;
+        }
+      }
+      
+      if (!finalParticipationId) {
+        setError('Failed to create registration. Please try again.');
+        setSubmitting(false);
+        return;
+      }
       
       // Format responses for API
       const responses = fields.map(field => {
@@ -140,7 +165,8 @@ function CustomRegistrationFormPage() {
         }
       });
 
-      await registrationFieldService.saveResponses(eventId, participationId, responses);
+      await registrationFieldService.saveResponses(eventId, finalParticipationId, responses);
+      console.log('[CustomRegistrationForm] Responses saved successfully');
       
       // Navigate to success page or my events
       navigate('/my-events', {
@@ -150,6 +176,8 @@ function CustomRegistrationFormPage() {
         }
       });
     } catch (err) {
+      console.error('[CustomRegistrationForm] Form submission error:', err);
+      console.error('[CustomRegistrationForm] Error response:', err.response);
       setError(err.response?.data?.error || 'Failed to submit form');
     } finally {
       setSubmitting(false);
@@ -322,7 +350,7 @@ function CustomRegistrationFormPage() {
           <div className="form-actions">
             <button
               type="button"
-              onClick={() => navigate('/my-events')}
+              onClick={() => navigate('/events', { state: { message: 'Registration cancelled. You are not registered for this event.' } })}
               className="skip-button"
               disabled={submitting}
             >

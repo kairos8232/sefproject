@@ -24,6 +24,22 @@ class FacultyController {
     }
   }
 
+  // Get all active faculties publicly (no auth required)
+  static async getPublicFaculties(req, res) {
+    try {
+      // Only return active faculties for public access
+      const filters = {
+        status: 'active'
+      };
+
+      const faculties = await Faculty.getAll(filters);
+      res.json({ success: true, faculties });
+    } catch (error) {
+      console.error('Error getting public faculties:', error);
+      res.status(500).json({ message: 'Failed to get faculties' });
+    }
+  }
+
   // Get faculty by ID
   static async getFacultyById(req, res) {
     try {

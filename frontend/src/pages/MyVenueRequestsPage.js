@@ -112,12 +112,14 @@ function MyVenueRequestsPage() {
       setLoading(false);
     };
     initialLoad();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     if (!loading) {
       loadMyBookings();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter, eventSearch, venueSearch, periodFilter, customStartDate, customEndDate]);
 
   const handleViewDetails = (bookingId) => {
@@ -166,60 +168,72 @@ function MyVenueRequestsPage() {
 
       {/* Filter Section */}
       <div className="mvr-filter-section">
-        <label>Event Name: </label>
-        <input
-          type="text"
-          placeholder="Search event name..."
-          value={eventSearch}
-          onChange={(e) => setEventSearch(e.target.value)}
-          style={{ padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc', marginRight: '15px', width: '180px' }}
-        />
+        <div className="mvr-filter-group">
+          <label>Event Name:</label>
+          <input
+            type="text"
+            placeholder="Search event name..."
+            value={eventSearch}
+            onChange={(e) => setEventSearch(e.target.value)}
+            style={{ padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc', width: '180px' }}
+          />
+        </div>
         
-        <label>Venue: </label>
-        <input
-          type="text"
-          placeholder="Search venue..."
-          value={venueSearch}
-          onChange={(e) => setVenueSearch(e.target.value)}
-          style={{ padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc', marginRight: '15px', width: '150px' }}
-        />
+        <div className="mvr-filter-group">
+          <label>Venue:</label>
+          <input
+            type="text"
+            placeholder="Search venue..."
+            value={venueSearch}
+            onChange={(e) => setVenueSearch(e.target.value)}
+            style={{ padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc', width: '150px' }}
+          />
+        </div>
         
-        <label>Period: </label>
-        <select value={periodFilter} onChange={(e) => setPeriodFilter(e.target.value)}>
-          <option value="all">All Time</option>
-          <option value="today">Today</option>
-          <option value="this-week">This Week</option>
-          <option value="this-month">This Month</option>
-          <option value="custom">Custom Range</option>
-        </select>
+        <div className="mvr-filter-group">
+          <label>Period:</label>
+          <select value={periodFilter} onChange={(e) => setPeriodFilter(e.target.value)}>
+            <option value="all">All Time</option>
+            <option value="today">Today</option>
+            <option value="this-week">This Week</option>
+            <option value="this-month">This Month</option>
+            <option value="custom">Custom Range</option>
+          </select>
+        </div>
         
         {periodFilter === 'custom' && (
           <>
-            <label style={{ marginLeft: '15px' }}>From: </label>
-            <input
-              type="date"
-              value={customStartDate}
-              onChange={(e) => setCustomStartDate(e.target.value)}
-              style={{ padding: '5px', borderRadius: '4px', border: '1px solid #ccc' }}
-            />
-            <label style={{ marginLeft: '10px' }}>To: </label>
-            <input
-              type="date"
-              value={customEndDate}
-              onChange={(e) => setCustomEndDate(e.target.value)}
-              style={{ padding: '5px', borderRadius: '4px', border: '1px solid #ccc' }}
-            />
+            <div className="mvr-filter-group">
+              <label>From:</label>
+              <input
+                type="date"
+                value={customStartDate}
+                onChange={(e) => setCustomStartDate(e.target.value)}
+                style={{ padding: '5px', borderRadius: '4px', border: '1px solid #ccc' }}
+              />
+            </div>
+            <div className="mvr-filter-group">
+              <label>To:</label>
+              <input
+                type="date"
+                value={customEndDate}
+                onChange={(e) => setCustomEndDate(e.target.value)}
+                style={{ padding: '5px', borderRadius: '4px', border: '1px solid #ccc' }}
+              />
+            </div>
           </>
         )}
         
-        <label style={{ marginLeft: '15px' }}>Status: </label>
-        <select value={filter} onChange={(e) => setFilter(e.target.value)}>
-          <option value="all">All Status</option>
-          <option value="pending">Pending</option>
-          <option value="approved">Approved</option>
-          <option value="rejected">Rejected</option>
-          <option value="cancelled">Cancelled</option>
-        </select>
+        <div className="mvr-filter-group">
+          <label>Status:</label>
+          <select value={filter} onChange={(e) => setFilter(e.target.value)}>
+            <option value="all">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
       </div>
 
       {/* Bookings Table */}
@@ -236,9 +250,9 @@ function MyVenueRequestsPage() {
           <table className="mvr-bookings-table">
             <thead>
               <tr>
-                <th>Event Name</th>
+                <th>Event</th>
                 <th>Venue</th>
-                <th>Requested Dates</th>
+                <th>Date & Time</th>
                 <th>Status</th>
                 <th>Submitted</th>
                 <th>Actions</th>

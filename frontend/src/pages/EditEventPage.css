@@ -88,6 +88,7 @@
 }
 
 .ee-form-group input[type="text"],
+.ee-form-group input[type="number"],
 .ee-form-group input[type="datetime-local"],
 .ee-form-group select,
 .ee-form-group textarea {
@@ -102,6 +103,7 @@
 }
 
 .ee-form-group input[type="text"]:focus,
+.ee-form-group input[type="number"]:focus,
 .ee-form-group input[type="datetime-local"]:focus,
 .ee-form-group select:focus,
 .ee-form-group textarea:focus {

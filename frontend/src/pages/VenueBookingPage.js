@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import venueBookingService from '../services/venueBookingService';
+import facultyService from '../services/facultyService';
 import { toDateTimeLocalInput, fromDateTimeLocalInput, formatDateTime } from '../utils/dateUtils';
 import './VenueBookingPage.css';
 
@@ -15,10 +16,12 @@ function VenueBookingPage() {
     expected_attendees: '',
     setup_time: 0,
     teardown_time: 0,
+    faculty_filter: '',
     remarks: ''
   });
 
   const [availableVenues, setAvailableVenues] = useState([]);
+  const [faculties, setFaculties] = useState([]);
   const [selectedVenue, setSelectedVenue] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -27,9 +30,23 @@ function VenueBookingPage() {
   // Redirect if no event provided
   useEffect(() => {
     document.title = 'Book Venue - CESMS';
+    
     if (!event) {
       navigate('/my-events');
     }
+
+    // Load faculties using public endpoint
+    const loadFaculties = async () => {
+      try {
+        const data = await facultyService.getPublicFaculties();
+        setFaculties(data.faculties || []);
+      } catch (err) {
+        console.error('Error loading faculties:', err);
+        // Don't show error to user - faculty filter is optional
+      }
+    };
+
+    loadFaculties();
   }, [event, navigate]);
 
   if (!event) {
@@ -75,12 +92,16 @@ function VenueBookingPage() {
       const actualStartTime = new Date(startTime.getTime() - setupMinutes * 60 * 1000);
       const actualEndTime = new Date(endTime.getTime() + teardownMinutes * 60 * 1000);
       
+      console.log('[VenueBooking] Checking availability with faculty filter:', formData.faculty_filter || 'none');
+      
       const result = await venueBookingService.checkAvailability(
         actualStartTime.toISOString(),
         actualEndTime.toISOString(),
-        formData.expected_attendees || null,
-        null // faculty_id - could be added as filter later
+        event?.expected_attendees || null,
+        formData.faculty_filter || null
       );
+      
+      console.log('[VenueBooking] Available venues:', result.venues?.length || 0);
 
       setAvailableVenues(result.venues);
       setSearchPerformed(true);
@@ -107,7 +128,7 @@ function VenueBookingPage() {
         venue_id: selectedVenue.id,
         requested_start_datetime: fromDateTimeLocalInput(formData.requested_start_datetime),
         requested_end_datetime: fromDateTimeLocalInput(formData.requested_end_datetime),
-        expected_attendees: formData.expected_attendees ? parseInt(formData.expected_attendees) : null,
+        expected_attendees: event?.expected_attendees || null,
         setup_time: formData.setup_time ? parseInt(formData.setup_time) : 0,
         teardown_time: formData.teardown_time ? parseInt(formData.teardown_time) : 0,
         remarks: formData.remarks || null
@@ -151,21 +172,22 @@ function VenueBookingPage() {
         <div className="venue-selection-section">
           <h2>Available Venues</h2>
 
-          {/* Filters */}
-          <div className="filter-section">
-            <div className="form-group">
-              <label htmlFor="expected_attendees">Expected Attendees (Optional)</label>
-              <input
-                type="number"
-                id="expected_attendees"
-                name="expected_attendees"
-                value={formData.expected_attendees}
-                onChange={handleInputChange}
-                min="1"
-                placeholder="e.g., 100"
-              />
-              <small>Filter venues by minimum capacity</small>
-            </div>
+          {/* Faculty Filter */}
+          <div className="venue-filter-group">
+            <label htmlFor="faculty_filter">Filter by Faculty (Optional)</label>
+            <select
+              id="faculty_filter"
+              name="faculty_filter"
+              value={formData.faculty_filter}
+              onChange={handleInputChange}
+            >
+              <option value="">All Faculties</option>
+              {faculties.map((faculty) => (
+                <option key={faculty.id} value={faculty.id}>
+                  {faculty.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           <button onClick={handleSearchVenues} className="search-button" disabled={loading}>

@@ -26,6 +26,12 @@ const facultyService = {
     return response.data;
   },
 
+  // Get all faculties publicly (no auth required)
+  getPublicFaculties: async () => {
+    const response = await api.get('/public');
+    return response.data;
+  },
+
   // Get faculty by ID
   getFacultyById: async (id) => {
     const response = await axios.get(`${API_URL}/${id}`);

@@ -54,10 +54,42 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
+  align-items: flex-start;
+  gap: 15px;
 }
 
+.fep-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.fep-filter-group label {
+  font-weight: 600;
+  font-size: 14px;
+  color: #333;
+  white-space: nowrap;
+}
+
+.fep-filter-group select,
+.fep-filter-group input {
+  padding: 5px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.fep-filter-group select {
+  cursor: pointer;
+}
+
+.fep-filter-group select:focus,
+.fep-filter-group input:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+/* Legacy styles for backward compatibility */
 .fep-filter-section label {
   margin-right: 10px;
   font-weight: 600;

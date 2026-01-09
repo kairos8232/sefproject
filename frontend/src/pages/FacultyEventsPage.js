@@ -46,6 +46,7 @@ function FacultyEventsPage() {
     } finally {
       setLoading(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters.status, filters.booking_status, filters.period, filters.start_date, filters.end_date]);
 
   useEffect(() => {
@@ -208,86 +209,104 @@ function FacultyEventsPage() {
 
       {/* Filters Section */}
       <div className="fep-filter-section">
-        <label>Event Name: </label>
-        <input
-          type="text"
-          placeholder="Search event name..."
-          value={filters.search}
-          onChange={(e) => handleFilterChange('search', e.target.value)}
-          style={{ padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc', marginRight: '15px', width: '180px' }}
-        />
+        <div className="fep-filter-group">
+          <label>Event Name:</label>
+          <input
+            type="text"
+            placeholder="Search event name..."
+            value={filters.search}
+            onChange={(e) => handleFilterChange('search', e.target.value)}
+            style={{ padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc', width: '180px' }}
+          />
+        </div>
         
-        <label>Organizer: </label>
-        <input
-          type="text"
-          placeholder="Search organizer..."
-          value={filters.organizer}
-          onChange={(e) => handleFilterChange('organizer', e.target.value)}
-          style={{ padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc', marginRight: '15px', width: '150px' }}
-        />
+        <div className="fep-filter-group">
+          <label>Organizer:</label>
+          <input
+            type="text"
+            placeholder="Search organizer..."
+            value={filters.organizer}
+            onChange={(e) => handleFilterChange('organizer', e.target.value)}
+            style={{ padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc', width: '150px' }}
+          />
+        </div>
         
-        <label>Role: </label>
-        <select value={filters.role} onChange={(e) => handleFilterChange('role', e.target.value)}>
-          <option value="">All Roles</option>
-          <option value="student">Student</option>
-          <option value="faculty_manager">Faculty Manager</option>
-          <option value="event_organizer">Event Organizer</option>
-        </select>
+        <div className="fep-filter-group">
+          <label>Role:</label>
+          <select value={filters.role} onChange={(e) => handleFilterChange('role', e.target.value)}>
+            <option value="">All Roles</option>
+            <option value="student">Student</option>
+            <option value="faculty_manager">Faculty Manager</option>
+            <option value="event_organizer">Event Organizer</option>
+          </select>
+        </div>
         
-        <label style={{ marginLeft: '15px' }}>Venue: </label>
-        <input
-          type="text"
-          placeholder="Search venue..."
-          value={filters.venue}
-          onChange={(e) => handleFilterChange('venue', e.target.value)}
-          style={{ padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc', marginRight: '15px', width: '150px' }}
-        />
+        <div className="fep-filter-group">
+          <label>Venue:</label>
+          <input
+            type="text"
+            placeholder="Search venue..."
+            value={filters.venue}
+            onChange={(e) => handleFilterChange('venue', e.target.value)}
+            style={{ padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc', width: '150px' }}
+          />
+        </div>
         
-        <label style={{ marginLeft: '15px' }}>Period: </label>
-        <select value={filters.period} onChange={(e) => handleFilterChange('period', e.target.value)}>
-          <option value="all">All Time</option>
-          <option value="today">Today</option>
-          <option value="this-week">This Week</option>
-          <option value="this-month">This Month</option>
-          <option value="custom">Custom Range</option>
-        </select>
+        <div className="fep-filter-group">
+          <label>Period:</label>
+          <select value={filters.period} onChange={(e) => handleFilterChange('period', e.target.value)}>
+            <option value="all">All Time</option>
+            <option value="today">Today</option>
+            <option value="this-week">This Week</option>
+            <option value="this-month">This Month</option>
+            <option value="custom">Custom Range</option>
+          </select>
+        </div>
         
         {filters.period === 'custom' && (
           <>
-            <label style={{ marginLeft: '15px' }}>From: </label>
-            <input
-              type="date"
-              value={filters.start_date}
-              onChange={(e) => handleFilterChange('start_date', e.target.value)}
-              style={{ padding: '5px', borderRadius: '4px', border: '1px solid #ccc' }}
-            />
-            <label style={{ marginLeft: '10px' }}>To: </label>
-            <input
-              type="date"
-              value={filters.end_date}
-              onChange={(e) => handleFilterChange('end_date', e.target.value)}
-              style={{ padding: '5px', borderRadius: '4px', border: '1px solid #ccc' }}
-            />
+            <div className="fep-filter-group">
+              <label>From:</label>
+              <input
+                type="date"
+                value={filters.start_date}
+                onChange={(e) => handleFilterChange('start_date', e.target.value)}
+                style={{ padding: '5px', borderRadius: '4px', border: '1px solid #ccc' }}
+              />
+            </div>
+            <div className="fep-filter-group">
+              <label>To:</label>
+              <input
+                type="date"
+                value={filters.end_date}
+                onChange={(e) => handleFilterChange('end_date', e.target.value)}
+                style={{ padding: '5px', borderRadius: '4px', border: '1px solid #ccc' }}
+              />
+            </div>
           </>
         )}
         
-        <label style={{ marginLeft: '15px' }}>Event Status: </label>
-        <select value={filters.status} onChange={(e) => handleFilterChange('status', e.target.value)}>
-          <option value="">All Statuses</option>
-          <option value="upcoming">Upcoming</option>
-          <option value="ongoing">Ongoing</option>
-          <option value="completed">Completed</option>
-          <option value="cancelled">Cancelled</option>
-        </select>
+        <div className="fep-filter-group">
+          <label>Event Status:</label>
+          <select value={filters.status} onChange={(e) => handleFilterChange('status', e.target.value)}>
+            <option value="">All Statuses</option>
+            <option value="upcoming">Upcoming</option>
+            <option value="ongoing">Ongoing</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
         
-        <label style={{ marginLeft: '15px' }}>Booking Status: </label>
-        <select value={filters.booking_status} onChange={(e) => handleFilterChange('booking_status', e.target.value)}>
-          <option value="">All</option>
-          <option value="approved">Approved</option>
-          <option value="pending">Pending</option>
-          <option value="rejected">Rejected</option>
-          <option value="cancelled">Cancelled</option>
-        </select>
+        <div className="fep-filter-group">
+          <label>Booking Status:</label>
+          <select value={filters.booking_status} onChange={(e) => handleFilterChange('booking_status', e.target.value)}>
+            <option value="">All</option>
+            <option value="approved">Approved</option>
+            <option value="pending">Pending</option>
+            <option value="rejected">Rejected</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
       </div>
 
       {/* Error Message */}

@@ -221,68 +221,82 @@ function MyResourceRequestsPage() {
       )}
 
       <div className="mrr-filter-section">
-        <label>Event Name: </label>
-        <input
-          type="text"
-          placeholder="Search event name..."
-          value={eventSearch}
-          onChange={(e) => setEventSearch(e.target.value)}
-          style={{ padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc', marginRight: '15px', width: '180px' }}
-        />
+        <div className="mrr-filter-group">
+          <label>Event Name:</label>
+          <input
+            type="text"
+            placeholder="Search event name..."
+            value={eventSearch}
+            onChange={(e) => setEventSearch(e.target.value)}
+            style={{ padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc', width: '180px' }}
+          />
+        </div>
         
-        <label>Type: </label>
-        <select value={resourceTypeFilter} onChange={(e) => setResourceTypeFilter(e.target.value)}>
-          <option value="all">All Types</option>
-          {resourceCategories.map(category => (
-            <option key={category.id} value={category.name}>{category.name}</option>
-          ))}
-        </select>
+        <div className="mrr-filter-group">
+          <label>Type:</label>
+          <select value={resourceTypeFilter} onChange={(e) => setResourceTypeFilter(e.target.value)}>
+            <option value="all">All Types</option>
+            {resourceCategories.map(category => (
+              <option key={category.id} value={category.name}>{category.name}</option>
+            ))}
+          </select>
+        </div>
         
-        <label style={{ marginLeft: '15px' }}>Resource: </label>
-        <input
-          type="text"
-          placeholder="Search resource..."
-          value={resourceSearch}
-          onChange={(e) => setResourceSearch(e.target.value)}
-          style={{ padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc', marginRight: '15px', width: '150px' }}
-        />
+        <div className="mrr-filter-group">
+          <label>Resource:</label>
+          <input
+            type="text"
+            placeholder="Search resource..."
+            value={resourceSearch}
+            onChange={(e) => setResourceSearch(e.target.value)}
+            style={{ padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc', width: '150px' }}
+          />
+        </div>
         
-        <label>Period: </label>
-        <select value={periodFilter} onChange={(e) => setPeriodFilter(e.target.value)}>
-          <option value="all">All Time</option>
-          <option value="today">Today</option>
-          <option value="this-week">This Week</option>
-          <option value="this-month">This Month</option>
-          <option value="custom">Custom Range</option>
-        </select>
+        <div className="mrr-filter-group">
+          <label>Period:</label>
+          <select value={periodFilter} onChange={(e) => setPeriodFilter(e.target.value)}>
+            <option value="all">All Time</option>
+            <option value="today">Today</option>
+            <option value="this-week">This Week</option>
+            <option value="this-month">This Month</option>
+            <option value="custom">Custom Range</option>
+          </select>
+        </div>
         
         {periodFilter === 'custom' && (
           <>
-            <label style={{ marginLeft: '15px' }}>From: </label>
-            <input
-              type="date"
-              value={customStartDate}
-              onChange={(e) => setCustomStartDate(e.target.value)}
-              style={{ padding: '5px', borderRadius: '4px', border: '1px solid #ccc' }}
-            />
-            <label style={{ marginLeft: '10px' }}>To: </label>
-            <input
-              type="date"
-              value={customEndDate}
-              onChange={(e) => setCustomEndDate(e.target.value)}
-              style={{ padding: '5px', borderRadius: '4px', border: '1px solid #ccc' }}
-            />
+            <div className="mrr-filter-group">
+              <label>From:</label>
+              <input
+                type="date"
+                value={customStartDate}
+                onChange={(e) => setCustomStartDate(e.target.value)}
+                style={{ padding: '5px', borderRadius: '4px', border: '1px solid #ccc' }}
+              />
+            </div>
+            <div className="mrr-filter-group">
+              <label>To:</label>
+              <input
+                type="date"
+                value={customEndDate}
+                onChange={(e) => setCustomEndDate(e.target.value)}
+                style={{ padding: '5px', borderRadius: '4px', border: '1px solid #ccc' }}
+              />
+            </div>
           </>
         )}
         
-        <label style={{ marginLeft: '15px' }}>Status: </label>
-        <select value={filter} onChange={(e) => setFilter(e.target.value)}>
-          <option value="all">All Status</option>
-          <option value="pending">Pending</option>
-          <option value="approved">Approved</option>
-          <option value="rejected">Rejected</option>
-          <option value="cancelled">Cancelled</option>
-        </select>
+        <div className="mrr-filter-group">
+          <label>Status:</label>
+          <select value={filter} onChange={(e) => setFilter(e.target.value)}>
+            <option value="all">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
       </div>
 
       {error && <div className="mrr-error-message">{error}</div>}
@@ -309,7 +323,7 @@ function MyResourceRequestsPage() {
                   <th>Event</th>
                   <th>Resource</th>
                   <th>Quantity</th>
-                  <th>Usage Period</th>
+                  <th>Date & Time</th>
                   <th>Status</th>
                   <th>Actions</th>
                 </tr>

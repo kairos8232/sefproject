@@ -37,9 +37,13 @@ const participationService = {
   // Register for an event
   async register(eventId) {
     try {
+      console.log('[ParticipationService] Registering for event:', eventId);
       const response = await api.post(`/event/${eventId}/register`);
+      console.log('[ParticipationService] Registration successful:', response.data);
       return response.data;
     } catch (error) {
+      console.error('[ParticipationService] Registration failed:', error);
+      console.error('[ParticipationService] Error response:', error.response);
       throw error.response?.data?.error || 'Failed to register for event';
     }
   },

@@ -50,23 +50,39 @@
   background: white;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 15px;
 }
 
-.ep-filter-section label {
-  margin-right: 10px;
+.ep-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.ep-filter-group label {
   font-weight: 600;
-}
-
-.ep-filter-section select {
-  padding: 8px 12px;
-  border: 2px solid #ddd;
-  border-radius: 6px;
   font-size: 14px;
-  cursor: pointer;
-  transition: border-color 0.2s;
+  color: #333;
+  white-space: nowrap;
 }
 
-.ep-filter-section select:focus {
+.ep-filter-group select,
+.ep-filter-group input {
+  padding: 5px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.ep-filter-group select {
+  cursor: pointer;
+}
+
+.ep-filter-group select:focus,
+.ep-filter-group input:focus {
   outline: none;
   border-color: #667eea;
 }

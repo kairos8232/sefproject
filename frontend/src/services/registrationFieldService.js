@@ -62,10 +62,12 @@ const registrationFieldService = {
 
   // Save participant responses
   async saveResponses(eventId, participationId, responses) {
+    console.log('[RegistrationFieldService] Saving responses:', { eventId, participationId, responsesCount: responses.length });
     const response = await api.post(`/events/${eventId}/registration-responses`, {
       participationId,
       responses
     });
+    console.log('[RegistrationFieldService] Responses saved:', response.data);
     return response.data;
   },
 

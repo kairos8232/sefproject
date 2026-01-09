@@ -119,17 +119,24 @@ function CreateEventPage() {
         event_type: formData.event_type === 'other' ? customEventType : formData.event_type,
         organizer_id: user.id,
         status: 'upcoming',
+        // Convert empty strings to null for integer fields
+        expected_attendees: formData.expected_attendees ? parseInt(formData.expected_attendees) : null,
+        registration_limit: formData.registration_limit ? parseInt(formData.registration_limit) : null,
         // Convert datetime-local input to ISO string (UTC)
         start_datetime: fromDateTimeLocalInput(formData.start_datetime),
         end_datetime: fromDateTimeLocalInput(formData.end_datetime)
       };
 
+      console.log('Creating event with data:', eventData);
       const result = await eventService.createEvent(eventData);
+      console.log('Event created successfully:', result);
       
       alert('Event created successfully!');
-      navigate(`/events/${result.event.id}`);
+      navigate('/my-events', { state: { message: 'Event created successfully!' } });
     } catch (error) {
-      alert(error || 'Failed to create event');
+      console.error('Create event error:', error);
+      const errorMessage = error?.response?.data?.error || error?.message || error || 'Failed to create event';
+      alert(errorMessage);
     } finally {
       setSubmitting(false);
     }
@@ -281,37 +288,39 @@ function CreateEventPage() {
         <div className="ce-form-section">
           <h2>Registration Settings</h2>
           
-          <div className="ce-form-group">
-            <label htmlFor="expected_attendees">Expected Attendees *</label>
-            <input
-              type="number"
-              id="expected_attendees"
-              name="expected_attendees"
-              value={formData.expected_attendees}
-              onChange={handleChange}
-              min="1"
-              required
-              placeholder="Enter expected number of attendees"
-            />
-            <span className="ce-helper-text">
-              This helps filter suitable venues when booking. Required for venue booking.
-            </span>
-          </div>
+          <div className="ce-form-row">
+            <div className="ce-form-group">
+              <label htmlFor="expected_attendees">Expected Attendees *</label>
+              <input
+                type="number"
+                id="expected_attendees"
+                name="expected_attendees"
+                value={formData.expected_attendees}
+                onChange={handleChange}
+                min="1"
+                required
+                placeholder="Enter expected number of attendees"
+              />
+              <span className="ce-helper-text">
+                This helps filter suitable venues when booking. Required for venue booking.
+              </span>
+            </div>
 
-          <div className="ce-form-group">
-            <label htmlFor="registration_limit">Registration Limit (Optional)</label>
-            <input
-              type="number"
-              id="registration_limit"
-              name="registration_limit"
-              value={formData.registration_limit}
-              onChange={handleChange}
-              min="1"
-              placeholder="Leave empty to use venue capacity"
-            />
-            <span className="ce-helper-text">
-              Maximum number of participants allowed to register. If left empty, the system will use the venue's capacity from your booking request.
-            </span>
+            <div className="ce-form-group">
+              <label htmlFor="registration_limit">Registration Limit (Optional)</label>
+              <input
+                type="number"
+                id="registration_limit"
+                name="registration_limit"
+                value={formData.registration_limit}
+                onChange={handleChange}
+                min="1"
+                placeholder="Leave empty to use venue capacity"
+              />
+              <span className="ce-helper-text">
+                Maximum number of participants allowed to register. If left empty, the system will use the venue's capacity from your booking request.
+              </span>
+            </div>
           </div>
         </div>
 

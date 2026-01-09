@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { formatDateTime } from '../utils/dateUtils';
 import './FacultyBookingRequestsPage.css';
 
 const FacultyBookingRequestsPage = () => {
@@ -411,75 +410,91 @@ const FacultyBookingRequestsPage = () => {
       {error && <div className="fbrp-error-message">{error}</div>}
 
       <div className="fbrp-filter-section">
-        <label>Event Name: </label>
-        <input
-          type="text"
-          placeholder="Search event name..."
-          value={eventNameSearch}
-          onChange={(e) => setEventNameSearch(e.target.value)}
-          style={{ padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc', marginRight: '15px', width: '180px' }}
-        />
+        <div className="fbrp-filter-group">
+          <label>Event Name:</label>
+          <input
+            type="text"
+            placeholder="Search event name..."
+            value={eventNameSearch}
+            onChange={(e) => setEventNameSearch(e.target.value)}
+            style={{ padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc', width: '180px' }}
+          />
+        </div>
         
-        <label>Requester: </label>
-        <input
-          type="text"
-          placeholder="Search requester..."
-          value={requesterSearch}
-          onChange={(e) => setRequesterSearch(e.target.value)}
-          style={{ padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc', marginRight: '15px', width: '150px' }}
-        />
+        <div className="fbrp-filter-group">
+          <label>Requester:</label>
+          <input
+            type="text"
+            placeholder="Search requester..."
+            value={requesterSearch}
+            onChange={(e) => setRequesterSearch(e.target.value)}
+            style={{ padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc', width: '150px' }}
+          />
+        </div>
         
-        <label>Role: </label>
-        <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
-          <option value="">All Roles</option>
-          <option value="student">Student</option>
-          <option value="faculty_manager">Faculty Manager</option>
-          <option value="event_organizer">Event Organizer</option>
-        </select>
+        <div className="fbrp-filter-group">
+          <label>Role:</label>
+          <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
+            <option value="">All Roles</option>
+            <option value="student">Student</option>
+            <option value="faculty_manager">Faculty Manager</option>
+            <option value="event_organizer">Event Organizer</option>
+          </select>
+        </div>
         
-        <label style={{ marginLeft: '15px' }}>Venue: </label>
-        <input
-          type="text"
-          placeholder="Search venue..."
-          value={venueSearch}
-          onChange={(e) => setVenueSearch(e.target.value)}
-          style={{ padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc', marginRight: '15px', width: '150px' }}
-        />
+        <div className="fbrp-filter-group">
+          <label>Venue:</label>
+          <input
+            type="text"
+            placeholder="Search venue..."
+            value={venueSearch}
+            onChange={(e) => setVenueSearch(e.target.value)}
+            style={{ padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc', width: '150px' }}
+          />
+        </div>
         
-        <label>Status: </label>
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-          <option value="">All Statuses</option>
-          <option value="pending">Pending</option>
-          <option value="approved">Approved</option>
-          <option value="rejected">Rejected</option>
-          <option value="cancelled">Cancelled</option>
-        </select>
+        <div className="fbrp-filter-group">
+          <label>Status:</label>
+          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+            <option value="">All Statuses</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
         
-        <label style={{ marginLeft: '15px' }}>Period: </label>
-        <select value={periodFilter} onChange={(e) => setPeriodFilter(e.target.value)}>
-          <option value="all">All Time</option>
-          <option value="today">Today</option>
-          <option value="this-week">This Week</option>
-          <option value="this-month">This Month</option>
-          <option value="custom">Custom Range</option>
-        </select>
+        <div className="fbrp-filter-group">
+          <label>Period:</label>
+          <select value={periodFilter} onChange={(e) => setPeriodFilter(e.target.value)}>
+            <option value="all">All Time</option>
+            <option value="today">Today</option>
+            <option value="this-week">This Week</option>
+            <option value="this-month">This Month</option>
+            <option value="custom">Custom Range</option>
+          </select>
+        </div>
         
         {periodFilter === 'custom' && (
           <>
-            <label style={{ marginLeft: '15px' }}>From: </label>
-            <input
-              type="date"
-              value={customStartDate}
-              onChange={(e) => setCustomStartDate(e.target.value)}
-              style={{ padding: '5px', borderRadius: '4px', border: '1px solid #ccc' }}
-            />
-            <label style={{ marginLeft: '10px' }}>To: </label>
-            <input
-              type="date"
-              value={customEndDate}
-              onChange={(e) => setCustomEndDate(e.target.value)}
-              style={{ padding: '5px', borderRadius: '4px', border: '1px solid #ccc' }}
-            />
+            <div className="fbrp-filter-group">
+              <label>From:</label>
+              <input
+                type="date"
+                value={customStartDate}
+                onChange={(e) => setCustomStartDate(e.target.value)}
+                style={{ padding: '5px', borderRadius: '4px', border: '1px solid #ccc' }}
+              />
+            </div>
+            <div className="fbrp-filter-group">
+              <label>To:</label>
+              <input
+                type="date"
+                value={customEndDate}
+                onChange={(e) => setCustomEndDate(e.target.value)}
+                style={{ padding: '5px', borderRadius: '4px', border: '1px solid #ccc' }}
+              />
+            </div>
           </>
         )}
       </div>

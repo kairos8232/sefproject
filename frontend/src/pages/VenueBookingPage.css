@@ -82,6 +82,33 @@
   margin-bottom: 20px;
 }
 
+.venue-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 15px;
+}
+
+.venue-filter-group label {
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+}
+
+.venue-filter-group select {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.venue-filter-group select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
 .search-button {
   width: 100%;
   padding: 12px 24px;

@@ -110,23 +110,39 @@
   background: white;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 15px;
 }
 
-.me-filter-section label {
-  margin-right: 10px;
+.me-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.me-filter-group label {
   font-weight: 600;
-}
-
-.me-filter-section select {
-  padding: 8px 12px;
-  border: 2px solid #ddd;
-  border-radius: 6px;
   font-size: 14px;
-  cursor: pointer;
-  transition: border-color 0.2s;
+  color: #333;
+  white-space: nowrap;
 }
 
-.me-filter-section select:focus {
+.me-filter-group select,
+.me-filter-group input {
+  padding: 5px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.me-filter-group select {
+  cursor: pointer;
+}
+
+.me-filter-group select:focus,
+.me-filter-group input:focus {
   outline: none;
   border-color: #667eea;
 }

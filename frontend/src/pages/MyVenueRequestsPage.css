@@ -51,7 +51,7 @@
 /* Filter Section */
 .mvr-filter-section {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   flex-wrap: wrap;
   gap: 15px;
   background: white;
@@ -61,6 +61,39 @@
   margin-bottom: 20px;
 }
 
+.mvr-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.mvr-filter-group label {
+  font-weight: 600;
+  font-size: 14px;
+  color: #333;
+  white-space: nowrap;
+  margin: 0;
+}
+
+.mvr-filter-group select,
+.mvr-filter-group input {
+  padding: 5px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.mvr-filter-group select {
+  cursor: pointer;
+}
+
+.mvr-filter-group select:focus,
+.mvr-filter-group input:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+/* Legacy styles (keeping for backward compatibility) */
 .mvr-filter-section label {
   font-weight: 600;
   color: #333;
