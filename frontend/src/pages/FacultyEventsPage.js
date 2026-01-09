@@ -184,11 +184,14 @@ function FacultyEventsPage() {
     }
     // Venue search
     if (filters.venue) {
-      const booking = event.venue_bookings?.[0];
-      const venueName = booking?.venue?.name?.toLowerCase() || '';
-      const venueCode = booking?.venue?.code?.toLowerCase() || '';
+      const bookings = event.venue_bookings || [];
       const searchTerm = filters.venue.toLowerCase();
-      if (!venueName.includes(searchTerm) && !venueCode.includes(searchTerm)) {
+      const hasMatchingVenue = bookings.some(booking => {
+        const venueName = booking?.venue?.name?.toLowerCase() || '';
+        const venueCode = booking?.venue?.code?.toLowerCase() || '';
+        return venueName.includes(searchTerm) || venueCode.includes(searchTerm);
+      });
+      if (!hasMatchingVenue) {
         return false;
       }
     }
@@ -296,17 +299,6 @@ function FacultyEventsPage() {
             <option value="cancelled">Cancelled</option>
           </select>
         </div>
-        
-        <div className="fep-filter-group">
-          <label>Booking Status:</label>
-          <select value={filters.booking_status} onChange={(e) => handleFilterChange('booking_status', e.target.value)}>
-            <option value="">All</option>
-            <option value="approved">Approved</option>
-            <option value="pending">Pending</option>
-            <option value="rejected">Rejected</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
-        </div>
       </div>
 
       {/* Error Message */}
@@ -337,14 +329,15 @@ function FacultyEventsPage() {
                     <th>Venue</th>
                     <th>Date & Time</th>
                     <th>Event Status</th>
-                    <th>Booking Status</th>
                     <th>Attendees</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredEvents.map(event => {
-                    const booking = event.venue_bookings?.[0]; // Get first booking
+                    const approvedBookings = (event.venue_bookings || []).filter(b => b.status === 'approved');
+                    const booking = approvedBookings[0]; // For other data like dates
+                    
                     return (
                       <tr key={event.id}>
                         <td>
@@ -370,8 +363,19 @@ function FacultyEventsPage() {
                         </td>
                         <td>
                           <div className="fep-venue-info">
-                            <div className="fep-venue-name">{booking?.venue?.name || 'N/A'}</div>
-                            <div className="fep-venue-code">{booking?.venue?.code || ''}</div>
+                            {approvedBookings.length > 0 ? (
+                              approvedBookings.map((b, idx) => (
+                                <div key={b.id} style={{ marginBottom: idx < approvedBookings.length - 1 ? '8px' : '0' }}>
+                                  <div className="fep-venue-name">{b.venue?.name || 'N/A'}</div>
+                                  <div className="fep-venue-code">{b.venue?.code || ''}</div>
+                                </div>
+                              ))
+                            ) : (
+                              <>
+                                <div className="fep-venue-name">N/A</div>
+                                <div className="fep-venue-code"></div>
+                              </>
+                            )}
                           </div>
                         </td>
                         <td>
@@ -382,7 +386,6 @@ function FacultyEventsPage() {
                           </div>
                         </td>
                         <td>{getStatusBadge(event.status)}</td>
-                        <td>{getBookingStatusBadge(booking?.status)}</td>
                         <td className="fep-text-center">
                           {booking?.expected_attendees || 'N/A'}
                         </td>

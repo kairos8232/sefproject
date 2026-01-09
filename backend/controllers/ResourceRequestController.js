@@ -627,6 +627,137 @@ class ResourceRequestController {
       res.status(500).json({ error: 'Failed to override resource request' });
     }
   }
+
+  // Create resource request package (multiple resources as one request)
+  createResourceRequestPackage = async (req, res) => {
+    try {
+      const userId = req.user.userId;
+      const userRole = req.user.role;
+      const packageData = req.body;
+
+      // Check if user can create resource requests
+      if (userRole === 'administrator') {
+        return res.status(403).json({ error: 'Administrators cannot create resource requests' });
+      }
+
+      // Validate required fields
+      if (!packageData.event_id || !packageData.venue_booking_id) {
+        return res.status(400).json({ error: 'Missing event_id or venue_booking_id' });
+      }
+
+      if (!packageData.resources || !Array.isArray(packageData.resources) || packageData.resources.length === 0) {
+        return res.status(400).json({ error: 'No resources selected' });
+      }
+
+      if (!packageData.usage_start_datetime || !packageData.usage_end_datetime) {
+        return res.status(400).json({ error: 'Missing usage datetime' });
+      }
+
+      // Get event to verify ownership
+      const Event = require('../models/Event');
+      const event = await Event.getById(packageData.event_id);
+      
+      if (!event) {
+        return res.status(404).json({ error: 'Event not found' });
+      }
+
+      if (event.organizer_id !== userId) {
+        return res.status(403).json({ error: 'Only the event organizer can request resources' });
+      }
+
+      // Get venue booking to verify it exists and is approved
+      const VenueBooking = require('../models/VenueBooking');
+      const venueBooking = await VenueBooking.getById(packageData.venue_booking_id);
+      
+      if (!venueBooking) {
+        return res.status(404).json({ error: 'Venue booking not found' });
+      }
+
+      if (venueBooking.event_id !== packageData.event_id) {
+        return res.status(400).json({ error: 'Venue booking does not belong to this event' });
+      }
+
+      if (venueBooking.status !== 'approved') {
+        return res.status(400).json({ error: 'Venue booking must be approved before requesting resources' });
+      }
+
+      // Generate package ID
+      const { v4: uuidv4 } = require('uuid');
+      const packageId = uuidv4();
+
+      // Validate all resources and check availability
+      const ResourceType = require('../models/Resource');
+      const unavailableResources = [];
+      const insufficientQuantityResources = [];
+
+      for (const item of packageData.resources) {
+        if (!item.resource_id || !item.requested_quantity) {
+          return res.status(400).json({ error: 'Each resource must have resource_id and requested_quantity' });
+        }
+
+        // Check if resource exists
+        const resource = await ResourceType.getById(item.resource_id);
+        if (!resource || resource.status !== 'active') {
+          return res.status(404).json({ error: `Resource ${item.resource_id} not found or inactive` });
+        }
+
+        // Check quantity availability
+        const availableQty = await ResourceType.getAvailableQuantity(
+          item.resource_id,
+          packageData.usage_start_datetime,
+          packageData.usage_end_datetime
+        );
+
+        if (availableQty < item.requested_quantity) {
+          insufficientQuantityResources.push(`${resource.name} (available: ${availableQty}, requested: ${item.requested_quantity})`);
+        }
+      }
+
+      if (insufficientQuantityResources.length > 0) {
+        return res.status(409).json({ 
+          error: `Insufficient quantity for: ${insufficientQuantityResources.join(', ')}` 
+        });
+      }
+
+      // Create request for each resource with same package_id
+      const ResourceRequest = require('../models/ResourceRequest');
+      const createdRequests = [];
+      
+      for (const item of packageData.resources) {
+        const requestData = {
+          event_id: packageData.event_id,
+          venue_booking_id: packageData.venue_booking_id,
+          resource_id: item.resource_id,
+          package_id: packageId,
+          requester_user_id: userId,
+          requested_quantity: item.requested_quantity,
+          usage_start_datetime: packageData.usage_start_datetime,
+          usage_end_datetime: packageData.usage_end_datetime,
+          setup_instructions: packageData.setup_instructions || null,
+          status: 'pending'
+        };
+
+        const newRequest = await ResourceRequest.create(requestData);
+        createdRequests.push(newRequest);
+      }
+
+      // Get complete requests with relations
+      const completeRequests = await Promise.all(
+        createdRequests.map(r => ResourceRequest.getById(r.id))
+      );
+
+      res.status(201).json({
+        success: true,
+        message: `Resource package with ${createdRequests.length} resources submitted successfully`,
+        package_id: packageId,
+        requests: completeRequests
+      });
+    } catch (error) {
+      console.error('Create resource request package error:', error);
+      res.status(500).json({ error: 'Failed to create resource request package' });
+    }
+  }
 }
 
 module.exports = new ResourceRequestController();
+

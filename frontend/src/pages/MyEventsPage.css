@@ -246,6 +246,24 @@
   line-height: 1.4;
 }
 
+.my-events-container .event-booking-info,
+.my-events-container .event-resource-info {
+  font-size: 11px;
+  color: #667eea;
+  margin-top: 6px;
+  padding: 4px 8px;
+  background: #f0f4ff;
+  border-left: 3px solid #667eea;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.my-events-container .event-resource-info {
+  color: #28a745;
+  background: #e8f5e9;
+  border-left-color: #28a745;
+}
+
 /* Badges */
 .my-events-container .status-badge {
   margin-bottom: 5px;

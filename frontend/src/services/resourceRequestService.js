@@ -60,6 +60,12 @@ const resourceRequestService = {
     return response.data;
   },
 
+  // Create resource request package (multiple resources)
+  createPackage: async (packageData) => {
+    const response = await api.post('/resource-requests/package', packageData);
+    return response.data;
+  },
+
   // Update resource request
   update: async (id, updateData) => {
     const response = await api.put(`/resource-requests/${id}`, updateData);

@@ -813,6 +813,154 @@ class VenueBookingController {
       res.status(500).json({ error: 'Failed to override booking' });
     }
   }
+
+  // Create venue booking package (multiple venues as one request)
+  createVenueBookingPackage = async (req, res) => {
+    try {
+      const userId = req.user.userId;
+      const userRole = req.user.role;
+      const packageData = req.body;
+
+      // Check if user can create bookings
+      if (userRole === 'administrator') {
+        return res.status(403).json({ error: 'Administrators cannot create venue bookings' });
+      }
+
+      // Validate required fields
+      if (!packageData.event_id || !packageData.venue_ids || !Array.isArray(packageData.venue_ids) || packageData.venue_ids.length === 0) {
+        return res.status(400).json({ error: 'Missing required fields or no venues selected' });
+      }
+
+      if (!packageData.requested_start_datetime || !packageData.requested_end_datetime) {
+        return res.status(400).json({ error: 'Missing start or end datetime' });
+      }
+
+      // Get event to verify ownership
+      const event = await Event.getById(packageData.event_id);
+      
+      if (!event) {
+        return res.status(404).json({ error: 'Event not found' });
+      }
+
+      // Only event organizer can book venues for their event
+      if (event.organizer_id !== userId) {
+        return res.status(403).json({ error: 'Only the event organizer can book venues' });
+      }
+
+      // Check advance booking restrictions
+      const settings = await SystemSetting.getSettingsObject();
+      const minAdvanceDays = parseInt(settings.min_advance_booking_days) || 3;
+      const maxAdvanceDays = parseInt(settings.max_advance_booking_days) || 30;
+      
+      const requestedStartDate = new Date(packageData.requested_start_datetime);
+      const now = new Date();
+      const daysInAdvance = Math.floor((requestedStartDate - now) / (1000 * 60 * 60 * 24));
+      
+      if (daysInAdvance < minAdvanceDays) {
+        return res.status(400).json({ 
+          error: `Venue must be booked at least ${minAdvanceDays} days in advance` 
+        });
+      }
+      
+      if (daysInAdvance > maxAdvanceDays) {
+        return res.status(400).json({ 
+          error: `Venue cannot be booked more than ${maxAdvanceDays} days in advance` 
+        });
+      }
+
+      // Generate package ID
+      const { v4: uuidv4 } = require('uuid');
+      const packageId = uuidv4();
+
+      // Validate all venues exist, are active, and available
+      const unavailableVenues = [];
+      const insufficientCapacityVenues = [];
+      const venueDetails = [];
+      
+      for (const venueId of packageData.venue_ids) {
+        const venue = await Venue.getById(venueId);
+        
+        if (!venue || venue.status !== 'active') {
+          return res.status(404).json({ error: `Venue ${venueId} not found or inactive` });
+        }
+        
+        venueDetails.push(venue);
+
+        // Check venue availability
+        const isAvailable = await Venue.checkAvailability(
+          venueId,
+          packageData.requested_start_datetime,
+          packageData.requested_end_datetime
+        );
+
+        if (!isAvailable) {
+          unavailableVenues.push(venue.name);
+        }
+
+        // Check capacity if provided
+        if (packageData.expected_attendees && venue.capacity < packageData.expected_attendees) {
+          insufficientCapacityVenues.push(`${venue.name} (capacity: ${venue.capacity})`);
+        }
+      }
+      
+      // Check all venues belong to the same faculty
+      const facultyIds = [...new Set(venueDetails.map(v => v.faculty_id))];
+      if (facultyIds.length > 1) {
+        return res.status(400).json({ 
+          error: 'Cannot book venues from multiple faculties in the same package. All venues must belong to the same faculty.' 
+        });
+      }
+
+      if (unavailableVenues.length > 0) {
+        return res.status(409).json({ 
+          error: `The following venues are not available: ${unavailableVenues.join(', ')}` 
+        });
+      }
+
+      if (insufficientCapacityVenues.length > 0) {
+        return res.status(400).json({ 
+          error: `The following venues have insufficient capacity: ${insufficientCapacityVenues.join(', ')}` 
+        });
+      }
+
+      // Create booking for each venue with same package_id
+      const createdBookings = [];
+      
+      for (const venueId of packageData.venue_ids) {
+        const bookingData = {
+          event_id: packageData.event_id,
+          venue_id: venueId,
+          package_id: packageId,
+          requester_user_id: userId,
+          requested_start_datetime: packageData.requested_start_datetime,
+          requested_end_datetime: packageData.requested_end_datetime,
+          expected_attendees: packageData.expected_attendees || null,
+          setup_time: packageData.setup_time || 0,
+          teardown_time: packageData.teardown_time || 0,
+          remarks: packageData.remarks || null,
+          status: 'pending'
+        };
+
+        const newBooking = await VenueBooking.create(bookingData);
+        createdBookings.push(newBooking);
+      }
+
+      // Get complete bookings with relations
+      const completeBookings = await Promise.all(
+        createdBookings.map(b => VenueBooking.getById(b.id))
+      );
+
+      res.status(201).json({
+        success: true,
+        message: `Venue package with ${createdBookings.length} venues submitted successfully`,
+        package_id: packageId,
+        bookings: completeBookings
+      });
+    } catch (error) {
+      console.error('Create venue booking package error:', error);
+      res.status(500).json({ error: 'Failed to create venue booking package' });
+    }
+  }
 }
 
 module.exports = new VenueBookingController();

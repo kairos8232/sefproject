@@ -69,6 +69,12 @@ const venueBookingService = {
     return response.data;
   },
 
+  // Create venue booking package (multiple venues)
+  createPackage: async (packageData) => {
+    const response = await api.post('/venue-bookings/package', packageData);
+    return response.data;
+  },
+
   // Update venue booking
   updateBooking: async (id, bookingData) => {
     const response = await api.put(`/venue-bookings/${id}`, bookingData);

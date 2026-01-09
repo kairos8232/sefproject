@@ -24,6 +24,9 @@ router.get('/:id', resourceRequestController.getResourceRequestById);
 // Create resource request
 router.post('/', resourceRequestController.createResourceRequest);
 
+// Create resource request package (multiple resources)
+router.post('/package', resourceRequestController.createResourceRequestPackage);
+
 // Update resource request
 router.put('/:id', resourceRequestController.updateResourceRequest);
 

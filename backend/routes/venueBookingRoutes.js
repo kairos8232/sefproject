@@ -62,6 +62,10 @@ router.get('/:id/details', AuthController.verifyToken, VenueBookingController.ge
 // POST /api/venue-bookings
 router.post('/', AuthController.verifyToken, VenueBookingController.createVenueBooking);
 
+// UC-07: Submit Venue Booking Package - Create multiple venue bookings as one package
+// POST /api/venue-bookings/package
+router.post('/package', AuthController.verifyToken, VenueBookingController.createVenueBookingPackage);
+
 // UC-07: Submit Venue Booking - Update booking
 // PUT /api/venue-bookings/:id
 router.put('/:id', AuthController.verifyToken, VenueBookingController.updateVenueBooking);

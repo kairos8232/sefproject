@@ -15,7 +15,7 @@ class RegistrationFieldController {
       }
 
       // Only event organizer can view custom fields configuration
-      if (event.created_by !== req.user.userId && req.user.role !== 'administrator') {
+      if (event.organizer_id !== req.user.userId && req.user.role !== 'administrator') {
         return res.status(403).json({ error: 'Not authorized to view this event\'s registration fields' });
       }
 

@@ -51,15 +51,23 @@ function MyEventsPage() {
       setLoading(true);
       setError('');
       
+      console.log('[MyEvents] Starting loadMyEvents, userId:', userId);
+      
       if (!userId) {
+        console.log('[MyEvents] No userId, redirecting to login');
         navigate('/login');
         return;
       }
       
       const data = await eventService.getAllEvents();
+      console.log('[MyEvents] Raw API response:', data);
+      console.log('[MyEvents] Total events from API:', data.events?.length);
+      console.log('[MyEvents] All event organizer_ids:', data.events?.map(e => ({ name: e.event_name, organizer_id: e.organizer_id })));
       
       // Filter events created by current user
       let myEvents = data.events.filter(e => e.organizer_id === userId);
+      console.log('[MyEvents] Events created by current user:', myEvents.length);
+      console.log('[MyEvents] My events:', myEvents);
       
       // Store total count before applying filter
       setTotalEvents(myEvents.length);
@@ -158,6 +166,8 @@ function MyEventsPage() {
       }
       
       setEvents(myEvents);
+      console.log('[MyEvents] Final filtered events to display:', myEvents.length);
+      console.log('[MyEvents] Final events array:', myEvents);
 
       // Fetch venue bookings and resource requests for each event
       const bookingsMap = {};
@@ -167,16 +177,72 @@ function MyEventsPage() {
           try {
             // Fetch venue bookings
             const bookingResponse = await venueBookingService.getBookingsByEvent(event.id);
-            const approvedBooking = bookingResponse.bookings?.find(b => b.status === 'approved');
-            if (approvedBooking) {
-              bookingsMap[event.id] = approvedBooking;
+            console.log(`[MyEvents] Bookings for event "${event.event_name}":`, bookingResponse);
+            
+            const approvedBookings = bookingResponse.bookings?.filter(b => b.status === 'approved') || [];
+            console.log(`[MyEvents] Approved bookings (${approvedBookings.length}):`, approvedBookings);
+            
+            if (approvedBookings.length > 0) {
+              // Group bookings by package_id
+              const packages = {};
+              const standaloneBookings = [];
+              
+              approvedBookings.forEach(booking => {
+                console.log(`[MyEvents] Processing booking:`, booking.id, 'package_id:', booking.package_id);
+                if (booking.package_id) {
+                  if (!packages[booking.package_id]) {
+                    packages[booking.package_id] = [];
+                  }
+                  packages[booking.package_id].push(booking);
+                } else {
+                  standaloneBookings.push(booking);
+                }
+              });
+              
+              const bookingData = {
+                packages: Object.values(packages), // Array of arrays (each inner array is a package)
+                standalone: standaloneBookings
+              };
+              
+              console.log(`[MyEvents] Grouped bookings for event ${event.id}:`, bookingData);
+              bookingsMap[event.id] = bookingData;
             }
             
             // Fetch resource requests
             const resourceResponse = await resourceRequestService.getByEvent(event.id);
+            console.log(`[MyEvents] Resources for event "${event.event_name}":`, resourceResponse);
+            
             const approvedResources = resourceResponse.requests?.filter(r => r.status === 'approved') || [];
+            console.log(`[MyEvents] Approved resources (${approvedResources.length}):`, approvedResources);
+            
             if (approvedResources.length > 0) {
-              resourcesMap[event.id] = approvedResources;
+              // Group resources by package_id
+              const resourcePackages = {};
+              const standaloneResources = [];
+              
+              approvedResources.forEach(resource => {
+                console.log(`[MyEvents] Processing resource:`, resource.id, 'package_id:', resource.package_id);
+                if (resource.package_id) {
+                  if (!resourcePackages[resource.package_id]) {
+                    resourcePackages[resource.package_id] = [];
+                  }
+                  resourcePackages[resource.package_id].push(resource);
+                } else {
+                  standaloneResources.push(resource);
+                }
+              });
+              
+              const resourceData = {
+                packages: Object.values(resourcePackages), // Array of arrays
+                standalone: standaloneResources
+              };
+              
+              console.log(`[MyEvents] Grouped resources for event ${event.id}:`, resourceData);
+              resourcesMap[event.id] = resourceData;
+      
+      console.log('[MyEvents] Final bookingsMap:', bookingsMap);
+      console.log('[MyEvents] Final resourcesMap:', resourcesMap);
+      
             }
           } catch (err) {
             // Silently fail for individual fetches
@@ -186,10 +252,14 @@ function MyEventsPage() {
       );
       setEventBookings(bookingsMap);
       setEventResources(resourcesMap);
+      console.log('[MyEvents] State updated successfully');
     } catch (err) {
+      console.error('[MyEvents] Error in loadMyEvents:', err);
+      console.error('[MyEvents] Error details:', err?.response?.data || err.message);
       setError(err || 'Failed to load events');
     } finally {
       setLoading(false);
+      console.log('[MyEvents] Loading complete');
     }
   }, [filter, typeFilter, visibilityFilter, registrationFilter, periodFilter, searchQuery, customStartDate, customEndDate, userId, navigate]);
 
@@ -213,6 +283,64 @@ function MyEventsPage() {
 
   const handleViewEvent = (eventId) => {
     navigate(`/events/${eventId}`, { state: { fromMyEvents: true } });
+  };
+
+  // Helper to get venue booking info for display
+  const getVenueBookingInfo = (event) => {
+    const bookingsData = eventBookings[event.id];
+    console.log(`[MyEvents] getVenueBookingInfo for event ${event.id}:`, bookingsData);
+    
+    if (!bookingsData) return null;
+    
+    const totalPackages = bookingsData.packages?.length || 0;
+    const totalStandalone = bookingsData.standalone?.length || 0;
+    const totalBookings = totalPackages + totalStandalone;
+    
+    console.log(`[MyEvents] Venue info - packages: ${totalPackages}, standalone: ${totalStandalone}`);
+    
+    if (totalBookings === 0) return null;
+    
+    let info = '';
+    if (totalPackages > 0) {
+      const totalVenues = bookingsData.packages.reduce((sum, pkg) => sum + pkg.length, 0);
+      info += `${totalVenues} venue${totalVenues > 1 ? 's' : ''} (${totalPackages} package${totalPackages > 1 ? 's' : ''})`;
+    }
+    if (totalStandalone > 0) {
+      if (info) info += ' + ';
+      info += `${totalStandalone} venue${totalStandalone > 1 ? 's' : ''}`;
+    }
+    
+    console.log(`[MyEvents] Venue info result:`, info);
+    return info;
+  };
+
+  // Helper to get resource request info for display
+  const getResourceRequestInfo = (event) => {
+    const resourcesData = eventResources[event.id];
+    console.log(`[MyEvents] getResourceRequestInfo for event ${event.id}:`, resourcesData);
+    
+    if (!resourcesData) return null;
+    
+    const totalResourcePackages = resourcesData.packages?.length || 0;
+    const totalStandaloneResources = resourcesData.standalone?.length || 0;
+    const totalRequests = totalResourcePackages + totalStandaloneResources;
+    
+    console.log(`[MyEvents] Resource info - packages: ${totalResourcePackages}, standalone: ${totalStandaloneResources}`);
+    
+    if (totalRequests === 0) return null;
+    
+    let info = '';
+    if (totalResourcePackages > 0) {
+      const totalResources = resourcesData.packages.reduce((sum, pkg) => sum + pkg.length, 0);
+      info += `${totalResources} resource${totalResources > 1 ? 's' : ''} (${totalResourcePackages} package${totalResourcePackages > 1 ? 's' : ''})`;
+    }
+    if (totalStandaloneResources > 0) {
+      if (info) info += ' + ';
+      info += `${totalStandaloneResources} resource${totalStandaloneResources > 1 ? 's' : ''}`;
+    }
+    
+    console.log(`[MyEvents] Resource info result:`, info);
+    return info;
   };
 
   const handleToggleRegistration = async (event) => {
@@ -288,9 +416,13 @@ function MyEventsPage() {
   };
 
   const handleRequestResources = (event) => {
-    const booking = eventBookings[event.id];
-    if (booking) {
-      navigate('/request-resources', { state: { event, venueBooking: booking } });
+    const bookingsData = eventBookings[event.id];
+    if (bookingsData) {
+      // Use the first approved booking (from package or standalone)
+      const firstBooking = bookingsData.packages?.[0]?.[0] || bookingsData.standalone?.[0];
+      if (firstBooking) {
+        navigate('/request-resources', { state: { event, venueBooking: firstBooking } });
+      }
     }
   };
 
@@ -492,10 +624,10 @@ function MyEventsPage() {
                         {event.status}
                       </span>
                       {event.registration_status === 'open' && (
-                        <span className="registration-status-badge open">✓ Open</span>
+                        <span className="registration-status-badge open">Open</span>
                       )}
                       {event.registration_status === 'closed' && (
-                        <span className="registration-status-badge closed">🔒 Closed</span>
+                        <span className="registration-status-badge closed">Closed</span>
                       )}
                     </td>
                     <td>

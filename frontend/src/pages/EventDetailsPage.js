@@ -11,7 +11,7 @@ import './EventDetailsPage.css';
 
 function EventDetailsPage() {
   const [event, setEvent] = useState(null);
-  const [venueBooking, setVenueBooking] = useState(null);
+  const [venueBookings, setVenueBookings] = useState([]);
   const [resources, setResources] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -40,16 +40,14 @@ function EventDetailsPage() {
       
       const isCreator = userId && data.event.organizer_id === userId;
       
-      // If user is the creator, load venue booking and resources
+      // If user is the creator, load venue bookings and resources
       if (isCreator) {
         try {
           const bookingResponse = await venueBookingService.getBookingsByEvent(id);
-          const approvedBooking = bookingResponse.bookings?.find(b => b.status === 'approved');
-          if (approvedBooking) {
-            setVenueBooking(approvedBooking);
-          }
+          const approvedBookings = bookingResponse.bookings?.filter(b => b.status === 'approved') || [];
+          setVenueBookings(approvedBookings);
         } catch (err) {
-          console.error('Error loading venue booking:', err);
+          console.error('Error loading venue bookings:', err);
         }
         
         try {
@@ -317,17 +315,60 @@ function EventDetailsPage() {
         )}
 
         {/* Venue and Resources Section - Only for event creator */}
-        {isManagementView && venueBooking && (
-          <div className="ed-venue-section">
-            <h3>Approved Venue Booking</h3>
-            <div className="ed-venue-details">
-              <p><strong>Venue:</strong> {venueBooking.venue?.name || 'N/A'} ({venueBooking.venue?.code || 'N/A'})</p>
-              <p><strong>Location:</strong> {venueBooking.venue?.location || 'N/A'}</p>
-              <p><strong>Capacity:</strong> {venueBooking.venue?.capacity || 'N/A'} people</p>
-              <p><strong>Period:</strong> {formatDateTime(venueBooking.requested_start_datetime)} - {formatDateTime(venueBooking.requested_end_datetime)}</p>
+        {isManagementView && venueBookings.length > 0 && (() => {
+          // Group venue bookings by package_id
+          const venuePackages = {};
+          const standaloneVenues = [];
+          
+          venueBookings.forEach(booking => {
+            if (booking.package_id) {
+              if (!venuePackages[booking.package_id]) {
+                venuePackages[booking.package_id] = [];
+              }
+              venuePackages[booking.package_id].push(booking);
+            } else {
+              standaloneVenues.push(booking);
+            }
+          });
+          
+          return (
+            <div className="ed-venue-section">
+              <h3>Approved Venue Booking{venueBookings.length > 1 ? 's' : ''}</h3>
+              
+              {/* Display packages */}
+              {Object.values(venuePackages).map((packageBookings, pkgIndex) => (
+                <div key={`package-${pkgIndex}`} style={{
+                  marginBottom: '20px'
+                }}>
+                  <div className="ed-resources-list">
+                    {packageBookings.map((booking) => (
+                      <div key={booking.id} className="ed-resource-item">
+                        <p><strong>{booking.venue?.name || 'N/A'}</strong> ({booking.venue?.code || 'N/A'})</p>
+                        <p>Location: {booking.venue?.location || 'N/A'}</p>
+                        <p>Capacity: {booking.venue?.capacity || 'N/A'} people</p>
+                        <p>Period: {formatDateTime(booking.requested_start_datetime)} - {formatDateTime(booking.requested_end_datetime)}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              
+              {/* Display standalone bookings */}
+              {standaloneVenues.length > 0 && (
+                <div className="ed-resources-list">
+                  {standaloneVenues.map(booking => (
+                    <div key={booking.id} className="ed-resource-item">
+                      <p><strong>{booking.venue?.name || 'N/A'}</strong> ({booking.venue?.code || 'N/A'})</p>
+                      <p>Location: {booking.venue?.location || 'N/A'}</p>
+                      <p>Capacity: {booking.venue?.capacity || 'N/A'} people</p>
+                      <p>Period: {formatDateTime(booking.requested_start_datetime)} - {formatDateTime(booking.requested_end_datetime)}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {isManagementView && resources.length > 0 && (
           <div className="ed-resources-section">

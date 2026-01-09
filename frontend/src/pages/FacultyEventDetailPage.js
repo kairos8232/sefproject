@@ -98,7 +98,30 @@ function FacultyEventDetailPage() {
     );
   }
 
-  const booking = event.venue_bookings?.[0];
+  // Group venue bookings by package_id - only approved ones
+  const venueBookings = (event.venue_bookings || []).filter(b => b.status === 'approved');
+  console.log('[FacultyEventDetail] Total venue bookings:', venueBookings.length);
+  console.log('[FacultyEventDetail] Venue bookings:', venueBookings);
+  
+  const venuePackages = {};
+  const standaloneVenueBookings = [];
+  
+  venueBookings.forEach(booking => {
+    console.log('[FacultyEventDetail] Processing booking:', booking.id, 'package_id:', booking.package_id);
+    if (booking.package_id) {
+      if (!venuePackages[booking.package_id]) {
+        venuePackages[booking.package_id] = [];
+      }
+      venuePackages[booking.package_id].push(booking);
+    } else {
+      standaloneVenueBookings.push(booking);
+    }
+  });
+  
+  console.log('[FacultyEventDetail] Venue packages:', Object.keys(venuePackages).length);
+  console.log('[FacultyEventDetail] Standalone bookings:', standaloneVenueBookings.length);
+
+  const booking = event.venue_bookings?.[0]; // Keep for backward compatibility
 
   return (
     <div className="faculty-event-detail-page">
@@ -143,6 +166,18 @@ function FacultyEventDetailPage() {
             <label>End Date & Time</label>
             <p>{formatDateTime(event.end_datetime)}</p>
           </div>
+          {venueBookings.length > 0 && venueBookings[0].setup_time && (
+            <div className="info-item">
+              <label>Setup Time</label>
+              <p>{venueBookings[0].setup_time} minutes</p>
+            </div>
+          )}
+          {venueBookings.length > 0 && venueBookings[0].teardown_time && (
+            <div className="info-item">
+              <label>Teardown Time</label>
+              <p>{venueBookings[0].teardown_time} minutes</p>
+            </div>
+          )}
         </div>
         {event.description && (
           <div className="description">
@@ -153,7 +188,219 @@ function FacultyEventDetailPage() {
       </div>
 
       {/* Venue Booking Section */}
-      {booking && (
+      {venueBookings.length > 0 && (
+        <div className="detail-section">
+          <h2>🏛️ Venue Booking Details</h2>
+          
+          <div className="table-container">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Venue</th>
+                  <th>Code</th>
+                  <th>Location</th>
+                  <th>Capacity</th>
+                </tr>
+              </thead>
+              <tbody>
+                {venueBookings.map((booking) => (
+                  <tr key={booking.id}>
+                    <td><strong>{booking.venue?.name || 'N/A'}</strong></td>
+                    <td>{booking.venue?.code || 'N/A'}</td>
+                    <td>{booking.venue?.location || 'N/A'}</td>
+                    <td>{booking.venue?.capacity || 'N/A'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Old complex display - remove this entire section */}
+      {false && venueBookings.length > 0 && (
+        <div className="detail-section">
+          <h2>🏛️ Venue Booking Details</h2>
+          
+          {/* Display packages */}
+          {Object.values(venuePackages).map((packageBookings, pkgIndex) => {
+            const firstBooking = packageBookings[0];
+            const allSameStatus = packageBookings.every(b => b.status === firstBooking.status);
+            
+            return (
+              <div key={`package-${pkgIndex}`} className="venue-package" style={{ 
+                marginBottom: '20px', 
+                padding: '15px', 
+                border: '2px solid #667eea',
+                borderRadius: '8px',
+                backgroundColor: '#f8f9ff'
+              }}>
+                <div style={{ 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center',
+                  marginBottom: '15px',
+                  paddingBottom: '10px',
+                  borderBottom: '1px solid #667eea'
+                }}>
+                  <h3 style={{ margin: 0, color: '#667eea' }}>
+                    📦 Venue Package ({packageBookings.length} venues)
+                  </h3>
+                  {allSameStatus && getStatusBadge(firstBooking.status)}
+                </div>
+                
+                {packageBookings.map((booking, idx) => (
+                  <div key={booking.id} style={{ 
+                    marginBottom: idx < packageBookings.length - 1 ? '15px' : '0',
+                    paddingBottom: idx < packageBookings.length - 1 ? '15px' : '0',
+                    borderBottom: idx < packageBookings.length - 1 ? '1px dashed #ccc' : 'none'
+                  }}>
+                    <div className="booking-status-header">
+                      <h4 style={{ margin: '0 0 10px 0' }}>{booking.venue?.name}</h4>
+                      {!allSameStatus && getStatusBadge(booking.status)}
+                    </div>
+                    <div className="info-grid">
+                      <div className="info-item">
+                        <label>Venue Code</label>
+                        <p>{booking.venue?.code}</p>
+                      </div>
+                      <div className="info-item">
+                        <label>Location</label>
+                        <p>{booking.venue?.location || 'N/A'}</p>
+                      </div>
+                      <div className="info-item">
+                        <label>Capacity</label>
+                        <p>{booking.venue?.capacity || 'N/A'}</p>
+                      </div>
+                      <div className="info-item">
+                        <label>Expected Attendees</label>
+                        <p>{booking.expected_attendees || 'N/A'}</p>
+                      </div>
+                      <div className="info-item">
+                        <label>Requested Time</label>
+                        <p>{formatDateTime(booking.requested_start_datetime)}</p>
+                        <small>to</small>
+                        <p>{formatDateTime(booking.requested_end_datetime)}</p>
+                      </div>
+                      {booking.approved_start_datetime && (
+                        <div className="info-item">
+                          <label>Approved Time</label>
+                          <p>{formatDateTime(booking.approved_start_datetime)}</p>
+                          <small>to</small>
+                          <p>{formatDateTime(booking.approved_end_datetime)}</p>
+                        </div>
+                      )}
+                      <div className="info-item">
+                        <label>Setup Time</label>
+                        <p>{booking.setup_time ? `${booking.setup_time} minutes` : 'N/A'}</p>
+                      </div>
+                      <div className="info-item">
+                        <label>Teardown Time</label>
+                        <p>{booking.teardown_time ? `${booking.teardown_time} minutes` : 'N/A'}</p>
+                      </div>
+                    </div>
+                    {booking.remarks && (
+                      <div className="remarks">
+                        <label>Booking Remarks</label>
+                        <p>{booking.remarks}</p>
+                      </div>
+                    )}
+                    {booking.approval_notes && (
+                      <div className="approval-notes">
+                        <label>Approval Notes</label>
+                        <p>{booking.approval_notes}</p>
+                        {booking.approved_at && (
+                          <small>Approved on {formatDate(booking.approved_at)}</small>
+                        )}
+                      </div>
+                    )}
+                    {booking.rejection_reason && (
+                      <div className="rejection-reason">
+                        <label>Rejection Reason</label>
+                        <p>{booking.rejection_reason}</p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            );
+          })}
+          
+          {/* Display standalone bookings */}
+          {standaloneVenueBookings.map(booking => (
+            <div key={booking.id} style={{ marginBottom: '20px' }}>
+              <div className="booking-status-header">
+                <h3>{booking.venue?.name}</h3>
+                {getStatusBadge(booking.status)}
+              </div>
+              <div className="info-grid">
+                <div className="info-item">
+                  <label>Venue Code</label>
+                  <p>{booking.venue?.code}</p>
+                </div>
+                <div className="info-item">
+                  <label>Location</label>
+                  <p>{booking.venue?.location || 'N/A'}</p>
+                </div>
+                <div className="info-item">
+                  <label>Capacity</label>
+                  <p>{booking.venue?.capacity || 'N/A'}</p>
+                </div>
+                <div className="info-item">
+                  <label>Expected Attendees</label>
+                  <p>{booking.expected_attendees || 'N/A'}</p>
+                </div>
+                <div className="info-item">
+                  <label>Requested Time</label>
+                  <p>{formatDateTime(booking.requested_start_datetime)}</p>
+                  <small>to</small>
+                  <p>{formatDateTime(booking.requested_end_datetime)}</p>
+                </div>
+                {booking.approved_start_datetime && (
+                  <div className="info-item">
+                    <label>Approved Time</label>
+                    <p>{formatDateTime(booking.approved_start_datetime)}</p>
+                    <small>to</small>
+                    <p>{formatDateTime(booking.approved_end_datetime)}</p>
+                  </div>
+                )}
+                <div className="info-item">
+                  <label>Setup Time</label>
+                  <p>{booking.setup_time ? `${booking.setup_time} minutes` : 'N/A'}</p>
+                </div>
+                <div className="info-item">
+                  <label>Teardown Time</label>
+                  <p>{booking.teardown_time ? `${booking.teardown_time} minutes` : 'N/A'}</p>
+                </div>
+              </div>
+              {booking.remarks && (
+                <div className="remarks">
+                  <label>Booking Remarks</label>
+                  <p>{booking.remarks}</p>
+                </div>
+              )}
+              {booking.approval_notes && (
+                <div className="approval-notes">
+                  <label>Approval Notes</label>
+                  <p>{booking.approval_notes}</p>
+                  {booking.approved_at && (
+                    <small>Approved on {formatDate(booking.approved_at)}</small>
+                  )}
+                </div>
+              )}
+              {booking.rejection_reason && (
+                <div className="rejection-reason">
+                  <label>Rejection Reason</label>
+                  <p>{booking.rejection_reason}</p>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Old single booking display - remove this entire section */}
+      {false && booking && (
         <div className="detail-section">
           <h2>🏛️ Venue Booking Details</h2>
           <div className="booking-status-header">
@@ -227,50 +474,31 @@ function FacultyEventDetailPage() {
       {/* Resource Requests Section */}
       <div className="detail-section">
         <h2>📦 Resource Requests</h2>
-        <p style={{ color: '#666', fontSize: '14px', marginBottom: '10px', fontStyle: 'italic' }}>
-          * Resource usage periods include setup and teardown time
-        </p>
-        {event.resource_requests && event.resource_requests.length > 0 ? (
+        {event.resource_requests && event.resource_requests.filter(r => r.status === 'approved').length > 0 ? (
           <div className="table-container">
-            <table className="resources-table">
+            <table className="data-table">
               <thead>
                 <tr>
                   <th>Resource</th>
                   <th>Category</th>
                   <th>Quantity</th>
-                  <th>Usage Period (incl. setup/teardown)</th>
-                  <th>Status</th>
-                  <th>Requester</th>
                 </tr>
               </thead>
               <tbody>
-                {event.resource_requests.map(request => (
+                {event.resource_requests.filter(r => r.status === 'approved').map(request => (
                   <tr key={request.id}>
-                    <td className="resource-name">{request.resource?.name}</td>
-                    <td>
-                      <span className="category-badge">
-                        {request.resource?.category?.name || 'N/A'}
-                      </span>
-                    </td>
+                    <td><strong>{request.resource?.name}</strong></td>
+                    <td>{request.resource?.category?.name || 'N/A'}</td>
                     <td>
                       {request.requested_quantity} {request.resource?.unit}
                     </td>
-                    <td className="datetime">
-                      {formatDateTime(request.usage_start_datetime)}
-                      <br />
-                      <small>to</small>
-                      <br />
-                      {formatDateTime(request.usage_end_datetime)}
-                    </td>
-                    <td>{getStatusBadge(request.status)}</td>
-                    <td>{request.requester?.name}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         ) : (
-          <p className="no-data">No resource requests for this event.</p>
+          <p className="no-data">No approved resource requests for this event.</p>
         )}
       </div>
 

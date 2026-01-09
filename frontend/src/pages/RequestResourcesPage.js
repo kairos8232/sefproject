@@ -10,8 +10,7 @@ function RequestResourcesPage() {
   const { event, venueBooking } = location.state || {};
 
   const [resources, setResources] = useState([]);
-  const [selectedResource, setSelectedResource] = useState(null);
-  const [quantity, setQuantity] = useState(1);
+  const [selectedResources, setSelectedResources] = useState([]);
   const [setupInstructions, setSetupInstructions] = useState('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -57,52 +56,73 @@ function RequestResourcesPage() {
     loadAvailableResources();
   }, [event, venueBooking, navigate, loadAvailableResources]);
 
-  const handleResourceSelect = (resource) => {
-    setSelectedResource(resource);
-    setQuantity(1); // Reset quantity when selecting new resource
-    setSetupInstructions('');
+  const handleResourceToggle = (resource) => {
+    setSelectedResources(prev => {
+      const existing = prev.find(r => r.resource.id === resource.id);
+      if (existing) {
+        // Remove from selection
+        return prev.filter(r => r.resource.id !== resource.id);
+      } else {
+        // Add to selection with default quantity 1
+        return [...prev, { resource, quantity: 1 }];
+      }
+    });
+  };
+
+  const handleQuantityChange = (resourceId, newQuantity) => {
+    setSelectedResources(prev =>
+      prev.map(item =>
+        item.resource.id === resourceId
+          ? { ...item, quantity: parseInt(newQuantity) || 1 }
+          : item
+      )
+    );
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!selectedResource) {
-      alert('Please select a resource');
+    if (selectedResources.length === 0) {
+      alert('Please select at least one resource');
       return;
     }
 
-    if (quantity < 1) {
-      alert('Quantity must be at least 1');
-      return;
-    }
-
-    if (quantity > selectedResource.availableQuantity) {
-      alert(`Only ${selectedResource.availableQuantity} ${selectedResource.unit} available`);
-      return;
+    // Validate quantities
+    for (const item of selectedResources) {
+      if (item.quantity < 1) {
+        alert(`Quantity for ${item.resource.name} must be at least 1`);
+        return;
+      }
+      if (item.quantity > item.resource.availableQuantity) {
+        alert(`Only ${item.resource.availableQuantity} ${item.resource.unit} of ${item.resource.name} available`);
+        return;
+      }
     }
 
     try {
       setSubmitting(true);
       setError('');
 
-      const requestData = {
+      const packageData = {
         event_id: event.id,
         venue_booking_id: venueBooking.id,
-        resource_id: selectedResource.id,
-        requested_quantity: parseInt(quantity),
+        resources: selectedResources.map(item => ({
+          resource_id: item.resource.id,
+          requested_quantity: item.quantity
+        })),
         usage_start_datetime: venueBooking.approved_start_datetime || venueBooking.requested_start_datetime,
         usage_end_datetime: venueBooking.approved_end_datetime || venueBooking.requested_end_datetime,
         setup_instructions: setupInstructions || null,
       };
 
-      await resourceRequestService.create(requestData);
+      await resourceRequestService.createPackage(packageData);
 
       // Show success message and navigate back to my events
       navigate('/my-events', {
-        state: { message: 'Resource request submitted successfully!' }
+        state: { message: 'Resource package submitted successfully!' }
       });
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to submit resource request');
+      setError(err.response?.data?.error || 'Failed to submit resource package');
       console.error('Submit request error:', err);
     } finally {
       setSubmitting(false);
@@ -182,70 +202,91 @@ function RequestResourcesPage() {
             </div>
           ) : (
             <div className="resources-grid">
-              {resources.map((resource) => (
-                <div
-                  key={resource.id}
-                  className={`resource-card ${selectedResource?.id === resource.id ? 'selected' : ''} ${resource.availableQuantity === 0 ? 'unavailable' : ''}`}
-                  onClick={() => resource.availableQuantity > 0 && handleResourceSelect(resource)}
-                >
-                  <div className="resource-header">
-                    <h3>{resource.name}</h3>
-                    <span className="resource-category">{getCategoryLabel(resource.category)}</span>
-                  </div>
-                  <div className="resource-details">
-                    {resource.description && <p>{resource.description}</p>}
-                    <p>
-                      <strong>Available:</strong> {resource.availableQuantity} / {resource.total_quantity} {typeof resource.unit === 'object' ? resource.unit?.name || resource.unit?.code || 'units' : resource.unit || 'units'}
-                    </p>
-                    {resource.availableQuantity < resource.total_quantity && (
-                      <p className="allocated-info">
-                        ({resource.allocatedQuantity} {typeof resource.unit === 'object' ? resource.unit?.name || resource.unit?.code || 'units' : resource.unit || 'units'} already allocated)
+              {resources.map((resource) => {
+                const isSelected = selectedResources.some(r => r.resource.id === resource.id);
+                return (
+                  <div
+                    key={resource.id}
+                    className={`resource-card ${isSelected ? 'selected' : ''} ${resource.availableQuantity === 0 ? 'unavailable' : ''}`}
+                    onClick={() => resource.availableQuantity > 0 && handleResourceToggle(resource)}
+                  >
+                    <div className="resource-header">
+                      <h3>{resource.name}</h3>
+                      <span className="resource-category">{getCategoryLabel(resource.category)}</span>
+                    </div>
+                    <div className="resource-details">
+                      {resource.description && <p>{resource.description}</p>}
+                      <p>
+                        <strong>Available:</strong> {resource.availableQuantity} / {resource.total_quantity} {typeof resource.unit === 'object' ? resource.unit?.name || resource.unit?.code || 'units' : resource.unit || 'units'}
                       </p>
+                      {resource.availableQuantity < resource.total_quantity && (
+                        <p className="allocated-info">
+                          ({resource.allocatedQuantity} {typeof resource.unit === 'object' ? resource.unit?.name || resource.unit?.code || 'units' : resource.unit || 'units'} already allocated)
+                        </p>
+                      )}
+                      {resource.notes && (
+                        <p className="resource-notes">
+                          <strong>Note:</strong> {resource.notes}
+                        </p>
+                      )}
+                    </div>
+                    {isSelected && (
+                      <div className="selected-badge">✓ Selected</div>
                     )}
-                    {resource.notes && (
-                      <p className="resource-notes">
-                        <strong>Note:</strong> {resource.notes}
-                      </p>
+                    {resource.availableQuantity === 0 && (
+                      <div className="unavailable-badge">Unavailable</div>
                     )}
                   </div>
-                  {selectedResource?.id === resource.id && (
-                    <div className="selected-badge">Selected</div>
-                  )}
-                  {resource.availableQuantity === 0 && (
-                    <div className="unavailable-badge">Unavailable</div>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
 
         {/* Request Form Section */}
-        {selectedResource && (
+        {selectedResources.length > 0 && (
           <div className="request-form-section">
             <h2>Request Details</h2>
             <form onSubmit={handleSubmit}>
               <div className="form-group">
-                <label>Selected Resource</label>
-                <input
-                  type="text"
-                  value={selectedResource.name}
-                  readOnly
-                  className="readonly-field"
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Quantity *</label>
-                <input
-                  type="number"
-                  min="1"
-                  max={selectedResource.availableQuantity}
-                  value={quantity}
-                  onChange={(e) => setQuantity(e.target.value)}
-                  required
-                />
-                <small>Maximum available: {selectedResource.availableQuantity} {typeof selectedResource.unit === 'object' ? selectedResource.unit?.name || selectedResource.unit?.code || 'units' : selectedResource.unit || 'units'}</small>
+                <label>Selected Resources ({selectedResources.length})</label>
+                <div className="selected-resources-list">
+                  {selectedResources.map((item, index) => (
+                    <div key={item.resource.id} className="selected-resource-item">
+                      <div className="resource-item-header">
+                        <span className="resource-number">{index + 1}.</span>
+                        <span className="resource-name">{item.resource.name}</span>
+                        <button
+                          type="button"
+                          className="remove-resource-btn"
+                          onClick={() => handleResourceToggle(item.resource)}
+                          title="Remove from selection"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                      <div className="resource-item-quantity">
+                        <label htmlFor={`qty-${item.resource.id}`}>Quantity:</label>
+                        <input
+                          type="number"
+                          id={`qty-${item.resource.id}`}
+                          min="1"
+                          max={item.resource.availableQuantity}
+                          value={item.quantity}
+                          onChange={(e) => handleQuantityChange(item.resource.id, e.target.value)}
+                        />
+                        <span className="unit-label">
+                          {typeof item.resource.unit === 'object' 
+                            ? item.resource.unit?.name || item.resource.unit?.code || 'units' 
+                            : item.resource.unit || 'units'}
+                        </span>
+                        <span className="available-info">
+                          (Max: {item.resource.availableQuantity})
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <div className="form-group">

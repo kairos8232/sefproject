@@ -345,6 +345,7 @@ class Event {
             rejection_reason,
             approved_at,
             approved_user_id,
+            package_id,
             venue:venue_id (
               id,
               code,

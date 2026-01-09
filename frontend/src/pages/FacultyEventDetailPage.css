@@ -122,7 +122,8 @@
   color: #495057;
   height: auto;
 }
-.detail-section {
+
+.faculty-event-detail-page .detail-section {
   background: white;
   border-radius: 8px;
   padding: 25px;
@@ -130,7 +131,7 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.detail-section h2 {
+.faculty-event-detail-page .detail-section h2 {
   margin: 0 0 20px 0;
   color: #333;
   font-size: 20px;
@@ -139,26 +140,26 @@
   padding-bottom: 10px;
 }
 
-.detail-section h3 {
+.faculty-event-detail-page .detail-section h3 {
   margin: 0;
   color: #333;
   font-size: 18px;
 }
 
 /* Info Grid */
-.info-grid {
+.faculty-event-detail-page .info-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
   gap: 20px;
   margin-bottom: 20px;
 }
 
-.info-item {
+.faculty-event-detail-page .info-item {
   display: flex;
   flex-direction: column;
 }
 
-.info-item label {
+.faculty-event-detail-page .info-item label {
   font-weight: 600;
   color: #555;
   font-size: 13px;
@@ -167,13 +168,13 @@
   letter-spacing: 0.5px;
 }
 
-.info-item p {
+.faculty-event-detail-page .info-item p {
   margin: 0;
   color: #333;
   font-size: 16px;
 }
 
-.info-item small {
+.faculty-event-detail-page .info-item small {
   color: #888;
   font-size: 13px;
   margin-top: 3px;
@@ -237,55 +238,6 @@
   margin-bottom: 20px;
 }
 
-/* Status Badges */
-.faculty-event-detail-page .status-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 6px 14px;
-  border-radius: 12px;
-  font-size: 13px;
-  font-weight: 600;
-  text-transform: capitalize;
-  white-space: nowrap;
-  height: 32px;
-}
-
-.faculty-event-detail-page .status-badge.upcoming {
-  background-color: #e3f2fd;
-  color: #1976d2;
-}
-
-.faculty-event-detail-page .status-badge.ongoing {
-  background-color: #fff3e0;
-  color: #f57c00;
-}
-
-.faculty-event-detail-page .status-badge.completed {
-  background-color: #e8f5e9;
-  color: #388e3c;
-}
-
-.faculty-event-detail-page .status-badge.cancelled {
-  background-color: #ffebee;
-  color: #d32f2f;
-}
-
-.faculty-event-detail-page .status-badge.pending {
-  background-color: #fff9e6;
-  color: #f39c12;
-}
-
-.faculty-event-detail-page .status-badge.approved {
-  background-color: #e8f5e9;
-  color: #27ae60;
-}
-
-.faculty-event-detail-page .status-badge.rejected {
-  background-color: #ffebee;
-  color: #e74c3c;
-}
-
 /* Tables */
 .faculty-event-detail-page .table-container {
   overflow-x: auto;
@@ -294,15 +246,25 @@
   overflow: hidden;
 }
 
+.faculty-event-detail-page .data-table,
 .faculty-event-detail-page .resources-table,
 .faculty-event-detail-page .participants-table {
   width: 100%;
   border-collapse: collapse;
 }
 
+.faculty-event-detail-page .data-table thead,
+.faculty-event-detail-page .resources-table thead,
+.faculty-event-detail-page .participants-table thead {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+
+
+.faculty-event-detail-page .data-table th,
 .faculty-event-detail-page .resources-table th,
 .faculty-event-detail-page .participants-table th {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
   padding: 15px;
   text-align: left;
   font-weight: 600;
@@ -311,21 +273,25 @@
   white-space: nowrap;
 }
 
+.faculty-event-detail-page .data-table td,
 .faculty-event-detail-page .resources-table td,
 .faculty-event-detail-page .participants-table td {
   padding: 15px;
   border-bottom: 1px solid #eee;
-  vertical-align: top;
+  vertical-align: middle;
 }
 
+/* Make first column (venue/resource names) bold and purple */
+.faculty-event-detail-page .data-table td:first-child strong,
+.faculty-event-detail-page .resources-table td:first-child strong,
+.faculty-event-detail-page .participants-table td:first-child strong {
+  font-weight: 800;
+}
+
+.faculty-event-detail-page .data-table tbody tr:hover,
 .faculty-event-detail-page .resources-table tbody tr:hover,
 .faculty-event-detail-page .participants-table tbody tr:hover {
   background-color: #f9f9f9;
-}
-
-.faculty-event-detail-page .resource-name {
-  font-weight: 600;
-  color: #667eea;
 }
 
 .faculty-event-detail-page .datetime {

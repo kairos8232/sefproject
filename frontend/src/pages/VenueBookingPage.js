@@ -22,7 +22,7 @@ function VenueBookingPage() {
 
   const [availableVenues, setAvailableVenues] = useState([]);
   const [faculties, setFaculties] = useState([]);
-  const [selectedVenue, setSelectedVenue] = useState(null);
+  const [selectedVenues, setSelectedVenues] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [searchPerformed, setSearchPerformed] = useState(false);
@@ -65,7 +65,7 @@ function VenueBookingPage() {
     e.preventDefault();
     setError('');
     setAvailableVenues([]);
-    setSelectedVenue(null);
+    setSelectedVenues([]);
     setSearchPerformed(false);
 
     // Validation
@@ -113,9 +113,20 @@ function VenueBookingPage() {
     }
   };
 
+  const handleVenueToggle = (venue) => {
+    setSelectedVenues(prev => {
+      const isSelected = prev.some(v => v.id === venue.id);
+      if (isSelected) {
+        return prev.filter(v => v.id !== venue.id);
+      } else {
+        return [...prev, venue];
+      }
+    });
+  };
+
   const handleSubmitBooking = async () => {
-    if (!selectedVenue) {
-      setError('Please select a venue');
+    if (selectedVenues.length === 0) {
+      setError('Please select at least one venue');
       return;
     }
 
@@ -123,9 +134,10 @@ function VenueBookingPage() {
     setError('');
 
     try {
-      const bookingData = {
+      // Create package with multiple venues
+      const packageData = {
         event_id: event.id,
-        venue_id: selectedVenue.id,
+        venue_ids: selectedVenues.map(v => v.id),
         requested_start_datetime: fromDateTimeLocalInput(formData.requested_start_datetime),
         requested_end_datetime: fromDateTimeLocalInput(formData.requested_end_datetime),
         expected_attendees: event?.expected_attendees || null,
@@ -134,13 +146,15 @@ function VenueBookingPage() {
         remarks: formData.remarks || null
       };
 
-      const result = await venueBookingService.createBooking(bookingData);
+      const result = await venueBookingService.createPackage(packageData);
       
-      // Success - navigate to booking details page
-      navigate(`/venue-bookings/${result.booking.id}`);
+      // Success - navigate to my events page
+      navigate('/my-events', {
+        state: { message: 'Venue package submitted successfully!' }
+      });
     } catch (err) {
       console.error('Submit booking error:', err);
-      setError(err.response?.data?.error || 'Failed to submit venue booking');
+      setError(err.response?.data?.error || 'Failed to submit venue booking package');
       setLoading(false);
     }
   };
@@ -203,43 +217,58 @@ function VenueBookingPage() {
             </div>
           ) : searchPerformed ? (
             <div className="venues-grid">
-              {availableVenues.map((venue) => (
-                <div
-                  key={venue.id}
-                  className={`venue-card ${selectedVenue?.id === venue.id ? 'selected' : ''}`}
-                  onClick={() => setSelectedVenue(venue)}
-                >
-                  <div className="venue-header">
-                    <h3>{venue.name}</h3>
-                    <span className="venue-code">{venue.code}</span>
+              {availableVenues.map((venue) => {
+                const isSelected = selectedVenues.some(v => v.id === venue.id);
+                return (
+                  <div
+                    key={venue.id}
+                    className={`venue-card ${isSelected ? 'selected' : ''}`}
+                    onClick={() => handleVenueToggle(venue)}
+                  >
+                    <div className="venue-header">
+                      <h3>{venue.name}</h3>
+                      <span className="venue-code">{venue.code}</span>
+                    </div>
+                    <div className="venue-details">
+                      <p><strong>Faculty:</strong> {venue.faculty?.name || 'N/A'}</p>
+                      <p><strong>Location:</strong> {venue.location || 'N/A'}</p>
+                      <p><strong>Capacity:</strong> {venue.capacity || 'N/A'} people</p>
+                    </div>
+                    {isSelected && (
+                      <div className="selected-badge">✓ Selected</div>
+                    )}
                   </div>
-                  <div className="venue-details">
-                    <p><strong>Faculty:</strong> {venue.faculty?.name || 'N/A'}</p>
-                    <p><strong>Location:</strong> {venue.location || 'N/A'}</p>
-                    <p><strong>Capacity:</strong> {venue.capacity || 'N/A'} people</p>
-                  </div>
-                  {selectedVenue?.id === venue.id && (
-                    <div className="selected-badge">Selected</div>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : null}
         </div>
 
         {/* Booking Form Section */}
-        {selectedVenue && (
+        {selectedVenues.length > 0 && (
           <div className="booking-form-section">
             <h2>Booking Details</h2>
             <form onSubmit={(e) => { e.preventDefault(); handleSubmitBooking(); }}>
               <div className="form-group">
-                <label>Selected Venue</label>
-                <input
-                  type="text"
-                  value={`${selectedVenue.name} (${selectedVenue.code})`}
-                  readOnly
-                  className="readonly-field"
-                />
+                <label>Selected Venues ({selectedVenues.length})</label>
+                <div className="selected-venues-list">
+                  {selectedVenues.map((venue, index) => (
+                    <div key={venue.id} className="selected-venue-item">
+                      <span className="venue-number">{index + 1}.</span>
+                      <span className="venue-info">
+                        {venue.name} ({venue.code}) - {venue.faculty?.name || 'N/A'}
+                      </span>
+                      <button
+                        type="button"
+                        className="remove-venue-btn"
+                        onClick={() => handleVenueToggle(venue)}
+                        title="Remove from selection"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <div className="form-group">

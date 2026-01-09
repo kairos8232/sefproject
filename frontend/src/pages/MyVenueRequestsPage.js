@@ -278,9 +278,9 @@ function MyVenueRequestsPage() {
                   </td>
                   <td>
                     <div className="mvr-datetime-cell">
-                      <div>{formatDateTime(booking.requested_start_datetime)}</div>
+                      <div>{formatDateTime(new Date(new Date(booking.requested_start_datetime).getTime() - (booking.setup_time || 0) * 60000))}</div>
                       <div className="mvr-datetime-to">to</div>
-                      <div>{formatDateTime(booking.requested_end_datetime)}</div>
+                      <div>{formatDateTime(new Date(new Date(booking.requested_end_datetime).getTime() + (booking.teardown_time || 0) * 60000))}</div>
                     </div>
                   </td>
                   <td>
