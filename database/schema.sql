@@ -822,27 +822,147 @@ INSERT INTO event_invitations (event_id, user_id, invited_by, status, invited_at
 -- ========================================
 -- Sample Resource Categories Data
 -- ========================================
-INSERT INTO resource_categories (id, code, name, description, status) VALUES
-  ('rc1rc1rc-rc1r-c1rc-1rc1-rc1rc1rc1rc1', 'AV', 'Audio Visual Equipment', 'Projectors, microphones, speakers, and other presentation equipment', 'active'),
-  ('rc2rc2rc-rc2r-c2rc-2rc2-rc2rc2rc2rc2', 'FURN', 'Furniture', 'Tables, chairs, and other furniture items', 'active'),
-  ('rc3rc3rc-rc3r-c3rc-3rc3-rc3rc3rc3rc3', 'IT', 'IT Equipment', 'Laptops, computers, and other IT devices', 'active'),
-  ('rc4rc4rc-rc4r-c4rc-4rc4-rc4rc4rc4rc4', 'CATER', 'Catering', 'Food and beverage services', 'active'),
-  ('rc5rc5rc-rc5r-c5rc-5rc5-rc5rc5rc5rc5', 'OTHER', 'Other Resources', 'Miscellaneous resources', 'active');
+INSERT INTO resource_categories (code, name, description, status) VALUES
+  ('AV', 'Audio Visual Equipment', 'Projectors, microphones, speakers, and other presentation equipment', 'active'),
+  ('FURN', 'Furniture', 'Tables, chairs, and other furniture items', 'active'),
+  ('IT', 'IT Equipment', 'Laptops, computers, and other IT devices', 'active'),
+  ('CATER', 'Catering', 'Food and beverage services', 'active'),
+  ('OTHER', 'Other Resources', 'Miscellaneous resources', 'active');
 
 -- ========================================
 -- Sample Resource Types Data
 -- ========================================
-INSERT INTO resource_types (id, category_id, code, name, description, total_quantity, available_quantity, unit, status, managed_by) VALUES
-  ('rt1rt1rt-rt1r-t1rt-1rt1-rt1rt1rt1rt1', 'rc1rc1rc-rc1r-c1rc-1rc1-rc1rc1rc1rc1', 'PROJ-LCD', 'LCD Projector', 'Full HD projector with HDMI and VGA inputs', 10, 10, 'units', 'active', '22222222-2222-2222-2222-222222222222'),
-  ('rt2rt2rt-rt2r-t2rt-2rt2-rt2rt2rt2rt2', 'rc1rc1rc-rc1r-c1rc-1rc1-rc1rc1rc1rc1', 'MIC-WL', 'Wireless Microphone Set', 'Wireless microphone with receiver and batteries', 8, 8, 'sets', 'active', '22222222-2222-2222-2222-222222222222'),
-  ('rt3rt3rt-rt3r-t3rt-3rt3-rt3rt3rt3rt3', 'rc1rc1rc-rc1r-c1rc-1rc1-rc1rc1rc1rc1', 'SOUND-PA', 'PA Sound System', 'Complete sound system with speakers and mixer', 4, 4, 'sets', 'active', '22222222-2222-2222-2222-222222222222'),
-  ('rt4rt4rt-rt4r-t4rt-4rt4-rt4rt4rt4rt4', 'rc1rc1rc-rc1r-c1rc-1rc1-rc1rc1rc1rc1', 'LED-SCREEN', 'Portable LED Screen', 'Large LED display screen for outdoor events', 2, 2, 'units', 'active', '22222222-2222-2222-2222-222222222222'),
-  ('rt5rt5rt-rt5r-t5rt-5rt5-rt5rt5rt5rt5', 'rc1rc1rc-rc1r-c1rc-1rc1-rc1rc1rc1rc1', 'CAM-VIDEO', 'Video Camera Kit', 'Professional video camera with tripod', 3, 3, 'kits', 'active', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'FAC students only - requires training certification'),
-  ('rt6rt6rt-rt6r-t6rt-6rt6-rt6rt6rt6rt6', 'rc2rc2rc-rc2r-c2rc-2rc2-rc2rc2rc2rc2', 'CHAIR-FOLD', 'Folding Chairs', 'Portable folding chairs for events', 200, 200, 'pieces', 'active', '22222222-2222-2222-2222-222222222222'),
-  ('rt7rt7rt-rt7r-t7rt-7rt7-rt7rt7rt7rt7', 'rc2rc2rc-rc2r-c2rc-2rc2-rc2rc2rc2rc2', 'TABLE-6FT', 'Folding Tables (6ft)', '6-foot folding tables', 50, 50, 'pieces', 'active', '22222222-2222-2222-2222-222222222222'),
-  ('rt8rt8rt-rt8r-t8rt-8rt8-rt8rt8rt8rt8', 'rc2rc2rc-rc2r-c2rc-2rc2-rc2rc2rc2rc2', 'WB-MOBILE', 'Whiteboard (Mobile)', 'Large mobile whiteboard with markers', 15, 15, 'units', 'active', '22222222-2222-2222-2222-222222222222'),
-  ('rt9rt9rt-rt9r-t9rt-9rt9-rt9rt9rt9rt9', 'rc3rc3rc-rc3r-c3rc-3rc3-rc3rc3rc3rc3', 'LAPTOP-PRES', 'Laptop (Presentation)', 'Laptop pre-loaded with presentation software', 5, 5, 'units', 'active', '66666666-6666-6666-6666-666666666666'),
-  ('rtartart-rtar-tart-art-artartartart', 'rc4rc4rc-rc4r-c4rc-4rc4-rc4rc4rc4rc4', 'SNACK-PKG', 'Catering Package (Snacks)', 'Light refreshments package for events', 20, 20, 'packages', 'active', '22222222-2222-2222-2222-222222222222', 'Requires 48 hours advance notice');
+INSERT INTO resource_types (category_id, code, name, description, total_quantity, available_quantity, unit, status, managed_by)
+SELECT 
+  (SELECT id FROM resource_categories WHERE code = 'AV' LIMIT 1),
+  'PROJ-LCD',
+  'LCD Projector',
+  'Full HD projector with HDMI and VGA inputs',
+  10,
+  10,
+  'units',
+  'active',
+  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1)
+WHERE EXISTS (SELECT 1 FROM resource_categories WHERE code = 'AV');
+
+INSERT INTO resource_types (category_id, code, name, description, total_quantity, available_quantity, unit, status, managed_by)
+SELECT 
+  (SELECT id FROM resource_categories WHERE code = 'AV' LIMIT 1),
+  'MIC-WL',
+  'Wireless Microphone Set',
+  'Wireless microphone with receiver and batteries',
+  8,
+  8,
+  'sets',
+  'active',
+  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1)
+WHERE EXISTS (SELECT 1 FROM resource_categories WHERE code = 'AV');
+
+INSERT INTO resource_types (category_id, code, name, description, total_quantity, available_quantity, unit, status, managed_by)
+SELECT 
+  (SELECT id FROM resource_categories WHERE code = 'AV' LIMIT 1),
+  'SOUND-PA',
+  'PA Sound System',
+  'Complete sound system with speakers and mixer',
+  4,
+  4,
+  'sets',
+  'active',
+  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1)
+WHERE EXISTS (SELECT 1 FROM resource_categories WHERE code = 'AV');
+
+INSERT INTO resource_types (category_id, code, name, description, total_quantity, available_quantity, unit, status, managed_by)
+SELECT 
+  (SELECT id FROM resource_categories WHERE code = 'AV' LIMIT 1),
+  'LED-SCREEN',
+  'Portable LED Screen',
+  'Large LED display screen for outdoor events',
+  2,
+  2,
+  'units',
+  'active',
+  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1)
+WHERE EXISTS (SELECT 1 FROM resource_categories WHERE code = 'AV');
+
+INSERT INTO resource_types (category_id, code, name, description, total_quantity, available_quantity, unit, status, managed_by, notes)
+SELECT 
+  (SELECT id FROM resource_categories WHERE code = 'AV' LIMIT 1),
+  'CAM-VIDEO',
+  'Video Camera Kit',
+  'Professional video camera with tripod',
+  3,
+  3,
+  'kits',
+  'active',
+  (SELECT id FROM users WHERE email = 'james.lee@fac.edu' LIMIT 1),
+  'FAC students only - requires training certification'
+WHERE EXISTS (SELECT 1 FROM resource_categories WHERE code = 'AV');
+
+INSERT INTO resource_types (category_id, code, name, description, total_quantity, available_quantity, unit, status, managed_by)
+SELECT 
+  (SELECT id FROM resource_categories WHERE code = 'FURN' LIMIT 1),
+  'CHAIR-FOLD',
+  'Folding Chairs',
+  'Portable folding chairs for events',
+  200,
+  200,
+  'pieces',
+  'active',
+  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1)
+WHERE EXISTS (SELECT 1 FROM resource_categories WHERE code = 'FURN');
+
+INSERT INTO resource_types (category_id, code, name, description, total_quantity, available_quantity, unit, status, managed_by)
+SELECT 
+  (SELECT id FROM resource_categories WHERE code = 'FURN' LIMIT 1),
+  'TABLE-6FT',
+  'Folding Tables (6ft)',
+  '6-foot folding tables',
+  50,
+  50,
+  'pieces',
+  'active',
+  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1)
+WHERE EXISTS (SELECT 1 FROM resource_categories WHERE code = 'FURN');
+
+INSERT INTO resource_types (category_id, code, name, description, total_quantity, available_quantity, unit, status, managed_by)
+SELECT 
+  (SELECT id FROM resource_categories WHERE code = 'FURN' LIMIT 1),
+  'WB-MOBILE',
+  'Whiteboard (Mobile)',
+  'Large mobile whiteboard with markers',
+  15,
+  15,
+  'units',
+  'active',
+  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1)
+WHERE EXISTS (SELECT 1 FROM resource_categories WHERE code = 'FURN');
+
+INSERT INTO resource_types (category_id, code, name, description, total_quantity, available_quantity, unit, status, managed_by)
+SELECT 
+  (SELECT id FROM resource_categories WHERE code = 'IT' LIMIT 1),
+  'LAPTOP-PRES',
+  'Laptop (Presentation)',
+  'Laptop pre-loaded with presentation software',
+  5,
+  5,
+  'units',
+  'active',
+  (SELECT id FROM users WHERE email = 'alice.wong@fci.edu' LIMIT 1)
+WHERE EXISTS (SELECT 1 FROM resource_categories WHERE code = 'IT');
+
+INSERT INTO resource_types (category_id, code, name, description, total_quantity, available_quantity, unit, status, managed_by, notes)
+SELECT 
+  (SELECT id FROM resource_categories WHERE code = 'CATER' LIMIT 1),
+  'SNACK-PKG',
+  'Catering Package (Snacks)',
+  'Light refreshments package for events',
+  20,
+  20,
+  'packages',
+  'active',
+  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1),
+  'Requires 48 hours advance notice'
+WHERE EXISTS (SELECT 1 FROM resource_categories WHERE code = 'CATER');
 
 -- ========================================
 -- Useful Functions
@@ -1114,13 +1234,23 @@ CREATE POLICY "Backend can delete system_settings" ON system_settings
 -- ========================================
 
 -- ========================================
--- Additional Past Events with Feedback and Participations
--- Reference Date: Current date is January 9, 2026
+-- Additional Test Events with Various Statuses
 -- ========================================
 
--- COMPLETED EVENT 1 (November 2025 - 2 months ago)
-INSERT INTO events (id, organizer_id, event_name, description, visibility, event_type, status, expected_attendees, registration_limit, start_datetime, end_datetime, created_at) VALUES
-  ('a1111111-1111-1111-1111-111111111111', '33333333-3333-3333-3333-333333333333', 'Web Development Workshop', 'Hands-on workshop covering HTML, CSS, and JavaScript fundamentals', 'campuswide', 'workshop', 'completed', 60, 50, '2025-11-15 09:00:00+08', '2025-11-15 17:00:00+08', '2025-11-01 10:00:00+08');
+-- COMPLETED EVENT 1 (November 2025 - within 3 months)
+INSERT INTO events (id, organizer_id, event_name, description, visibility, event_type, status, start_datetime, end_datetime, created_at)
+VALUES (
+  'a1111111-1111-1111-1111-111111111111',
+  (SELECT id FROM users WHERE role = 'event_organizer' LIMIT 1),
+  'Web Development Workshop',
+  'Hands-on workshop covering HTML, CSS, and JavaScript fundamentals',
+  'campuswide',
+  'workshop',
+  'completed',
+  '2025-11-15 09:00:00+08',
+  '2025-11-15 17:00:00+08',
+  '2025-11-01 10:00:00+08'
+);
 
 -- COMPLETED EVENT 2 (December 2025 - within 3 months)
 INSERT INTO events (id, organizer_id, event_name, description, visibility, event_type, status, start_datetime, end_datetime, created_at)
