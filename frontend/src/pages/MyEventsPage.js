@@ -25,6 +25,7 @@ function MyEventsPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const user = authService.getCurrentUser();
+  const userId = user?.id; // Extract primitive to prevent re-renders
 
   // Check authentication
   useEffect(() => {
@@ -49,7 +50,7 @@ function MyEventsPage() {
       setLoading(true);
       setError('');
       
-      if (!user) {
+      if (!userId) {
         navigate('/login');
         return;
       }
@@ -57,7 +58,7 @@ function MyEventsPage() {
       const data = await eventService.getAllEvents();
       
       // Filter events created by current user
-      let myEvents = data.events.filter(e => e.organizer_id === user.id);
+      let myEvents = data.events.filter(e => e.organizer_id === userId);
       
       // Store total count before applying filter
       setTotalEvents(myEvents.length);
@@ -184,7 +185,7 @@ function MyEventsPage() {
     } finally {
       setLoading(false);
     }
-  }, [filter, typeFilter, visibilityFilter, periodFilter, searchQuery, customStartDate, customEndDate, user, navigate]);
+  }, [filter, typeFilter, visibilityFilter, periodFilter, searchQuery, customStartDate, customEndDate, userId, navigate]);
 
   useEffect(() => {
     document.title = 'My Events - CESMS';
