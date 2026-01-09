@@ -107,7 +107,9 @@
   padding: 15px;
   text-align: left;
   font-weight: 600;
-  font-size: 14px;
+  color: white;
+  border-bottom: 2px solid #764ba2;
+  white-space: nowrap;
 }
 
 .fep-events-table td {
@@ -126,7 +128,52 @@
 /* Event Name */
 .fep-event-name {
   font-weight: 600;
+  color: #667eea;
+  margin-bottom: 4px;
+}
+
+.fep-event-description {
+  font-size: 12px;
+  color: #666;
+  line-height: 1.4;
+  margin-top: 4px;
+}
+
+/* Organizer Info */
+.fep-organizer-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.fep-organizer-name {
+  font-weight: 600;
   color: #333;
+}
+
+.fep-organizer-role {
+  color: white;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.fep-role-student {
+  background: #3498db;
+}
+
+.fep-role-faculty {
+  background: #e74c3c;
+}
+
+.fep-role-organizer {
+  background: #9b59b6;
+}
+
+.fep-role-default {
+  background: #95a5a6;
 }
 
 /* Venue Info */
@@ -146,7 +193,7 @@
   color: white;
   padding: 4px 10px;
   border-radius: 4px;
-  font-size: 0.9rem;
+  font-size: 11px;
   font-weight: 600;
 }
 

@@ -26,6 +26,14 @@ function MyEventsPage() {
   const location = useLocation();
   const user = authService.getCurrentUser();
 
+  // Check authentication
+  useEffect(() => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+  }, [user, navigate]);
+
   // Check if attendance recording is available (1 hour before start until end time)
   const isAttendanceAvailable = (event) => {
     const now = new Date();
@@ -40,6 +48,11 @@ function MyEventsPage() {
     try {
       setLoading(true);
       setError('');
+      
+      if (!user) {
+        navigate('/login');
+        return;
+      }
       
       const data = await eventService.getAllEvents();
       
@@ -171,7 +184,7 @@ function MyEventsPage() {
     } finally {
       setLoading(false);
     }
-  }, [filter, typeFilter, visibilityFilter, periodFilter, searchQuery, customStartDate, customEndDate, user.id]);
+  }, [filter, typeFilter, visibilityFilter, periodFilter, searchQuery, customStartDate, customEndDate, user, navigate]);
 
   useEffect(() => {
     document.title = 'My Events - CESMS';

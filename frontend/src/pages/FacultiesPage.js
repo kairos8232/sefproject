@@ -135,17 +135,17 @@ const FacultiesPage = () => {
           <button className="back-button" onClick={() => navigate('/home')}>
             ← Back
           </button>
-          <button className="btn-create" onClick={() => setShowCreateModal(true)}>
-            + Create Faculty
+          <button className="fp-btn-create" onClick={() => setShowCreateModal(true)}>
+            ➕ Create Faculty
           </button>
         </div>
       </div>
 
-      {error && <div className="message error-message">{error}</div>}
-      {success && <div className="message success-message">{success}</div>}
+      {error && <div className="fp-message fp-error-message">{error}</div>}
+      {success && <div className="fp-message fp-success-message">{success}</div>}
 
-      <div className="faculties-filters">
-        <div className="filter-group">
+      <div className="fp-faculties-filters">
+        <div className="fp-filter-group">
           <label>Search</label>
           <input
             type="text"
@@ -191,21 +191,21 @@ const FacultiesPage = () => {
                   <td>{faculty.name}</td>
                   <td>{faculty.description || '-'}</td>
                   <td>
-                    <span className={`status-badge status-${faculty.status}`}>
+                    <span className={`fp-status-badge fp-status-${faculty.status}`}>
                       {faculty.status}
                     </span>
                   </td>
                   <td>
-                    <div className="action-buttons">
+                    <div className="fp-action-buttons">
                       <button
-                        className="btn-edit"
+                        className="fp-btn-edit"
                         onClick={() => handleEditClick(faculty)}
                         title="Edit faculty"
                       >
                         ✏️
                       </button>
                       <button
-                        className={`btn-status ${faculty.status === 'active' ? 'deactivate' : 'activate'}`}
+                        className={`fp-btn-status fp-${faculty.status === 'active' ? 'deactivate' : 'activate'}`}
                         onClick={() => handleStatusToggle(faculty)}
                         title={faculty.status === 'active' ? 'Deactivate' : 'Activate'}
                       >
@@ -222,11 +222,11 @@ const FacultiesPage = () => {
 
       {/* Create Faculty Modal */}
       {showCreateModal && (
-        <div className="modal-overlay" onClick={() => setShowCreateModal(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <div className="fp-modal-overlay" onClick={() => setShowCreateModal(false)}>
+          <div className="fp-modal" onClick={(e) => e.stopPropagation()}>
             <h2>Create New Faculty</h2>
             <form onSubmit={handleCreateFaculty}>
-              <div className="form-group">
+              <div className="fp-form-group">
                 <label>Faculty Code * (e.g., FCI, FOM, FOB)</label>
                 <input
                   type="text"
@@ -240,7 +240,7 @@ const FacultiesPage = () => {
                 />
               </div>
 
-              <div className="form-group">
+              <div className="fp-form-group">
                 <label>Faculty Name *</label>
                 <input
                   type="text"
@@ -251,7 +251,7 @@ const FacultiesPage = () => {
                 />
               </div>
 
-              <div className="form-group">
+              <div className="fp-form-group">
                 <label>Description</label>
                 <textarea
                   value={formData.description}
@@ -312,11 +312,11 @@ const FacultiesPage = () => {
                 />
               </div>
 
-              <div className="modal-actions">
-                <button type="button" className="btn-cancel" onClick={() => setShowEditModal(false)}>
+              <div className="fp-modal-actions">
+                <button type="button" className="fp-btn-cancel" onClick={() => setShowCreateModal(false)}>
                   Cancel
                 </button>
-                <button type="submit" className="btn-submit">
+                <button type="submit" className="fp-btn-submit">
                   Update Faculty
                 </button>
               </div>

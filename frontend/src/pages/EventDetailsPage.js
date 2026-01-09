@@ -21,6 +21,7 @@ function EventDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const currentUser = authService.getCurrentUser();
   
   // Check if user came from My Events page (management view)
   const isManagementView = location.state?.fromMyEvents;
@@ -36,8 +37,7 @@ function EventDetailsPage() {
       const data = await eventService.getEventById(id);
       setEvent(data.event);
       
-      const currentUser = authService.getCurrentUser();
-      const isCreator = data.event.organizer_id === currentUser.id;
+      const isCreator = currentUser && data.event.organizer_id === currentUser.id;
       
       // If user is the creator, load venue booking and resources
       if (isCreator) {
@@ -319,8 +319,8 @@ function EventDetailsPage() {
           </div>
         )}
 
-        {/* Participation Actions - Only show if NOT in management view and NOT from home */}
-        {!isManagementView && !fromHome && (event.status === 'upcoming' || event.status === 'ongoing') && (
+        {/* Participation Actions - Only show if NOT in management view, NOT from home, and NOT administrator */}
+        {!isManagementView && !fromHome && (event.status === 'upcoming' || event.status === 'ongoing') && currentUser?.role !== 'administrator' && (
           <div className="ed-participation-actions">
             {actionMessage && (
               <div className={`ed-action-message ${actionMessage.includes('Success') || actionMessage.includes('cancel') ? 'ed-success' : 'ed-error'}`}>

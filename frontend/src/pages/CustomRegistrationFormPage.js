@@ -297,7 +297,7 @@ function CustomRegistrationFormPage() {
       <div className="form-container">
         <div className="form-header">
           <h1>Complete Your Registration</h1>
-          <p className="event-name">{event?.event_name}</p>
+          <p className="crfp-event-name">{event?.event_name}</p>
           <p className="form-subtitle">
             Please fill out the following information to complete your registration
           </p>

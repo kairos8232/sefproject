@@ -75,9 +75,10 @@ class VenueBooking {
         .from('venue_bookings')
         .select(`
           *,
-          event:events(id, event_name, start_datetime, end_datetime),
+          event:events(id, event_name, description, start_datetime, end_datetime),
           venue:venues(id, code, name, capacity, location),
-          approver:users!approved_user_id(id, name, email)
+          approver:users!approved_user_id(id, name, email),
+          requester:users!requester_user_id(id, name, email, role)
         `)
         .eq('requester_user_id', userId)
         .order('created_at', { ascending: false });

@@ -164,7 +164,9 @@
   padding: 15px;
   text-align: left;
   font-weight: 600;
-  font-size: 14px;
+  color: white;
+  border-bottom: 2px solid #764ba2;
+  white-space: nowrap;
 }
 
 .mrr-requests-table td {
@@ -183,7 +185,7 @@
 /* Event Cell */
 .mrr-event-name {
   font-weight: 600;
-  color: #333;
+  color: #667eea;
   margin-bottom: 5px;
 }
 

@@ -187,15 +187,15 @@
 }
 
 .my-events-container .events-table thead {
-  background-color: #f8f9fa;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
 .my-events-container .events-table th {
   padding: 15px;
   text-align: left;
   font-weight: 600;
-  color: #333;
-  border-bottom: 2px solid #dee2e6;
+  color: white;
+  border-bottom: 2px solid #764ba2;
   white-space: nowrap;
 }
 
@@ -220,7 +220,7 @@
 
 .my-events-container .event-name {
   font-weight: 600;
-  color: #333;
+  color: #667eea;
   margin-bottom: 5px;
 }
 

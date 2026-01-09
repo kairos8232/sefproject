@@ -115,57 +115,57 @@
 }
 
 /* Bookings Table */
-.faculty-booking-requests-page .bookings-table {
+.fbrp-bookings-table {
   width: 100%;
   border-collapse: collapse;
 }
 
-.faculty-booking-requests-page .bookings-table thead {
-  background-color: #f8f9fa;
+.fbrp-bookings-table thead {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
-.faculty-booking-requests-page .bookings-table th {
+.fbrp-bookings-table th {
   padding: 15px;
   text-align: left;
   font-weight: 600;
-  color: #333;
-  border-bottom: 2px solid #dee2e6;
+  color: white;
+  border-bottom: 2px solid #764ba2;
   white-space: nowrap;
 }
 
-.faculty-booking-requests-page .bookings-table td {
+.fbrp-bookings-table td {
   padding: 15px;
   border-bottom: 1px solid #dee2e6;
   vertical-align: top;
 }
 
-.faculty-booking-requests-page .bookings-table tbody tr {
+.fbrp-bookings-table tbody tr {
   transition: background-color 0.2s;
 }
 
-.faculty-booking-requests-page .bookings-table tbody tr:hover {
+.fbrp-bookings-table tbody tr:hover {
   background-color: #f8f9fa;
 }
 
 /* Event Name Cell */
-.faculty-booking-requests-page .event-name-cell {
+.fbrp-event-name-cell {
   max-width: 300px;
 }
 
-.faculty-booking-requests-page .event-name {
+.fbrp-event-name {
   font-weight: 600;
-  color: #333;
+  color: #667eea;
   margin-bottom: 5px;
 }
 
-.faculty-booking-requests-page .event-description-preview {
+.fbrp-event-description-preview {
   font-size: 12px;
   color: #666;
   line-height: 1.4;
 }
 
 /* Badges */
-.faculty-booking-requests-page .status-badge {
+.fbrp-status-badge {
   display: inline-block;
   padding: 4px 10px;
   border-radius: 12px;
@@ -174,53 +174,129 @@
   text-transform: capitalize;
 }
 
-.faculty-booking-requests-page .status-pending {
+.fbrp-status-pending {
   background-color: #fff3cd;
   color: #856404;
 }
 
-.faculty-booking-requests-page .status-approved {
+.fbrp-status-approved {
   background-color: #d4edda;
   color: #155724;
 }
 
-.faculty-booking-requests-page .status-rejected {
+.fbrp-status-rejected {
   background-color: #f8d7da;
   color: #721c24;
 }
 
-.faculty-booking-requests-page .status-cancelled {
+.fbrp-status-cancelled {
   background-color: #e2e3e5;
   color: #383d41;
 }
 
-.faculty-booking-requests-page .role-badge {
+.fbrp-role-badge {
   font-size: 11px;
   color: #666;
   text-transform: capitalize;
 }
 
-.faculty-booking-requests-page .fbrp-venue-info {
-  color: #666;
+/* Venue Info */
+.fbrp-venue-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
 }
 
-.faculty-booking-requests-page .time-range {
+.fbrp-venue-name {
+  font-weight: 600;
+  color: #333;
+}
+
+.fbrp-venue-code {
+  background: #667eea;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  display: inline-block;
+}
+
+/* Requester Info */
+.fbrp-requester-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.fbrp-requester-name {
+  font-weight: 600;
+  color: #333;
+}
+
+.fbrp-requester-role {
+  background: #764ba2;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  display: inline-block;
+  width: full-content;
+  text-transform: capitalize;
+}
+
+.fbrp-role-student {
+  background: #3498db;
+}
+
+.fbrp-role-faculty {
+  background: #e74c3c;
+}
+
+.fbrp-role-organizer {
+  background: #9b59b6;
+}
+
+.fbrp-role-default {
+  background: #95a5a6;
+}
+
+/* DateTime Cell */
+.fbrp-datetime-cell {
+  font-size: 13px;
+  color: #555;
+}
+
+.fbrp-datetime-to {
+  font-size: 11px;
+  color: #999;
+  margin: 2px 0;
+}
+
+/* Submitted Cell */
+.fbrp-submitted-cell {
+  font-size: 13px;
+  color: #555;
+}
+
+.fbrp-time-range {
   font-size: 12px;
   color: #666;
   margin-top: 3px;
 }
 
-.faculty-booking-requests-page .time-ago {
+.fbrp-time-ago {
   color: #666;
   font-size: 13px;
 }
 
 /* Actions Cell */
-.faculty-booking-requests-page .actions-cell {
+.fbrp-actions-cell {
   white-space: nowrap;
 }
 
-.faculty-booking-requests-page .action-button {
+.fbrp-action-button {
   padding: 6px 10px;
   border: none;
   border-radius: 6px;
@@ -230,15 +306,15 @@
   transition: all 0.2s;
 }
 
-.faculty-booking-requests-page .action-button:hover {
+.fbrp-action-button:hover {
   transform: scale(1.1);
 }
 
-.faculty-booking-requests-page .view-button {
+.fbrp-view-button {
   background-color: #e7f3ff;
 }
 
-.faculty-booking-requests-page .view-button:hover {
+.fbrp-view-button:hover {
   background-color: #cce5ff;
 }
 

@@ -136,7 +136,7 @@ class Report {
       query = query.lte('created_at', endDate);
     }
     if (resourceTypeId) {
-      query = query.eq('resource_type_id', resourceTypeId);
+      query = query.eq('resource_id', resourceTypeId);
     }
     
     const { data: requests, error } = await query;
@@ -157,7 +157,7 @@ class Report {
     const { startDate, endDate, facultyId } = filters;
     
     let query = supabase
-      .from('participation')
+      .from('event_participation')
       .select('*');
     
     if (startDate) {

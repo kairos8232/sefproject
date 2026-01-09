@@ -110,7 +110,9 @@
   padding: 15px;
   text-align: left;
   font-weight: 600;
-  font-size: 14px;
+  color: white;
+  border-bottom: 2px solid #764ba2;
+  white-space: nowrap;
 }
 
 .mvr-bookings-table td {
@@ -129,7 +131,15 @@
 /* Event Name */
 .mvr-event-name {
   font-weight: 600;
-  color: #333;
+  color: #667eea;
+  margin-bottom: 4px;
+}
+
+.mvr-event-description {
+  font-size: 12px;
+  color: #666;
+  line-height: 1.4;
+  margin-top: 4px;
 }
 
 /* Venue Info */
@@ -149,8 +159,30 @@
   color: white;
   padding: 4px 10px;
   border-radius: 4px;
-  font-size: 0.9rem;
+  font-size: 11px;
   font-weight: 600;
+}
+
+/* Requester Info */
+.mvr-requester-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.mvr-requester-name {
+  font-weight: 600;
+  color: #333;
+}
+
+.mvr-requester-role {
+  background: #764ba2;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: capitalize;
 }
 
 /* DateTime Cell */

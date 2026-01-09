@@ -262,7 +262,7 @@ function VenueAvailabilityPage() {
           <p>Block and unblock time slots for your faculty's venues</p>
         </div>
         <button onClick={() => navigate('/home')} className="back-button">
-          ← Back to Home
+          Back to Home
         </button>
       </div>
 

@@ -286,38 +286,38 @@ const ResourceCataloguePage = () => {
     }
   };
 
-  if (loading) return <div className="resource-catalogue-container"><div className="loading">Loading...</div></div>;
+  if (loading) return <div className="rcp-resource-catalogue-container"><div className="rcp-loading">Loading...</div></div>;
 
   return (
-    <div className="resource-catalogue-container">
+    <div className="rcp-resource-catalogue-container">
       <div className="page-header">
         <div>
           <h1>📦 Resource Catalogue</h1>
           <p>Manage resource categories and types for event bookings</p>
         </div>
-        <div className="header-actions">
-          <button className="back-button" onClick={() => navigate('/home')}>
+        <div className="rcp-header-actions">
+          <button className="rcp-back-button" onClick={() => navigate('/home')}>
             Back to Home
           </button>
         </div>
       </div>
 
-      {error && <div className="error-message">{error}</div>}
-      {success && <div className="success-message">{success}</div>}
+      {error && <div className="rcp-error-message">{error}</div>}
+      {success && <div className="rcp-success-message">{success}</div>}
 
-      <div className="resource-sections">
+      <div className="rcp-resource-sections">
         {/* ======================================== */}
         {/* Resource Categories Section - LEFT SIDE */}
         {/* ======================================== */}
-        <div className="resource-section categories-section">
-          <div className="section-header">
-            <div className="section-title">
+        <div className="rcp-resource-section rcp-categories-section">
+          <div className="rcp-section-header">
+            <div className="rcp-section-title">
               <h2>Categories</h2>
-              <span className="section-count">({categories.length})</span>
+              <span className="rcp-section-count">({categories.length})</span>
             </div>
-            <div className="header-actions">
+            <div className="rcp-header-actions">
               <button 
-                className="btn btn-primary"
+                className="rcp-btn rcp-btn-primary"
                 onClick={() => setShowCreateCategoryModal(true)}
               >
                 + New
@@ -325,18 +325,18 @@ const ResourceCataloguePage = () => {
             </div>
           </div>
 
-          <div className="section-filters">
+          <div className="rcp-section-filters">
             <input
               type="text"
               placeholder="Search categories..."
               value={categoryFilters.search}
               onChange={(e) => setCategoryFilters({ ...categoryFilters, search: e.target.value })}
-              className="search-input"
+              className="rcp-search-input"
             />
             <select
               value={categoryFilters.status}
               onChange={(e) => setCategoryFilters({ ...categoryFilters, status: e.target.value })}
-              className="filter-select"
+              className="rcp-filter-select"
             >
               <option value="">All Statuses</option>
               <option value="active">Active</option>
@@ -344,41 +344,41 @@ const ResourceCataloguePage = () => {
             </select>
           </div>
 
-          <div className="categories-list">
+          <div className="rcp-categories-list">
             {categories.length === 0 ? (
-              <p className="no-data">No categories found</p>
+              <p className="rcp-no-data">No categories found</p>
             ) : (
-              <div className="category-cards">
+              <div className="rcp-category-cards">
                 {categories.map((category) => (
                   <div 
                     key={category.id} 
-                    className={`category-card ${selectedCategoryId === category.id ? 'selected' : ''} ${category.status}`}
+                    className={`rcp-category-card ${selectedCategoryId === category.id ? 'rcp-selected' : ''} ${category.status === 'inactive' ? 'rcp-inactive' : ''}`}
                     onClick={() => handleCategorySelect(category.id)}
                   >
-                    <div className="category-card-header">
-                      <div className="category-info">
-                        <code className="category-code">{category.code}</code>
-                        <h3 className="category-name">{category.name}</h3>
+                    <div className="rcp-category-card-header">
+                      <div className="rcp-category-info">
+                        <code className="rcp-category-code">{category.code}</code>
+                        <h3 className="rcp-category-name">{category.name}</h3>
                       </div>
-                      <span className={`status-badge ${category.status}`}>
+                      <span className={`rcp-status-badge rcp-${category.status}`}>
                         {category.status}
                       </span>
                     </div>
                     {category.description && (
-                      <p className="category-description">{category.description}</p>
+                      <p className="rcp-category-description">{category.description}</p>
                     )}
-                    <div className="category-footer">
-                      <span className="type-count">{category.type_count || 0} types</span>
-                      <div className="category-actions" onClick={(e) => e.stopPropagation()}>
+                    <div className="rcp-category-footer">
+                      <span className="rcp-type-count">{category.type_count || 0} types</span>
+                      <div className="rcp-category-actions" onClick={(e) => e.stopPropagation()}>
                         <button 
-                          className="btn-edit" 
+                          className="rcp-btn-edit" 
                           onClick={() => handleEditCategoryClick(category)}
                           title="Edit category"
                         >
                           ✏️
                         </button>
                         <button
-                          className={`btn-status ${category.status === 'active' ? 'deactivate' : 'activate'}`}
+                          className={`rcp-btn-status ${category.status === 'active' ? 'rcp-deactivate' : 'rcp-activate'}`}
                           onClick={() => handleToggleCategoryStatus(category)}
                           title={category.status === 'active' ? 'Deactivate' : 'Activate'}
                         >
@@ -396,20 +396,20 @@ const ResourceCataloguePage = () => {
         {/* ======================================== */}
         {/* Resource Types Section - RIGHT SIDE */}
         {/* ======================================== */}
-        <div className="resource-section types-section">
-          <div className="section-header">
-            <div className="section-title">
+        <div className="rcp-resource-section rcp-types-section">
+          <div className="rcp-section-header">
+            <div className="rcp-section-title">
               <h2>Resource Types</h2>
-              <span className="section-count">({types.length})</span>
+              <span className="rcp-section-count">({types.length})</span>
               {selectedCategoryId && (
-                <span className="filter-indicator">
+                <span className="rcp-filter-indicator">
                   (filtered by category)
                 </span>
               )}
             </div>
-            <div className="header-actions">
+            <div className="rcp-header-actions">
               <button 
-                className="btn btn-primary"
+                className="rcp-btn rcp-btn-primary"
                 onClick={() => {
                   setTypeFormData({
                     category_id: selectedCategoryId || '',
@@ -429,19 +429,19 @@ const ResourceCataloguePage = () => {
             </div>
           </div>
 
-          <div className="section-filters">
+          <div className="rcp-section-filters">
             <input
               type="text"
               placeholder="Search resource types..."
               value={typeFilters.search}
               onChange={(e) => setTypeFilters({ ...typeFilters, search: e.target.value })}
-              className="search-input"
+              className="rcp-search-input"
             />
             {!selectedCategoryId && (
               <select
                 value={typeFilters.category_id}
                 onChange={(e) => setTypeFilters({ ...typeFilters, category_id: e.target.value })}
-                className="filter-select"
+                className="rcp-filter-select"
               >
                 <option value="">All Categories</option>
                 {categories.filter(c => c.status === 'active').map(category => (
@@ -452,7 +452,7 @@ const ResourceCataloguePage = () => {
             <select
               value={typeFilters.status}
               onChange={(e) => setTypeFilters({ ...typeFilters, status: e.target.value })}
-              className="filter-select"
+              className="rcp-filter-select"
             >
               <option value="">All Statuses</option>
               <option value="active">Active</option>
@@ -460,7 +460,7 @@ const ResourceCataloguePage = () => {
             </select>
             {selectedCategoryId && (
               <button
-                className="btn btn-secondary"
+                className="rcp-btn rcp-btn-secondary"
                 onClick={() => setSelectedCategoryId(null)}
                 title="Clear category filter"
               >
@@ -469,11 +469,11 @@ const ResourceCataloguePage = () => {
             )}
           </div>
 
-          <div className="types-list">
+          <div className="rcp-types-list">
             {types.length === 0 ? (
-              <p className="no-data">No resource types found</p>
+              <p className="rcp-no-data">No resource types found</p>
             ) : (
-              <table className="data-table">
+              <table className="rcp-data-table">
                 <thead>
                   <tr>
                     <th>Code</th>
@@ -490,27 +490,25 @@ const ResourceCataloguePage = () => {
                     <tr key={type.id}>
                       <td><code>{type.code}</code></td>
                       <td>{type.name}</td>
-                      <td>
-                        <span className="category-badge">{type.category_name}</span>
-                      </td>
+                      <td>{type.category_name}</td>
                       <td>{type.available_quantity} / {type.total_quantity}</td>
                       <td>{type.unit || '-'}</td>
                       <td>
-                        <span className={`status-badge ${type.status}`}>
+                        <span className={`rcp-status-badge rcp-${type.status}`}>
                           {type.status}
                         </span>
                       </td>
                       <td>
-                        <div className="action-buttons">
+                        <div className="rcp-action-buttons">
                           <button 
-                            className="btn-edit" 
+                            className="rcp-btn-edit" 
                             onClick={() => handleEditTypeClick(type)}
                             title="Edit resource type"
                           >
                             ✏️
                           </button>
                           <button
-                            className={`btn-status ${type.status === 'active' ? 'deactivate' : 'activate'}`}
+                            className={`rcp-btn-status ${type.status === 'active' ? 'rcp-deactivate' : 'rcp-activate'}`}
                             onClick={() => handleToggleTypeStatus(type)}
                             title={type.status === 'active' ? 'Deactivate' : 'Activate'}
                           >
@@ -531,11 +529,11 @@ const ResourceCataloguePage = () => {
       {/* Category Create Modal */}
       {/* ======================================== */}
       {showCreateCategoryModal && (
-        <div className="modal-overlay" onClick={() => setShowCreateCategoryModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="rcp-modal-overlay" onClick={() => setShowCreateCategoryModal(false)}>
+          <div className="rcp-modal-content" onClick={(e) => e.stopPropagation()}>
             <h2>Create New Category</h2>
             <form onSubmit={handleCreateCategory}>
-              <div className="form-group">
+              <div className="rcp-form-group">
                 <label>Category Code *</label>
                 <input
                   type="text"
@@ -547,7 +545,7 @@ const ResourceCataloguePage = () => {
                 />
                 <small>2-10 uppercase alphanumeric characters</small>
               </div>
-              <div className="form-group">
+              <div className="rcp-form-group">
                 <label>Category Name *</label>
                 <input
                   type="text"
@@ -557,7 +555,7 @@ const ResourceCataloguePage = () => {
                   required
                 />
               </div>
-              <div className="form-group">
+              <div className="rcp-form-group">
                 <label>Description</label>
                 <textarea
                   value={categoryFormData.description}
@@ -566,11 +564,11 @@ const ResourceCataloguePage = () => {
                   rows={3}
                 />
               </div>
-              <div className="modal-actions">
-                <button type="button" className="btn btn-secondary" onClick={() => setShowCreateCategoryModal(false)}>
+              <div className="rcp-modal-actions">
+                <button type="button" className="rcp-btn rcp-btn-secondary" onClick={() => setShowCreateCategoryModal(false)}>
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary">
+                <button type="submit" className="rcp-btn rcp-btn-primary">
                   Create Category
                 </button>
               </div>
@@ -583,11 +581,11 @@ const ResourceCataloguePage = () => {
       {/* Category Edit Modal */}
       {/* ======================================== */}
       {showEditCategoryModal && (
-        <div className="modal-overlay" onClick={() => setShowEditCategoryModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="rcp-modal-overlay" onClick={() => setShowEditCategoryModal(false)}>
+          <div className="rcp-modal-content" onClick={(e) => e.stopPropagation()}>
             <h2>Edit Category</h2>
             <form onSubmit={handleEditCategory}>
-              <div className="form-group">
+              <div className="rcp-form-group">
                 <label>Category Code *</label>
                 <input
                   type="text"
@@ -597,7 +595,7 @@ const ResourceCataloguePage = () => {
                   maxLength={10}
                 />
               </div>
-              <div className="form-group">
+              <div className="rcp-form-group">
                 <label>Category Name *</label>
                 <input
                   type="text"
@@ -606,7 +604,7 @@ const ResourceCataloguePage = () => {
                   required
                 />
               </div>
-              <div className="form-group">
+              <div className="rcp-form-group">
                 <label>Description</label>
                 <textarea
                   value={categoryFormData.description}
@@ -614,11 +612,11 @@ const ResourceCataloguePage = () => {
                   rows={3}
                 />
               </div>
-              <div className="modal-actions">
-                <button type="button" className="btn btn-secondary" onClick={() => setShowEditCategoryModal(false)}>
+              <div className="rcp-modal-actions">
+                <button type="button" className="rcp-btn rcp-btn-secondary" onClick={() => setShowEditCategoryModal(false)}>
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary">
+                <button type="submit" className="rcp-btn rcp-btn-primary">
                   Update Category
                 </button>
               </div>
@@ -631,11 +629,11 @@ const ResourceCataloguePage = () => {
       {/* Type Create Modal */}
       {/* ======================================== */}
       {showCreateTypeModal && (
-        <div className="modal-overlay" onClick={() => setShowCreateTypeModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="rcp-modal-overlay" onClick={() => setShowCreateTypeModal(false)}>
+          <div className="rcp-modal-content" onClick={(e) => e.stopPropagation()}>
             <h2>Create New Resource Type</h2>
             <form onSubmit={handleCreateType}>
-              <div className="form-group">
+              <div className="rcp-form-group">
                 <label>Category *</label>
                 <select
                   value={typeFormData.category_id}
@@ -648,7 +646,7 @@ const ResourceCataloguePage = () => {
                   ))}
                 </select>
               </div>
-              <div className="form-group">
+              <div className="rcp-form-group">
                 <label>Resource Code *</label>
                 <input
                   type="text"
@@ -660,7 +658,7 @@ const ResourceCataloguePage = () => {
                 />
                 <small>2-20 uppercase alphanumeric characters (hyphens allowed)</small>
               </div>
-              <div className="form-group">
+              <div className="rcp-form-group">
                 <label>Resource Name *</label>
                 <input
                   type="text"
@@ -670,7 +668,7 @@ const ResourceCataloguePage = () => {
                   required
                 />
               </div>
-              <div className="form-group">
+              <div className="rcp-form-group">
                 <label>Description</label>
                 <textarea
                   value={typeFormData.description}
@@ -679,8 +677,8 @@ const ResourceCataloguePage = () => {
                   rows={3}
                 />
               </div>
-              <div className="form-row">
-                <div className="form-group">
+              <div className="rcp-form-row">
+                <div className="rcp-form-group">
                   <label>Total Quantity *</label>
                   <input
                     type="number"
@@ -690,7 +688,7 @@ const ResourceCataloguePage = () => {
                     required
                   />
                 </div>
-                <div className="form-group">
+                <div className="rcp-form-group">
                   <label>Available Quantity *</label>
                   <input
                     type="number"
@@ -701,7 +699,7 @@ const ResourceCataloguePage = () => {
                     required
                   />
                 </div>
-                <div className="form-group">
+                <div className="rcp-form-group">
                   <label>Unit</label>
                   <input
                     type="text"
@@ -711,7 +709,7 @@ const ResourceCataloguePage = () => {
                   />
                 </div>
               </div>
-              <div className="form-group">
+              <div className="rcp-form-group">
                 <label>Notes</label>
                 <textarea
                   value={typeFormData.notes}
@@ -720,11 +718,11 @@ const ResourceCataloguePage = () => {
                   rows={2}
                 />
               </div>
-              <div className="modal-actions">
-                <button type="button" className="btn btn-secondary" onClick={() => setShowCreateTypeModal(false)}>
+              <div className="rcp-modal-actions">
+                <button type="button" className="rcp-btn rcp-btn-secondary" onClick={() => setShowCreateTypeModal(false)}>
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary">
+                <button type="submit" className="rcp-btn rcp-btn-primary">
                   Create Resource Type
                 </button>
               </div>
@@ -737,11 +735,11 @@ const ResourceCataloguePage = () => {
       {/* Type Edit Modal */}
       {/* ======================================== */}
       {showEditTypeModal && (
-        <div className="modal-overlay" onClick={() => setShowEditTypeModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className="rcp-modal-overlay" onClick={() => setShowEditTypeModal(false)}>
+          <div className="rcp-modal-content" onClick={(e) => e.stopPropagation()}>
             <h2>Edit Resource Type</h2>
             <form onSubmit={handleEditType}>
-              <div className="form-group">
+              <div className="rcp-form-group">
                 <label>Category *</label>
                 <select
                   value={typeFormData.category_id}
@@ -754,7 +752,7 @@ const ResourceCataloguePage = () => {
                   ))}
                 </select>
               </div>
-              <div className="form-group">
+              <div className="rcp-form-group">
                 <label>Resource Code *</label>
                 <input
                   type="text"
@@ -764,7 +762,7 @@ const ResourceCataloguePage = () => {
                   maxLength={20}
                 />
               </div>
-              <div className="form-group">
+              <div className="rcp-form-group">
                 <label>Resource Name *</label>
                 <input
                   type="text"
@@ -773,7 +771,7 @@ const ResourceCataloguePage = () => {
                   required
                 />
               </div>
-              <div className="form-group">
+              <div className="rcp-form-group">
                 <label>Description</label>
                 <textarea
                   value={typeFormData.description}
@@ -781,8 +779,8 @@ const ResourceCataloguePage = () => {
                   rows={3}
                 />
               </div>
-              <div className="form-row">
-                <div className="form-group">
+              <div className="rcp-form-row">
+                <div className="rcp-form-group">
                   <label>Total Quantity *</label>
                   <input
                     type="number"
@@ -792,7 +790,7 @@ const ResourceCataloguePage = () => {
                     required
                   />
                 </div>
-                <div className="form-group">
+                <div className="rcp-form-group">
                   <label>Available Quantity *</label>
                   <input
                     type="number"
@@ -803,7 +801,7 @@ const ResourceCataloguePage = () => {
                     required
                   />
                 </div>
-                <div className="form-group">
+                <div className="rcp-form-group">
                   <label>Unit</label>
                   <input
                     type="text"
@@ -812,7 +810,7 @@ const ResourceCataloguePage = () => {
                   />
                 </div>
               </div>
-              <div className="form-group">
+              <div className="rcp-form-group">
                 <label>Notes</label>
                 <textarea
                   value={typeFormData.notes}
@@ -820,11 +818,11 @@ const ResourceCataloguePage = () => {
                   rows={2}
                 />
               </div>
-              <div className="modal-actions">
-                <button type="button" className="btn btn-secondary" onClick={() => setShowEditTypeModal(false)}>
+              <div className="rcp-modal-actions">
+                <button type="button" className="rcp-btn rcp-btn-secondary" onClick={() => setShowEditTypeModal(false)}>
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary">
+                <button type="submit" className="rcp-btn rcp-btn-primary">
                   Update Resource Type
                 </button>
               </div>

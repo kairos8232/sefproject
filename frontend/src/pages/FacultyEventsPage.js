@@ -17,6 +17,7 @@ function FacultyEventsPage() {
     booking_status: '',
     search: '',
     organizer: '',
+    role: '',
     period: 'all',
     start_date: '',
     end_date: ''
@@ -151,6 +152,21 @@ function FacultyEventsPage() {
     };
   };
 
+  // Get role color class
+  const getRoleColorClass = (role) => {
+    if (!role) return 'fep-role-default';
+    switch (role.toLowerCase()) {
+      case 'student':
+        return 'fep-role-student';
+      case 'faculty_manager':
+        return 'fep-role-faculty';
+      case 'event_organizer':
+        return 'fep-role-organizer';
+      default:
+        return 'fep-role-default';
+    }
+  };
+
   // Filter events by search term, organizer, and venue
   const filteredEvents = events.filter(event => {
     // Event name search
@@ -159,6 +175,10 @@ function FacultyEventsPage() {
     }
     // Organizer search
     if (filters.organizer && !event.organizer?.name?.toLowerCase().includes(filters.organizer.toLowerCase())) {
+      return false;
+    }
+    // Role filter
+    if (filters.role && event.organizer?.role !== filters.role) {
       return false;
     }
     // Venue search
@@ -182,7 +202,7 @@ function FacultyEventsPage() {
           <p>Review events scheduled in your faculty's venues</p>
         </div>
         <button onClick={() => navigate('/home')} className="fep-back-button">
-          ← Back to Home
+          Back to Home
         </button>
       </div>
 
@@ -206,7 +226,15 @@ function FacultyEventsPage() {
           style={{ padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc', marginRight: '15px', width: '150px' }}
         />
         
-        <label>Venue: </label>
+        <label>Role: </label>
+        <select value={filters.role} onChange={(e) => handleFilterChange('role', e.target.value)}>
+          <option value="">All Roles</option>
+          <option value="student">Student</option>
+          <option value="faculty_manager">Faculty Manager</option>
+          <option value="event_organizer">Event Organizer</option>
+        </select>
+        
+        <label style={{ marginLeft: '15px' }}>Venue: </label>
         <input
           type="text"
           placeholder="Search venue..."
@@ -300,8 +328,27 @@ function FacultyEventsPage() {
                     const booking = event.venue_bookings?.[0]; // Get first booking
                     return (
                       <tr key={event.id}>
-                        <td className="fep-event-name">{event.event_name}</td>
-                        <td>{event.organizer?.name || 'N/A'}</td>
+                        <td>
+                          <div className="fep-event-name">{event.event_name}</div>
+                          {event.description && (
+                            <div className="fep-event-description">
+                              {event.description.substring(0, 50)}
+                              {event.description.length > 50 ? '...' : ''}
+                            </div>
+                          )}
+                        </td>
+                        <td>
+                          <div className="fep-organizer-info">
+                            <div className="fep-organizer-name">{event.organizer?.name || 'N/A'}</div>
+                            {event.organizer?.role && (
+                              <div className={`fep-organizer-role ${getRoleColorClass(event.organizer.role)}`}>
+                                {event.organizer.role.replace('_', ' ').split(' ').map(word => 
+                                  word.charAt(0).toUpperCase() + word.slice(1)
+                                ).join(' ')}
+                              </div>
+                            )}
+                          </div>
+                        </td>
                         <td>
                           <div className="fep-venue-info">
                             <div className="fep-venue-name">{booking?.venue?.name || 'N/A'}</div>

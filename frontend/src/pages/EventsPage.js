@@ -2,12 +2,15 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import eventService from '../services/eventService';
 import participationService from '../services/participationService';
+import authService from '../services/authService';
 import { formatDateTime } from '../utils/dateUtils';
 import './EventsPage.css';
 
 function EventsPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const currentUser = authService.getCurrentUser();
+  const isAdmin = currentUser?.role === 'administrator';
   const [events, setEvents] = useState([]);
   const [allEvents, setAllEvents] = useState([]); // Store all events for client-side filtering
   const [myParticipations, setMyParticipations] = useState([]); // Store user's registrations
@@ -239,15 +242,17 @@ function EventsPage() {
           <option value="inviteonly">Invite Only</option>
         </select>
         
-        <label style={{ marginLeft: '20px', display: 'inline-flex', alignItems: 'center', cursor: 'pointer' }}>
-          <input
-            type="checkbox"
-            checked={showMyRegistrations}
-            onChange={(e) => setShowMyRegistrations(e.target.checked)}
-            style={{ marginRight: '5px', cursor: 'pointer' }}
-          />
-          My Registrations
-        </label>
+        {!isAdmin && (
+          <label style={{ marginLeft: '20px', display: 'inline-flex', alignItems: 'center', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              checked={showMyRegistrations}
+              onChange={(e) => setShowMyRegistrations(e.target.checked)}
+              style={{ marginRight: '5px', cursor: 'pointer' }}
+            />
+            My Registrations
+          </label>
+        )}
       </div>
 
       {error && <div className="ep-error-message">{error}</div>}

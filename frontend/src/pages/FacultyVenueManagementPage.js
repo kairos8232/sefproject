@@ -271,11 +271,11 @@ const FacultyVenueManagementPage = () => {
   };
 
   if (loading) {
-    return <div className="faculty-venue-container"><div className="loading">Loading...</div></div>;
+    return <div className="fvm-faculty-venue-container"><div className="loading">Loading...</div></div>;
   }
 
   return (
-    <div className="faculty-venue-container">
+    <div className="fvm-faculty-venue-container">
       <div className="page-header">
         <div>
           <h1>🏛️ Faculty & Venue Management</h1>
@@ -291,19 +291,19 @@ const FacultyVenueManagementPage = () => {
       {error && <div className="error-message">{error}</div>}
       {success && <div className="success-message">{success}</div>}
 
-      <div className="management-sections">
+      <div className="fvm-management-sections">
         {/* ======================================== */}
         {/* Faculties Section - LEFT SIDE */}
         {/* ======================================== */}
-        <div className="management-section faculties-section">
-          <div className="section-header">
-            <div className="section-title">
+        <div className="fvm-management-section fvm-faculties-section">
+          <div className="fvm-section-header">
+            <div className="fvm-section-title">
               <h2>Faculties</h2>
-              <span className="section-count">({faculties.length})</span>
+              <span className="fvm-section-count">({faculties.length})</span>
             </div>
             <div className="header-actions">
               <button 
-                className="btn btn-primary"
+                className="fvm-btn fvm-btn-primary"
                 onClick={() => setShowCreateFacultyModal(true)}
               >
                 ➕ Create Faculty
@@ -311,16 +311,16 @@ const FacultyVenueManagementPage = () => {
             </div>
           </div>
 
-          <div className="section-filters">
+          <div className="fvm-section-filters">
             <input
               type="text"
-              className="filter-input"
+              className="fvm-filter-input"
               placeholder="🔍 Search faculties..."
               value={facultyFilters.search}
               onChange={(e) => setFacultyFilters({ ...facultyFilters, search: e.target.value })}
             />
             <select
-              className="filter-select"
+              className="fvm-filter-select"
               value={facultyFilters.status}
               onChange={(e) => setFacultyFilters({ ...facultyFilters, status: e.target.value })}
             >
@@ -380,11 +380,11 @@ const FacultyVenueManagementPage = () => {
         {/* ======================================== */}
         {/* Venues Section - RIGHT SIDE */}
         {/* ======================================== */}
-        <div className="management-section venues-section">
-          <div className="section-header">
-            <div className="section-title">
+        <div className="fvm-management-section fvm-venues-section">
+          <div className="fvm-section-header">
+            <div className="fvm-section-title">
               <h2>Venues</h2>
-              <span className="section-count">({venues.length})</span>
+              <span className="fvm-section-count">({venues.length})</span>
               {selectedFacultyId && (
                 <span className="filter-indicator">
                   • Filtered by faculty
@@ -394,14 +394,14 @@ const FacultyVenueManagementPage = () => {
             <div className="header-actions">
               {selectedFacultyId && (
                 <button 
-                  className="btn btn-secondary"
+                  className="fvm-btn fvm-btn-secondary"
                   onClick={() => setSelectedFacultyId(null)}
                 >
                   Clear Filter
                 </button>
               )}
               <button 
-                className="btn btn-primary"
+                className="fvm-btn fvm-btn-primary"
                 onClick={() => {
                   if (selectedFacultyId) {
                     setVenueFormData({ ...venueFormData, faculty_id: selectedFacultyId });
@@ -414,16 +414,16 @@ const FacultyVenueManagementPage = () => {
             </div>
           </div>
 
-          <div className="section-filters">
+          <div className="fvm-section-filters">
             <input
               type="text"
-              className="filter-input"
+              className="fvm-filter-input"
               placeholder="🔍 Search venues..."
               value={venueFilters.search}
               onChange={(e) => setVenueFilters({ ...venueFilters, search: e.target.value })}
             />
             <select
-              className="filter-select"
+              className="fvm-filter-select"
               value={venueFilters.status}
               onChange={(e) => setVenueFilters({ ...venueFilters, status: e.target.value })}
             >
@@ -467,7 +467,7 @@ const FacultyVenueManagementPage = () => {
                         </span>
                       </td>
                       <td>
-                        <div className="action-buttons">
+                        <div className="fvm-action-buttons">
                           <button
                             className="btn-icon btn-edit"
                             onClick={() => handleEditVenueClick(venue)}

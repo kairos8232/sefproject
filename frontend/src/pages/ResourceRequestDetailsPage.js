@@ -26,7 +26,7 @@ function ResourceRequestDetailsPage() {
   }, [id]);
 
   useEffect(() => {
-    document.title = 'Resource Request Details - CESMS';
+    document.title = 'My Resource Request Details - CESMS';
     loadRequestDetails();
   }, [loadRequestDetails]);
 
@@ -98,7 +98,7 @@ function ResourceRequestDetailsPage() {
       <div className="request-details-content">
         {/* Status Badge */}
         <div className="rrd-request-header">
-          <h2>Request #{request.id}</h2>
+          <h2>Resource Request Details</h2>
           <span className={`status-badge ${getStatusBadgeClass(request.status)}`}>
             {request.status.toUpperCase()}
           </span>
@@ -113,20 +113,20 @@ function ResourceRequestDetailsPage() {
               <span className="rrd-detail-value">{request.event?.event_name || 'N/A'}</span>
             </div>
             <div className="rrd-detail-item">
-              <span className="rrd-detail-label">Event Start:</span>
-              <span className="rrd-detail-value">{formatDateTime(request.event?.start_datetime)}</span>
-            </div>
-            <div className="rrd-detail-item">
-              <span className="rrd-detail-label">Event End:</span>
-              <span className="rrd-detail-value">{formatDateTime(request.event?.end_datetime)}</span>
-            </div>
-            <div className="rrd-detail-item">
               <span className="rrd-detail-label">Venue:</span>
               <span className="rrd-detail-value">
                 {typeof request.venue_booking?.venue === 'object' 
                   ? `${request.venue_booking?.venue?.name || 'Unknown'} (${request.venue_booking?.venue?.code || 'N/A'})` 
                   : request.venue_booking?.venue || 'Unknown Venue'}
               </span>
+            </div>
+            <div className="rrd-detail-item">
+              <span className="rrd-detail-label">Event Start:</span>
+              <span className="rrd-detail-value">{formatDateTime(request.event?.start_datetime)}</span>
+            </div>
+            <div className="rrd-detail-item">
+              <span className="rrd-detail-label">Event End:</span>
+              <span className="rrd-detail-value">{formatDateTime(request.event?.end_datetime)}</span>
             </div>
           </div>
         </div>
@@ -148,11 +148,12 @@ function ResourceRequestDetailsPage() {
               <span className="rrd-detail-value">{getCategoryLabel(request.resource?.category)}</span>
             </div>
             <div className="rrd-detail-item">
-              <span className="rrd-detail-label">Unit:</span>
+              <span className="rrd-detail-label">Requested Quantity:</span>
               <span className="rrd-detail-value">
+                {request.requested_quantity}{' '}
                 {typeof request.resource?.unit === 'object' 
-                  ? request.resource?.unit?.name || 'N/A' 
-                  : request.resource?.unit || 'N/A'}
+                  ? request.resource?.unit?.name || 'units' 
+                  : request.resource?.unit || 'units'}
               </span>
             </div>
             {request.resource?.description && (
@@ -168,15 +169,6 @@ function ResourceRequestDetailsPage() {
         <div className="rrd-details-section">
           <h2>Request Details</h2>
           <div className="rrd-details-grid">
-            <div className="rrd-detail-item">
-              <span className="rrd-detail-label">Requested Quantity:</span>
-              <span className="rrd-detail-value">
-                {request.requested_quantity}{' '}
-                {typeof request.resource?.unit === 'object' 
-                  ? request.resource?.unit?.name || 'units' 
-                  : request.resource?.unit || 'units'}
-              </span>
-            </div>
             <div className="rrd-detail-item">
               <span className="rrd-detail-label">Usage Start:</span>
               <span className="rrd-detail-value">{formatDateTime(request.usage_start_datetime)}</span>
@@ -205,10 +197,6 @@ function ResourceRequestDetailsPage() {
             <div className="rrd-detail-item">
               <span className="rrd-detail-label">Requested At:</span>
               <span className="rrd-detail-value">{formatDateTime(request.created_at)}</span>
-            </div>
-            <div className="rrd-detail-item">
-              <span className="rrd-detail-label">Last Updated:</span>
-              <span className="rrd-detail-value">{formatDateTime(request.updated_at)}</span>
             </div>
           </div>
         </div>

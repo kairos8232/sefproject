@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { formatDateTime } from '../utils/dateUtils';
 import './FacultyBookingRequestsPage.css';
 
 const FacultyBookingRequestsPage = () => {
@@ -18,35 +19,36 @@ const FacultyBookingRequestsPage = () => {
   const [adjustedEndTime, setAdjustedEndTime] = useState('');
   const [processing, setProcessing] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
-  
-  // Filters and sorting
+
+  // Filters
   const [statusFilter, setStatusFilter] = useState('pending');
   const [venueFilter, setVenueFilter] = useState('');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState('created_at');
-  const [sortOrder, setSortOrder] = useState('desc');
+  const [eventNameSearch, setEventNameSearch] = useState('');
+  const [requesterSearch, setRequesterSearch] = useState('');
+  const [roleFilter, setRoleFilter] = useState('');
+  const [venueSearch, setVenueSearch] = useState('');
+  const [periodFilter, setPeriodFilter] = useState('all');
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
 
   const navigate = useNavigate();
 
   const fetchBookings = useCallback(async () => {
     try {
-      console.log('[FacultyBookingRequests] Fetching bookings...');
       setLoading(true);
       setError(null);
       
       const token = localStorage.getItem('token');
       if (!token) {
-        console.log('[FacultyBookingRequests] No token found, redirecting to login');
         navigate('/login');
         return;
       }
 
       const params = new URLSearchParams();
-      if (sortBy) params.append('sort_by', sortBy);
-      if (sortOrder) params.append('sort_order', sortOrder);
+      if (statusFilter && statusFilter !== '') params.append('status', statusFilter);
+      if (venueFilter) params.append('venue_id', venueFilter);
 
       const url = `http://localhost:5001/api/venue-bookings/faculty/requests?${params}`;
-      console.log('[FacultyBookingRequests] Fetching from:', url);
 
       const response = await fetch(url, {
         headers: {
@@ -55,43 +57,110 @@ const FacultyBookingRequestsPage = () => {
         }
       });
 
-      console.log('[FacultyBookingRequests] Response status:', response.status);
       const data = await response.json();
-      console.log('[FacultyBookingRequests] Response data:', data);
 
       if (!response.ok) {
-        console.error('[FacultyBookingRequests] Error response:', data);
         throw new Error(data.error || 'Failed to fetch booking requests');
       }
 
-      console.log('[FacultyBookingRequests] Successfully loaded', data.bookings?.length || 0, 'bookings');
-      console.log('[FacultyBookingRequests] First booking structure:', JSON.stringify(data.bookings?.[0], null, 2));
       setAllBookings(data.bookings || []);
     } catch (err) {
-      console.error('[FacultyBookingRequests] Fetch error:', err);
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  }, [sortBy, sortOrder, navigate]);
+  }, [statusFilter, venueFilter, navigate]);
 
-  // Client-side filtering for status, venue and search
+  // Client-side filtering
   useEffect(() => {
-    const filtered = allBookings.filter(booking => {
-      const matchesStatus = !statusFilter || statusFilter === 'all' || booking.status === statusFilter;
-      const matchesVenue = !venueFilter || booking.venue_id === venueFilter;
-      const matchesSearch = !searchQuery || 
-        booking.event_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        booking.organizer?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        booking.venue?.name?.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesStatus && matchesVenue && matchesSearch;
-    });
+    let filtered = allBookings;
+    
+    // Apply event name filter
+    if (eventNameSearch.trim()) {
+      filtered = filtered.filter(b => 
+        b.event?.event_name?.toLowerCase().includes(eventNameSearch.toLowerCase())
+      );
+    }
+    
+    // Apply requester search filter
+    if (requesterSearch.trim()) {
+      filtered = filtered.filter(b => 
+        b.requester?.name?.toLowerCase().includes(requesterSearch.toLowerCase())
+      );
+    }
+    
+    // Apply role filter
+    if (roleFilter) {
+      filtered = filtered.filter(b => b.requester?.role === roleFilter);
+    }
+    
+    // Apply venue search filter
+    if (venueSearch.trim()) {
+      filtered = filtered.filter(b => 
+        b.venue?.name?.toLowerCase().includes(venueSearch.toLowerCase()) ||
+        b.venue?.code?.toLowerCase().includes(venueSearch.toLowerCase())
+      );
+    }
+    
+    // Apply period filter
+    if (periodFilter !== 'all') {
+      const now = new Date();
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const todayEnd = new Date(today);
+      todayEnd.setHours(23, 59, 59, 999);
+      const weekEnd = new Date(today);
+      weekEnd.setDate(weekEnd.getDate() + 7);
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+      
+      if (periodFilter === 'today') {
+        filtered = filtered.filter(b => {
+          const start = new Date(b.requested_start_datetime);
+          const end = new Date(b.requested_end_datetime);
+          return start <= todayEnd && end >= today;
+        });
+      } else if (periodFilter === 'this-week') {
+        filtered = filtered.filter(b => {
+          const start = new Date(b.requested_start_datetime);
+          const end = new Date(b.requested_end_datetime);
+          return start < weekEnd && end >= today;
+        });
+      } else if (periodFilter === 'this-month') {
+        filtered = filtered.filter(b => {
+          const start = new Date(b.requested_start_datetime);
+          const end = new Date(b.requested_end_datetime);
+          return start <= monthEnd && end >= monthStart;
+        });
+      } else if (periodFilter === 'custom') {
+        if (customStartDate || customEndDate) {
+          filtered = filtered.filter(b => {
+            const bookingStart = new Date(b.requested_start_datetime);
+            const bookingEnd = new Date(b.requested_end_datetime);
+            
+            if (customStartDate && customEndDate) {
+              const rangeStart = new Date(customStartDate);
+              const rangeEnd = new Date(customEndDate);
+              rangeEnd.setHours(23, 59, 59, 999);
+              return bookingStart <= rangeEnd && bookingEnd >= rangeStart;
+            } else if (customStartDate) {
+              const rangeStart = new Date(customStartDate);
+              return bookingEnd >= rangeStart;
+            } else if (customEndDate) {
+              const rangeEnd = new Date(customEndDate);
+              rangeEnd.setHours(23, 59, 59, 999);
+              return bookingStart <= rangeEnd;
+            }
+            return true;
+          });
+        }
+      }
+    }
+    
     setBookings(filtered);
-  }, [allBookings, statusFilter, venueFilter, searchQuery]);
+  }, [allBookings, eventNameSearch, requesterSearch, roleFilter, venueSearch, periodFilter, customStartDate, customEndDate]);
 
   const fetchVenues = useCallback(async () => {
     try {
-      console.log('[FacultyBookingRequests] Fetching venues...');
       const token = localStorage.getItem('token');
       const response = await fetch('http://localhost:5001/api/venues', {
         headers: {
@@ -100,17 +169,11 @@ const FacultyBookingRequestsPage = () => {
         }
       });
 
-      console.log('[FacultyBookingRequests] Venues response status:', response.status);
       const data = await response.json();
-      console.log('[FacultyBookingRequests] Venues data:', data);
       if (response.ok) {
-        console.log('[FacultyBookingRequests] Successfully loaded', data.venues?.length || 0, 'venues');
         setVenues(data.venues || []);
-      } else {
-        console.error('[FacultyBookingRequests] Failed to fetch venues:', data);
       }
     } catch (err) {
-      console.error('[FacultyBookingRequests] Fetch venues error:', err);
     }
   }, []);
 
@@ -118,7 +181,7 @@ const FacultyBookingRequestsPage = () => {
     document.title = 'Venue Booking Requests - CESMS';
     fetchBookings();
     fetchVenues();
-  }, [fetchBookings, fetchVenues]);
+  }, [fetchBookings, fetchVenues, statusFilter, venueFilter, eventNameSearch, requesterSearch, roleFilter, venueSearch, periodFilter, customStartDate, customEndDate]);
 
   const handleViewDetails = (booking) => {
     navigate(`/faculty/bookings/${booking.id}`);
@@ -225,24 +288,38 @@ const FacultyBookingRequestsPage = () => {
   const getStatusBadgeClass = (status) => {
     switch (status) {
       case 'pending':
-        return 'status-pending';
+        return 'fbrp-status-pending';
       case 'approved':
-        return 'status-approved';
+        return 'fbrp-status-approved';
       case 'rejected':
-        return 'status-rejected';
+        return 'fbrp-status-rejected';
       case 'cancelled':
-        return 'status-cancelled';
+        return 'fbrp-status-cancelled';
       default:
         return '';
     }
   };
 
+  const getRoleColorClass = (role) => {
+    if (!role) return 'fbrp-role-default';
+    switch (role.toLowerCase()) {
+      case 'student':
+        return 'fbrp-role-student';
+      case 'faculty_manager':
+        return 'fbrp-role-faculty';
+      case 'event_organizer':
+        return 'fbrp-role-organizer';
+      default:
+        return 'fbrp-role-default';
+    }
+  };
+
   const getStatusBadge = (status) => {
     const badges = {
-      pending: { icon: '🟡', label: 'Pending', class: 'status-pending' },
-      approved: { icon: '🟢', label: 'Approved', class: 'status-approved' },
-      rejected: { icon: '🔴', label: 'Rejected', class: 'status-rejected' },
-      cancelled: { icon: '⚪', label: 'Cancelled', class: 'status-cancelled' }
+      pending: { icon: '🟡', label: 'Pending', class: 'fbrp-status-pending' },
+      approved: { icon: '🟢', label: 'Approved', class: 'fbrp-status-approved' },
+      rejected: { icon: '🔴', label: 'Rejected', class: 'fbrp-status-rejected' },
+      cancelled: { icon: '⚪', label: 'Cancelled', class: 'fbrp-status-cancelled' }
     };
     
     const badge = badges[status] || badges.pending;
@@ -326,7 +403,7 @@ const FacultyBookingRequestsPage = () => {
           <p>Review and manage venue booking requests for your faculty</p>
         </div>
         <button onClick={() => navigate('/home')} className="fbrp-back-button">
-          ← Back to Home
+          Back to Home
         </button>
       </div>
 
@@ -334,13 +411,39 @@ const FacultyBookingRequestsPage = () => {
       {error && <div className="fbrp-error-message">{error}</div>}
 
       <div className="fbrp-filter-section">
-        <label>Search: </label>
+        <label>Event Name: </label>
         <input
           type="text"
-          placeholder="Event name or requester..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          style={{ padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc', marginRight: '15px', width: '200px' }}
+          placeholder="Search event name..."
+          value={eventNameSearch}
+          onChange={(e) => setEventNameSearch(e.target.value)}
+          style={{ padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc', marginRight: '15px', width: '180px' }}
+        />
+        
+        <label>Requester: </label>
+        <input
+          type="text"
+          placeholder="Search requester..."
+          value={requesterSearch}
+          onChange={(e) => setRequesterSearch(e.target.value)}
+          style={{ padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc', marginRight: '15px', width: '150px' }}
+        />
+        
+        <label>Role: </label>
+        <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
+          <option value="">All Roles</option>
+          <option value="student">Student</option>
+          <option value="faculty_manager">Faculty Manager</option>
+          <option value="event_organizer">Event Organizer</option>
+        </select>
+        
+        <label style={{ marginLeft: '15px' }}>Venue: </label>
+        <input
+          type="text"
+          placeholder="Search venue..."
+          value={venueSearch}
+          onChange={(e) => setVenueSearch(e.target.value)}
+          style={{ padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc', marginRight: '15px', width: '150px' }}
         />
         
         <label>Status: </label>
@@ -352,24 +455,33 @@ const FacultyBookingRequestsPage = () => {
           <option value="cancelled">Cancelled</option>
         </select>
         
-        <label style={{ marginLeft: '15px' }}>Venue: </label>
-        <select value={venueFilter} onChange={(e) => setVenueFilter(e.target.value)}>
-          <option value="">All Venues</option>
-          {venues.map(venue => (
-            <option key={venue.id} value={venue.id}>{venue.name} ({venue.code})</option>
-          ))}
+        <label style={{ marginLeft: '15px' }}>Period: </label>
+        <select value={periodFilter} onChange={(e) => setPeriodFilter(e.target.value)}>
+          <option value="all">All Time</option>
+          <option value="today">Today</option>
+          <option value="this-week">This Week</option>
+          <option value="this-month">This Month</option>
+          <option value="custom">Custom Range</option>
         </select>
         
-        <label style={{ marginLeft: '15px' }}>Sort by: </label>
-        <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-          <option value="created_at">Submission Date</option>
-          <option value="requested_start_datetime">Event Date</option>
-          <option value="status">Status</option>
-        </select>
-        <select value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} style={{ marginLeft: '5px' }}>
-          <option value="desc">Newest First</option>
-          <option value="asc">Oldest First</option>
-        </select>
+        {periodFilter === 'custom' && (
+          <>
+            <label style={{ marginLeft: '15px' }}>From: </label>
+            <input
+              type="date"
+              value={customStartDate}
+              onChange={(e) => setCustomStartDate(e.target.value)}
+              style={{ padding: '5px', borderRadius: '4px', border: '1px solid #ccc' }}
+            />
+            <label style={{ marginLeft: '10px' }}>To: </label>
+            <input
+              type="date"
+              value={customEndDate}
+              onChange={(e) => setCustomEndDate(e.target.value)}
+              style={{ padding: '5px', borderRadius: '4px', border: '1px solid #ccc' }}
+            />
+          </>
+        )}
       </div>
 
       {loading ? (
@@ -378,7 +490,7 @@ const FacultyBookingRequestsPage = () => {
         <div className="no-data">No booking requests found</div>
       ) : (
         <div className="fbrp-bookings-table-container">
-          <table className="bookings-table">
+          <table className="fbrp-bookings-table">
             <thead>
               <tr>
                 <th>Event Name</th>
@@ -393,35 +505,49 @@ const FacultyBookingRequestsPage = () => {
             <tbody>
               {bookings.map(booking => (
                 <tr key={booking.id}>
-                  <td className="event-name-cell">
-                    <div className="event-name">{booking.event?.event_name || 'N/A'}</div>
+                  <td className="fbrp-event-name-cell">
+                    <div className="fbrp-event-name">{booking.event?.event_name || 'N/A'}</div>
                     {booking.event?.description && (
-                      <div className="event-description-preview">
-                        {booking.event.description.substring(0, 60)}
-                        {booking.event.description.length > 60 ? '...' : ''}
+                      <div className="fbrp-event-description-preview">
+                        {booking.event.description.substring(0, 50)}
+                        {booking.event.description.length > 50 ? '...' : ''}
                       </div>
                     )}
                   </td>
                   <td>
-                    <div>{booking.requester?.name || 'N/A'}</div>
-                    <div className="role-badge">{booking.requester?.role || ''}</div>
+                    <div className="fbrp-requester-info">
+                      <div className="fbrp-requester-name">{booking.requester?.name || 'N/A'}</div>
+                      {booking.requester?.role && (
+                        <div className={`fbrp-requester-role ${getRoleColorClass(booking.requester.role)}`}>
+                          {booking.requester.role.replace('_', ' ').split(' ').map(word => 
+                            word.charAt(0).toUpperCase() + word.slice(1)
+                          ).join(' ')}
+                        </div>
+                      )}
+                    </div>
                   </td>
-                  <td className="fbrp-venue-info">{booking.venue?.name || 'N/A'}</td>
                   <td>
-                    <span className={`status-badge ${getStatusBadgeClass(booking.status)}`}>
+                    <div className="fbrp-venue-info">
+                      <div className="fbrp-venue-name">{booking.venue?.name || 'N/A'}</div>
+                      {booking.venue?.code && (
+                        <div className="fbrp-venue-code">{booking.venue.code}</div>
+                      )}
+                    </div>
+                  </td>
+                  <td>
+                    <span className={`fbrp-status-badge ${getStatusBadgeClass(booking.status)}`}>
                       {booking.status}
                     </span>
                   </td>
-                  <td>
-                    <div>{formatDateRange(booking.requested_start_datetime, booking.requested_end_datetime)}</div>
-                    <div className="time-range">
-                      {formatTime(booking.requested_start_datetime)} - {formatTime(booking.requested_end_datetime)}
-                    </div>
+                  <td className="fbrp-datetime-cell">
+                    <div>{formatDateTime(booking.requested_start_datetime)}</div>
+                    <div className="fbrp-datetime-to">to</div>
+                    <div>{formatDateTime(booking.requested_end_datetime)}</div>
                   </td>
-                  <td className="time-ago">{getTimeAgo(booking.created_at)}</td>
-                  <td className="actions-cell">
+                  <td className="fbrp-submitted-cell">{formatDateTime(booking.created_at)}</td>
+                  <td className="fbrp-actions-cell">
                     <button 
-                      className="action-button view-button"
+                      className="fbrp-action-button fbrp-view-button"
                       onClick={() => handleViewDetails(booking)}
                       title="View Details"
                     >
@@ -479,7 +605,7 @@ const FacultyBookingRequestsPage = () => {
                 </div>
                 <div className="detail-row">
                   <label>Role:</label>
-                  <span className="role-badge">{selectedBooking.requester?.role || 'N/A'}</span>
+                  <span className="fbrp-role-badge">{selectedBooking.requester?.role || 'N/A'}</span>
                 </div>
               </div>
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { toDateTimeLocalInput } from '../utils/dateUtils';
 import './FacultyBookingRequestDetailPage.css';
 
 const FacultyBookingRequestDetailPage = () => {
@@ -145,22 +146,6 @@ const FacultyBookingRequestDetailPage = () => {
     }
   };
 
-  const getStatusBadge = (status) => {
-    const badges = {
-      pending: { icon: '🟡', label: 'Pending', class: 'status-pending' },
-      approved: { icon: '🟢', label: 'Approved', class: 'status-approved' },
-      rejected: { icon: '🔴', label: 'Rejected', class: 'status-rejected' },
-      cancelled: { icon: '⚪', label: 'Cancelled', class: 'status-cancelled' }
-    };
-    
-    const badge = badges[status] || badges.pending;
-    return (
-      <span className={`status-badge ${badge.class}`}>
-        {badge.icon} {badge.label}
-      </span>
-    );
-  };
-
   const formatDateTime = (datetime) => {
     if (!datetime) return 'N/A';
     const date = new Date(datetime);
@@ -173,328 +158,364 @@ const FacultyBookingRequestDetailPage = () => {
     });
   };
 
+  const formatTimeDuration = (minutes) => {
+    if (!minutes || minutes === 0) return 'N/A';
+    
+    const months = Math.floor(minutes / (30 * 24 * 60));
+    const days = Math.floor((minutes % (30 * 24 * 60)) / (24 * 60));
+    const hours = Math.floor((minutes % (24 * 60)) / 60);
+    const mins = minutes % 60;
+    
+    const parts = [];
+    if (months > 0) parts.push(`${months} month${months > 1 ? 's' : ''}`);
+    if (days > 0) parts.push(`${days} day${days > 1 ? 's' : ''}`);
+    if (hours > 0) parts.push(`${hours} hour${hours > 1 ? 's' : ''}`);
+    if (mins > 0) parts.push(`${mins} min${mins > 1 ? 's' : ''}`);
+    
+    return parts.join(' ') || 'N/A';
+  };
+
   if (loading) {
     return (
-      <div className="faculty-booking-detail-page">
-        <div className="loading">Loading booking details...</div>
+      <div className="fbrd-container">
+        <div className="fbrd-loading">Loading booking details...</div>
       </div>
     );
   }
 
   if (error && !booking) {
     return (
-      <div className="faculty-booking-detail-page">
-        <div className="page-header">
+      <div className="fbrd-container">
+        <div className="fbrd-header">
           <div>
             <h1>Booking Request Details</h1>
             <p>Review and manage venue booking request</p>
           </div>
-          <button onClick={() => navigate('/faculty/bookings')} className="back-button">
-            ← Back to Requests
+          <button onClick={() => navigate('/faculty/bookings')} className="fbrd-back-button">
+            Back to Requests
           </button>
         </div>
-        <div className="error-message">{error}</div>
+        <div className="fbrd-error-message">{error}</div>
       </div>
     );
   }
 
   if (!booking) {
     return (
-      <div className="faculty-booking-detail-page">
-        <div className="page-header">
+      <div className="fbrd-container">
+        <div className="fbrd-header">
           <div>
             <h1>Booking Request Details</h1>
             <p>Review and manage venue booking request</p>
           </div>
-          <button onClick={() => navigate('/faculty/bookings')} className="back-button">
+          <button onClick={() => navigate('/faculty/bookings')} className="fbrd-back-button">
             ← Back to Requests
           </button>
         </div>
-        <div className="error-message">Booking request not found</div>
+        <div className="fbrd-error-message">Booking request not found</div>
       </div>
     );
   }
 
   return (
-    <div className="faculty-booking-detail-page">
-      <div className="page-header">
+    <div className="fbrd-container">
+      <div className="fbrd-header">
         <div>
           <h1>Booking Request Details</h1>
           <p>Review and manage venue booking request</p>
         </div>
-        <button onClick={() => navigate('/faculty/bookings')} className="back-button">
+        <button onClick={() => navigate('/faculty/bookings')} className="fbrd-back-button">
           ← Back to Requests
         </button>
       </div>
 
-      {successMessage && <div className="success-message">{successMessage}</div>}
-      {error && <div className="error-message">{error}</div>}
+      {successMessage && <div className="fbrd-success-message">{successMessage}</div>}
+      {error && <div className="fbrd-error-message">{error}</div>}
 
-      {/* Booking Header */}
-      <div className="booking-header">
-        <h1>{booking.event?.event_name || 'Booking Request'}</h1>
-        <div className="header-badges">
-          {getStatusBadge(booking.status)}
-          <span className="role-badge">{booking.requester?.role || 'N/A'}</span>
-        </div>
-      </div>
-
-      {/* Event Information */}
-      <div className="detail-section">
-        <h2>📅 Event Information</h2>
-        <div className="info-grid">
-          <div className="info-item">
-            <label>Event Name</label>
-            <p>{booking.event?.event_name || 'N/A'}</p>
-          </div>
-          <div className="info-item">
-            <label>Description</label>
-            <p>{booking.event?.description || 'No description provided'}</p>
-          </div>
-          <div className="info-item">
-            <label>Expected Attendees</label>
-            <p>{booking.expected_attendees || 'Not specified'}</p>
-          </div>
-          <div className="info-item">
-            <label>Start Date & Time</label>
-            <p>{formatDateTime(booking.requested_start_datetime)}</p>
-          </div>
-          <div className="info-item">
-            <label>End Date & Time</label>
-            <p>{formatDateTime(booking.requested_end_datetime)}</p>
+      <div className="fbrd-content">
+        {/* Booking Header */}
+        <div className="fbrd-booking-header">
+          <h2>{booking.event?.event_name || 'Booking Request'}</h2>
+          <div className="fbrd-header-badges">
+            <span className={`fbrd-status-badge fbrd-status-${booking.status}`}>
+              {booking.status}
+            </span>
           </div>
         </div>
-      </div>
 
-      {/* Requester Information */}
-      <div className="detail-section">
-        <h2>👤 Requester Information</h2>
-        <div className="info-grid">
-          <div className="info-item">
-            <label>Name</label>
-            <p>{booking.requester?.name || 'N/A'}</p>
+        {/* Event Information */}
+        <div className="fbrd-details-section">
+          <h2>📅 Event Information</h2>
+          <div className="fbrd-info-row">
+            <div className="fbrd-info-item">
+              <label>Event Name</label>
+              <p>{booking.event?.event_name || 'N/A'}</p>
+            </div>
+            <div className="fbrd-info-item">
+              <label>Event Description</label>
+              <p>{booking.event?.description || 'No description provided'}</p>
+            </div>
           </div>
-          <div className="info-item">
-            <label>Email</label>
-            <p>{booking.requester?.email || 'N/A'}</p>
-          </div>
-          <div className="info-item">
-            <label>Role</label>
-            <p className="role-badge">{booking.requester?.role || 'N/A'}</p>
-          </div>
-          <div className="info-item">
-            <label>Submitted On</label>
-            <p>{formatDateTime(booking.created_at)}</p>
+          <div className="fbrd-info-row">
+            <div className="fbrd-info-item">
+              <label>Event Start</label>
+              <p>{formatDateTime(booking.event?.start_datetime)}</p>
+            </div>
+            <div className="fbrd-info-item">
+              <label>Event End</label>
+              <p>{formatDateTime(booking.event?.end_datetime)}</p>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Venue Information */}
-      <div className="detail-section">
-        <h2>🏢 Venue Information</h2>
-        <div className="info-grid">
-          <div className="info-item">
-            <label>Venue Name</label>
-            <p>{booking.venue?.name || 'N/A'}</p>
+        {/* Venue Information */}
+        <div className="fbrd-details-section">
+          <h2>🏢 Venue Information</h2>
+          <div className="fbrd-info-row">
+            <div className="fbrd-info-item">
+              <label>Venue Name</label>
+              <p>{booking.venue?.name || 'N/A'}</p>
+            </div>
+            <div className="fbrd-info-item">
+              <label>Venue Code</label>
+              <p>{booking.venue?.code || 'N/A'}</p>
+            </div>
           </div>
-          <div className="info-item">
-            <label>Venue Code</label>
-            <p>{booking.venue?.code || 'N/A'}</p>
+          <div className="fbrd-info-row">
+            <div className="fbrd-info-item">
+              <label>Location</label>
+              <p>{booking.venue?.location || 'N/A'}</p>
+            </div>
+            <div className="fbrd-info-item">
+              <label>Faculty</label>
+              <p>{booking.venue?.faculty?.name || 'N/A'}</p>
+            </div>
           </div>
-          <div className="info-item">
-            <label>Capacity</label>
-            <p>{booking.venue?.capacity || 'N/A'} people</p>
-          </div>
-          <div className="info-item">
-            <label>Location</label>
-            <p>{booking.venue?.location || 'N/A'}</p>
-          </div>
-          <div className="info-item">
-            <label>Faculty</label>
-            <p>{booking.venue?.faculty?.name || 'N/A'}</p>
+          <div className="fbrd-info-row">
+            <div className="fbrd-info-item">
+              <label>Capacity</label>
+              <p>{booking.venue?.capacity || 'N/A'} people</p>
+            </div>
+            <div className="fbrd-info-item"></div>
           </div>
         </div>
-      </div>
 
-      {/* Requested Time */}
-      <div className="detail-section">
-        <h2>⏰ Requested Time</h2>
-        <div className="info-grid">
-          <div className="info-item">
-            <label>Start Date & Time</label>
-            <p>{formatDateTime(booking.requested_start_datetime)}</p>
+        {/* Booking Details */}
+        <div className="fbrd-details-section">
+          <h2>⏰ Booking Details</h2>
+          <div className="fbrd-info-row">
+            <div className="fbrd-info-item">
+              <label>Requested Start</label>
+              <p>{formatDateTime(booking.requested_start_datetime)}</p>
+            </div>
+            <div className="fbrd-info-item">
+              <label>Requested End</label>
+              <p>{formatDateTime(booking.requested_end_datetime)}</p>
+            </div>
           </div>
-          <div className="info-item">
-            <label>End Date & Time</label>
-            <p>{formatDateTime(booking.requested_end_datetime)}</p>
-          </div>
-          {booking.setup_time > 0 && (
-            <div className="info-item">
+          <div className="fbrd-info-row">
+            <div className="fbrd-info-item">
               <label>Setup Time</label>
-              <p>{booking.setup_time} minutes</p>
+              <p>{formatTimeDuration(booking.setup_time)}</p>
             </div>
-          )}
-          {booking.teardown_time > 0 && (
-            <div className="info-item">
+            <div className="fbrd-info-item">
               <label>Teardown Time</label>
-              <p>{booking.teardown_time} minutes</p>
+              <p>{formatTimeDuration(booking.teardown_time)}</p>
+            </div>
+          </div>
+          <div className="fbrd-info-row">
+            <div className="fbrd-info-item">
+              <label>Expected Attendees</label>
+              <p>{booking.expected_attendees || 'Not specified'}</p>
+            </div>
+            <div className="fbrd-info-item"></div>
+          </div>
+          {booking.remarks && (
+            <div className="fbrd-remarks-box">
+              <p><strong>Notes/Remarks:</strong> {booking.remarks}</p>
             </div>
           )}
         </div>
-      </div>
 
-      {/* Additional Information */}
-      {booking.remarks && (
-        <div className="detail-section">
-          <h2>📝 Additional Remarks</h2>
-          <div className="remarks-box">
-            <p>{booking.remarks}</p>
+        {/* Requester Information */}
+        <div className="fbrd-details-section">
+          <h2>👤 Requester Information</h2>
+          <div className="fbrd-info-row">
+            <div className="fbrd-info-item">
+              <label>Name</label>
+              <p>{booking.requester?.name || 'N/A'}</p>
+            </div>
+            <div className="fbrd-info-item">
+              <label>Email</label>
+              <p>{booking.requester?.email || 'N/A'}</p>
+            </div>
+          </div>
+          <div className="fbrd-info-row">
+            <div className="fbrd-info-item">
+              <label>Role</label>
+              <p>{booking.requester?.role?.replace('_', ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') || 'N/A'}</p>
+            </div>
+            <div className="fbrd-info-item">
+              <label>Submitted On</label>
+              <p>{formatDateTime(booking.created_at)}</p>
+            </div>
           </div>
         </div>
-      )}
 
-      {/* Approval/Rejection Information */}
-      {booking.status !== 'pending' && (
-        <div className="detail-section">
-          <h2>
-            {booking.status === 'approved' ? '✅ Approval Information' : '❌ Rejection Information'}
-          </h2>
-          <div className="info-grid">
-            <div className="info-item">
-              <label>{booking.status === 'approved' ? 'Approved By' : 'Rejected By'}</label>
-              <p>{booking.approver?.name || 'N/A'}</p>
-              <small>{booking.approver?.email}</small>
-            </div>
-            <div className="info-item">
-              <label>{booking.status === 'approved' ? 'Approved At' : 'Rejected At'}</label>
-              <p>{formatDateTime(booking.approved_at)}</p>
-            </div>
-            {booking.status === 'approved' && booking.approval_notes && (
-              <div className="info-item full-width">
-                <label>Approval Notes</label>
-                <p>{booking.approval_notes}</p>
+        {/* Approval/Rejection Information */}
+        {booking.status === 'approved' && (
+          <div className="fbrd-success-section">
+            <h2>✅ Approval Information</h2>
+            <div className="fbrd-info-row">
+              <div className="fbrd-info-item">
+                <label>Approved By</label>
+                <p>{booking.approver?.name || 'N/A'}</p>
               </div>
-            )}
-            {booking.status === 'rejected' && booking.rejection_reason && (
-              <div className="info-item full-width">
-                <label>Rejection Reason</label>
-                <p>{booking.rejection_reason}</p>
+              <div className="fbrd-info-item">
+                <label>Approved At</label>
+                <p>{formatDateTime(booking.approved_at)}</p>
+              </div>
+            </div>
+            {booking.approval_notes && (
+              <div className="fbrd-remarks-box">
+                <p><strong>Approval Notes:</strong> {booking.approval_notes}</p>
               </div>
             )}
             {booking.approved_start_datetime && (
-              <>
-                <div className="info-item">
+              <div className="fbrd-info-row">
+                <div className="fbrd-info-item">
                   <label>Approved Start Time</label>
                   <p>{formatDateTime(booking.approved_start_datetime)}</p>
                 </div>
-                <div className="info-item">
+                <div className="fbrd-info-item">
                   <label>Approved End Time</label>
                   <p>{formatDateTime(booking.approved_end_datetime)}</p>
                 </div>
-              </>
+              </div>
             )}
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Action Forms (only for pending bookings) */}
-      {booking.status === 'pending' && (
-        <div className="action-section">
-          <div className="action-toggle">
-            <button 
-              className={`toggle-btn ${!isRejecting ? 'active' : ''}`}
-              onClick={() => setIsRejecting(false)}
-            >
-              ✅ Approve Request
-            </button>
-            <button 
-              className={`toggle-btn ${isRejecting ? 'active' : ''}`}
-              onClick={() => setIsRejecting(true)}
-            >
-              ❌ Reject Request
-            </button>
-          </div>
-
-          {!isRejecting ? (
-            <form onSubmit={handleApprove} className="action-form approval-form">
-              <h3>Approve Booking Request</h3>
-              
-              <div className="form-group checkbox-group">
-                <label className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={adjustTime}
-                    onChange={(e) => setAdjustTime(e.target.checked)}
-                  /> Adjust requested time
-                </label>
+        {booking.status === 'rejected' && (
+          <div className="fbrd-error-section">
+            <h2>❌ Rejection Information</h2>
+            <div className="fbrd-info-row">
+              <div className="fbrd-info-item">
+                <label>Rejected By</label>
+                <p>{booking.approver?.name || 'N/A'}</p>
               </div>
+              <div className="fbrd-info-item">
+                <label>Rejected At</label>
+                <p>{formatDateTime(booking.approved_at)}</p>
+              </div>
+            </div>
+            {booking.rejection_reason && (
+              <div className="fbrd-remarks-box">
+                <p><strong>Rejection Reason:</strong> {booking.rejection_reason}</p>
+              </div>
+            )}
+          </div>
+        )}
 
-              {adjustTime && (
-                <div className="time-adjustment">
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label>Adjusted Start Date & Time *</label>
-                      <input
-                        type="datetime-local"
-                        value={adjustedStartTime ? new Date(adjustedStartTime).toISOString().slice(0, 16) : ''}
-                        onChange={(e) => setAdjustedStartTime(e.target.value)}
-                        required={adjustTime}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>Adjusted End Date & Time *</label>
-                      <input
-                        type="datetime-local"
-                        value={adjustedEndTime ? new Date(adjustedEndTime).toISOString().slice(0, 16) : ''}
-                        onChange={(e) => setAdjustedEndTime(e.target.value)}
-                        required={adjustTime}
-                      />
+        {/* Action Forms (only for pending bookings) */}
+        {booking.status === 'pending' && (
+          <div className="fbrd-action-section">
+            <div className="fbrd-action-toggle">
+              <button 
+                className={`fbrd-toggle-btn ${!isRejecting ? 'active' : ''}`}
+                onClick={() => setIsRejecting(false)}
+              >
+                ✅ Approve Request
+              </button>
+              <button 
+                className={`fbrd-toggle-btn ${isRejecting ? 'active' : ''}`}
+                onClick={() => setIsRejecting(true)}
+              >
+                ❌ Reject Request
+              </button>
+            </div>
+
+            {!isRejecting ? (
+              <form onSubmit={handleApprove} className="fbrd-action-form">
+                <h3>Approve Booking Request</h3>
+                
+                <div className="fbrd-form-group checkbox-group">
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={adjustTime}
+                      onChange={(e) => setAdjustTime(e.target.checked)}
+                    /> Adjust requested time
+                  </label>
+                </div>
+
+                {adjustTime && (
+                  <div className="fbrd-time-adjustment">
+                    <div className="fbrd-form-row">
+                      <div className="fbrd-form-group">
+                        <label>Adjusted Start Date & Time *</label>
+                        <input
+                          type="datetime-local"
+                          value={toDateTimeLocalInput(adjustedStartTime)}
+                          onChange={(e) => setAdjustedStartTime(e.target.value)}
+                          required={adjustTime}
+                        />
+                      </div>
+                      <div className="fbrd-form-group">
+                        <label>Adjusted End Date & Time *</label>
+                        <input
+                          type="datetime-local"
+                          value={toDateTimeLocalInput(adjustedEndTime)}
+                          onChange={(e) => setAdjustedEndTime(e.target.value)}
+                          required={adjustTime}
+                        />
+                      </div>
                     </div>
                   </div>
+                )}
+
+                <div className="fbrd-form-group">
+                  <label>Approval Notes (Optional)</label>
+                  <textarea
+                    value={approvalNotes}
+                    onChange={(e) => setApprovalNotes(e.target.value)}
+                    placeholder="Add any notes or conditions for the approval..."
+                    rows="4"
+                  />
                 </div>
-              )}
 
-              <div className="form-group">
-                <label>Approval Notes (Optional)</label>
-                <textarea
-                  value={approvalNotes}
-                  onChange={(e) => setApprovalNotes(e.target.value)}
-                  placeholder="Add any notes or conditions for the approval..."
-                  rows="4"
-                />
-              </div>
+                <div className="fbrd-form-actions">
+                  <button type="submit" className="fbrd-btn-approve" disabled={processing}>
+                    {processing ? 'Processing...' : '✅ Approve Booking'}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <form onSubmit={handleReject} className="fbrd-action-form">
+                <h3>Reject Booking Request</h3>
+                
+                <div className="fbrd-form-group">
+                  <label>Rejection Reason *</label>
+                  <textarea
+                    value={rejectionReason}
+                    onChange={(e) => setRejectionReason(e.target.value)}
+                    placeholder="Please provide a detailed reason for rejection (minimum 10 characters)..."
+                    rows="5"
+                    required
+                  />
+                  <small>{rejectionReason.length}/10 characters minimum</small>
+                </div>
 
-              <div className="form-actions">
-                <button type="submit" className="btn-approve" disabled={processing}>
-                  {processing ? 'Processing...' : '✅ Approve Booking'}
-                </button>
-              </div>
-            </form>
-          ) : (
-            <form onSubmit={handleReject} className="action-form rejection-form">
-              <h3>Reject Booking Request</h3>
-              
-              <div className="form-group">
-                <label>Rejection Reason *</label>
-                <textarea
-                  value={rejectionReason}
-                  onChange={(e) => setRejectionReason(e.target.value)}
-                  placeholder="Please provide a detailed reason for rejection (minimum 10 characters)..."
-                  rows="5"
-                  required
-                />
-                <small>{rejectionReason.length}/10 characters minimum</small>
-              </div>
-
-              <div className="form-actions">
-                <button type="submit" className="btn-reject" disabled={processing}>
-                  {processing ? 'Processing...' : '❌ Reject Booking'}
-                </button>
-              </div>
-            </form>
-          )}
-        </div>
-      )}
+                <div className="fbrd-form-actions">
+                  <button type="submit" className="fbrd-btn-reject" disabled={processing}>
+                    {processing ? 'Processing...' : '❌ Reject Booking'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

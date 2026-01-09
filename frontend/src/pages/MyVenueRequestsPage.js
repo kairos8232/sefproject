@@ -121,7 +121,7 @@ function MyVenueRequestsPage() {
   }, [filter, eventSearch, venueSearch, periodFilter, customStartDate, customEndDate]);
 
   const handleViewDetails = (bookingId) => {
-    navigate(`/venue-bookings/${bookingId}`);
+    navigate(`/venue-bookings/${bookingId}`, { state: { fromVenueRequests: true } });
   };
 
   const handleCancelBooking = async (bookingId, eventName) => {
@@ -249,6 +249,12 @@ function MyVenueRequestsPage() {
                 <tr key={booking.id}>
                   <td>
                     <div className="mvr-event-name">{booking.event?.event_name || 'N/A'}</div>
+                    {booking.event?.description && (
+                      <div className="mvr-event-description">
+                        {booking.event.description.substring(0, 50)}
+                        {booking.event.description.length > 50 ? '...' : ''}
+                      </div>
+                    )}
                   </td>
                   <td>
                     <div className="mvr-venue-info">
@@ -268,7 +274,11 @@ function MyVenueRequestsPage() {
                       {booking.status}
                     </span>
                   </td>
-                  <td>{formatDateTime(booking.created_at)}</td>
+                  <td>
+                    <div className="mvr-datetime-cell">
+                      <div>{formatDateTime(booking.created_at)}</div>
+                    </div>
+                  </td>
                   <td className="mvr-actions-cell">
                     <button 
                       onClick={() => handleViewDetails(booking.id)}

@@ -372,7 +372,7 @@ function ReportsAnalyticsPage() {
     // By resource type
     const byType = {};
     requests.forEach(req => {
-      const resourceType = resourceTypesData.find(rt => rt.id === req.resource_type_id);
+      const resourceType = resourceTypesData.find(rt => rt.id === req.resource_id);
       const type = resourceType?.name || 'Unknown';
       byType[type] = (byType[type] || 0) + 1;
     });
@@ -467,7 +467,7 @@ function ReportsAnalyticsPage() {
   
   const renderChart = () => {
     if (!chartData || chartData.length === 0) {
-      return <div className="no-data">No data available for the selected filters</div>;
+      return <div className="rap-no-data">No data available for the selected filters</div>;
     }
     
     if (chartType === 'bar') {
@@ -537,9 +537,9 @@ function ReportsAnalyticsPage() {
     if (!reportData) return null;
     
     return (
-      <div className="summary-stats">
+      <div className="rap-summary-stats">
         <h3>Summary Statistics</h3>
-        <div className="stats-grid">
+        <div className="rap-stats-grid">
           {Object.entries(summaryStats).map(([key, value]) => {
             if (typeof value === 'object') return null;
             
@@ -547,9 +547,9 @@ function ReportsAnalyticsPage() {
             label = label.charAt(0).toUpperCase() + label.slice(1);
             
             return (
-              <div key={key} className="report-stat-card">
-                <div className="stat-label">{label}</div>
-                <div className="stat-value">{value}</div>
+              <div key={key} className="rap-report-stat-card">
+                <div className="rap-stat-label">{label}</div>
+                <div className="rap-stat-value">{value}</div>
               </div>
             );
           })}
@@ -559,23 +559,24 @@ function ReportsAnalyticsPage() {
   };
   
   return (
-    <div className="reports-analytics-page">
-      <div className="reports-header">
+    <div className="rap-reports-analytics-page">
+      <div className="rap-reports-header">
         <div>
           <h1>📊 Reports & Analytics</h1>
           <p>Generate comprehensive reports on events, venues, bookings, and resources</p>
         </div>
-        <button onClick={() => navigate('/home')} className="back-button">
+        <button onClick={() => navigate('/home')} className="rap-back-button">
           Back to Home
         </button>
       </div>
       
-      <div className="report-filters">
-        <div className="report-filter-section">
-          <h3>Report Configuration</h3>
+      <div className="rap-reports-content">
+        <div className="rap-report-filters">
+          <div className="rap-report-filter-section">
+            <h3>Report Configuration</h3>
           
-          <div className="filter-row">
-            <div className="filter-group">
+          <div className="rap-filter-row">
+            <div className="rap-filter-group">
               <label>Report Type</label>
               <select 
                 value={reportType} 
@@ -589,7 +590,7 @@ function ReportsAnalyticsPage() {
               </select>
             </div>
             
-            <div className="filter-group">
+            <div className="rap-filter-group">
               <label>Chart Type</label>
               <select 
                 value={chartType} 
@@ -602,8 +603,8 @@ function ReportsAnalyticsPage() {
             </div>
           </div>
           
-          <div className="filter-row">
-            <div className="filter-group">
+          <div className="rap-filter-row">
+            <div className="rap-filter-group">
               <label>Date Range</label>
               <select 
                 value={dateRange} 
@@ -620,7 +621,7 @@ function ReportsAnalyticsPage() {
             
             {dateRange === 'custom' && (
               <>
-                <div className="filter-group">
+                <div className="rap-filter-group">
                   <label>Start Date</label>
                   <input
                     type="date"
@@ -629,7 +630,7 @@ function ReportsAnalyticsPage() {
                   />
                 </div>
                 
-                <div className="filter-group">
+                <div className="rap-filter-group">
                   <label>End Date</label>
                   <input
                     type="date"
@@ -641,8 +642,8 @@ function ReportsAnalyticsPage() {
             )}
           </div>
           
-          <div className="filter-row">
-            <div className="filter-group">
+          <div className="rap-filter-row">
+            <div className="rap-filter-group">
               <label>Faculty (Optional)</label>
               <select 
                 value={selectedFaculty} 
@@ -656,7 +657,7 @@ function ReportsAnalyticsPage() {
             </div>
             
             {reportType === 'venue-utilization' && (
-              <div className="filter-group">
+              <div className="rap-filter-group">
                 <label>Venue (Optional)</label>
                 <select 
                   value={selectedVenue} 
@@ -671,7 +672,7 @@ function ReportsAnalyticsPage() {
             )}
             
             {reportType === 'event-summary' && (
-              <div className="filter-group">
+              <div className="rap-filter-group">
                 <label>Event Type (Optional)</label>
                 <select 
                   value={selectedEventType} 
@@ -691,7 +692,7 @@ function ReportsAnalyticsPage() {
             )}
             
             {reportType === 'resource-usage' && (
-              <div className="filter-group">
+              <div className="rap-filter-group">
                 <label>Resource Type (Optional)</label>
                 <select 
                   value={selectedResourceType} 
@@ -706,9 +707,9 @@ function ReportsAnalyticsPage() {
             )}
           </div>
           
-          <div className="filter-actions">
+          <div className="rap-filter-actions">
             <button 
-              className="btn-generate-report" 
+              className="rap-btn-generate-report" 
               onClick={generateReport}
               disabled={loading}
             >
@@ -716,20 +717,23 @@ function ReportsAnalyticsPage() {
             </button>
           </div>
           
-          {error && <div className="error-message">{error}</div>}
+          {error && <div className="rap-error-message">{error}</div>}
         </div>
       </div>
       
-      {reportData && (
-        <div className="report-results">
-          {renderSummaryStats()}
-          
-          <div className="chart-container">
-            <h3>Visual Analysis</h3>
-            {renderChart()}
+      <div>
+        {reportData && (
+          <div className="rap-report-results">
+            {renderSummaryStats()}
+            
+            <div className="rap-chart-container">
+              <h3>Visual Analysis</h3>
+              {renderChart()}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
+    </div>
     </div>
   );
 }
