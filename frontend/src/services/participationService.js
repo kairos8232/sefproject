@@ -27,9 +27,12 @@ const participationService = {
   // Get user's participation status for an event
   async getEventStatus(eventId) {
     try {
+      console.log('[ParticipationService] Getting event status for:', eventId);
       const response = await api.get(`/event/${eventId}/status`);
+      console.log('[ParticipationService] Event status response:', response.data);
       return response.data;
     } catch (error) {
+      console.error('[ParticipationService] Get status error:', error);
       throw error.response?.data?.error || 'Failed to get participation status';
     }
   },
@@ -75,6 +78,16 @@ const participationService = {
       return response.data;
     } catch (error) {
       throw error.response?.data?.error || 'Failed to get event participants';
+    }
+  },
+
+  // Get calendar data
+  async getCalendarData(params = {}) {
+    try {
+      const response = await api.get('/calendar', { params });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data?.error || 'Failed to get calendar data';
     }
   }
 };

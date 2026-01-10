@@ -25,6 +25,7 @@ function EventsPage() {
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
   const [showMyRegistrations, setShowMyRegistrations] = useState(location.state?.filter === 'registered' || false);
+  const [myEventsFilter, setMyEventsFilter] = useState('all'); // 'all', 'exclude', 'only'
   const [registrationFilter, setRegistrationFilter] = useState('all'); // 'all', 'open', 'closed'
 
   const userRole = currentUser?.role;
@@ -160,6 +161,17 @@ function EventsPage() {
         filtered = filtered.filter(e => registeredEventIds.includes(e.id));
       }
 
+      // Apply My Events filter (dropdown) - 3 options
+      const currentUserId = currentUser?.id;
+      if (myEventsFilter === 'only' && currentUserId) {
+        // Show only events created by current user
+        filtered = filtered.filter(e => e.organizer_id === currentUserId);
+      } else if (myEventsFilter === 'exclude' && currentUserId) {
+        // Show all events except those created by current user
+        filtered = filtered.filter(e => e.organizer_id !== currentUserId);
+      }
+      // 'all' - no filtering needed
+
       // Apply registration status filter
       if (registrationFilter !== 'all') {
         filtered = filtered.filter(e => e.registration_status === registrationFilter);
@@ -169,15 +181,17 @@ function EventsPage() {
     };
     
     applyFilter();
-  }, [allEvents, userRole, filter, myParticipations, statusFilter, eventTypeFilter, searchQuery, visibilityFilter, periodFilter, customStartDate, customEndDate, showMyRegistrations, registrationFilter]);
+  }, [allEvents, userRole, filter, myParticipations, statusFilter, eventTypeFilter, searchQuery, visibilityFilter, periodFilter, customStartDate, customEndDate, showMyRegistrations, myEventsFilter, registrationFilter, currentUser?.id]);
 
-  const handleEventClick = (eventId) => {
+  const handleEventClick = useCallback((eventId) => {
+    console.log('[EventsPage] Navigating to event:', eventId);
     navigate(`/events/${eventId}`, { state: { fromEventsPage: true, filter } });
-  };
+  }, [navigate, filter]);
 
-  const handleBackToHome = () => {
+  const handleBackToHome = useCallback(() => {
+    console.log('[EventsPage] Navigating back to home');
     navigate('/home');
-  };
+  }, [navigate]);
 
   const formatVisibility = (visibility, event) => {
     if (visibility === 'campuswide') return 'Campus-Wide';
@@ -297,18 +311,28 @@ function EventsPage() {
         </div>
         
         {!isAdmin && (
-          <div className="ep-filter-group">
-            <label style={{ visibility: 'hidden' }}>_</label>
-            <label style={{ display: 'inline-flex', alignItems: 'center', cursor: 'pointer', margin: 0 }}>
-              <input
-                type="checkbox"
-                checked={showMyRegistrations}
-                onChange={(e) => setShowMyRegistrations(e.target.checked)}
-                style={{ marginRight: '5px', cursor: 'pointer' }}
-              />
-              My Registrations
-            </label>
-          </div>
+          <>
+            <div className="ep-filter-group">
+              <label>My Events:</label>
+              <select value={myEventsFilter} onChange={(e) => setMyEventsFilter(e.target.value)}>
+                <option value="all">All Events</option>
+                <option value="exclude">Exclude My Events</option>
+                <option value="only">My Events Only</option>
+              </select>
+            </div>
+              <div className="ep-filter-group">
+              <label style={{ visibility: 'hidden' }}>_</label>
+              <label style={{ display: 'inline-flex', alignItems: 'center', cursor: 'pointer', margin: 0 }}>
+                <input
+                  type="checkbox"
+                  checked={showMyRegistrations}
+                  onChange={(e) => setShowMyRegistrations(e.target.checked)}
+                  style={{ marginRight: '5px', cursor: 'pointer' }}
+                />
+                My Registrations
+              </label>
+            </div>
+          </>
         )}
       </div>
 
@@ -346,7 +370,12 @@ function EventsPage() {
                     <span className="registration-open-badge">Open</span>
                   )}
                 </p>
-                <p><strong>Organizer:</strong> {event.organizer?.name || event.organizer?.email || 'Unknown'}</p>
+                <p><strong>Organizer: </strong> 
+                  {event.organizer?.name || event.organizer?.email || 'Unknown'}{event.organizer_id === currentUser?.id && (
+                    // <span style={{ marginLeft: '6px', padding: '2px 8px', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white', borderRadius: '12px', fontSize: '11px', fontWeight: '600' }}>
+                    <span className="organizer-you-badge">You</span>
+                  )}
+                </p>
               </div>
             </div>
           ))}

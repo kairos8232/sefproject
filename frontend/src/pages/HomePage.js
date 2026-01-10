@@ -82,6 +82,13 @@ function HomePage() {
     
     const commonFeatures = [
       {
+        title: 'My Calendar',
+        description: 'View your event schedule',
+        icon: '📆',
+        path: '/my-calendar',
+        color: '#667eea'
+      },
+      {
         title: 'Browse Events',
         description: 'Explore all campus events',
         icon: '🎯',

@@ -31,6 +31,15 @@ class ParticipationController {
         return res.status(400).json({ error: 'You are already registered for this event' });
       }
 
+      // Check for time conflicts with user's existing events/participations
+      const conflictCheck = await Participation.checkTimeConflict(userId, event.start_datetime, event.end_datetime, eventId);
+      if (conflictCheck.hasConflict) {
+        return res.status(409).json({ 
+          error: 'You have a time conflict with another event',
+          conflictingEvent: conflictCheck.conflictingEvent
+        });
+      }
+
       // Check capacity limit before allowing registration
       const currentCount = await Participation.getEventParticipationCount(eventId, 'registered');
       let capacityLimit = null;
@@ -139,9 +148,14 @@ class ParticipationController {
           capacityLimit = approvedBooking.venue.capacity;
         }
       }
+      
+      // Get user's participation status
       const participation = await Participation.getUserEventParticipation(eventId, userId);
+      const isRegistered = participation && participation.status === 'registered';
 
       res.status(200).json({
+        isRegistered,
+        status: participation?.status || null,
         registeredCount,
         capacityLimit,
         isFull: capacityLimit ? registeredCount >= capacityLimit : false
@@ -231,6 +245,126 @@ class ParticipationController {
         message: 'Attendance recorded successfully',
         updatedCount: updatedParticipations.length,
         participations: updatedParticipations
+      });
+    } catch (error) {
+      console.error('Error in recordAttendance:', error);
+      res.status(500).json({ error: 'Failed to record attendance' });
+    }
+  };
+
+  // Get calendar data for user (participations + created events with approved venues)
+  getCalendarData = async (req, res) => {
+    try {
+      const userId = req.user.userId;
+      const { start, end, status, venueStatus } = req.query;
+
+      // Get all user's participations
+      const participations = await Participation.getUserParticipations(userId);
+      
+      // Get all events created by user
+      const Event = require('../models/Event');
+      const { data: createdEvents, error } = await require('../config/supabase')
+        .from('events')
+        .select(`
+          id,
+          event_name,
+          description,
+          event_type,
+          status,
+          start_datetime,
+          end_datetime,
+          venue_bookings (
+            id,
+            status,
+            setup_time,
+            teardown_time,
+            requested_start_datetime,
+            requested_end_datetime,
+            venue:venue_id (
+              id,
+              name,
+              code
+            )
+          )
+        `)
+        .eq('organizer_id', userId)
+        .order('start_datetime', { ascending: true });
+
+      if (error) throw error;
+
+      // Process events
+      const calendarEvents = [];
+
+      // Add participating events (actual event time)
+      participations.forEach(part => {
+        if (!part.event || part.status === 'cancelled') return;
+        
+        const eventStatus = part.event.status;
+        if (status && eventStatus !== status) return;
+
+        const eventStart = new Date(part.event.start_datetime);
+        const eventEnd = new Date(part.event.end_datetime);
+
+        if (start && eventStart < new Date(start)) return;
+        if (end && eventEnd > new Date(end)) return;
+
+        calendarEvents.push({
+          id: part.event.id,
+          title: part.event.event_name,
+          start: part.event.start_datetime,
+          end: part.event.end_datetime,
+          type: 'participation',
+          eventType: part.event.event_type,
+          status: eventStatus,
+          description: part.event.description
+        });
+      });
+
+      // Add created events with approved venues only (includes setup/teardown)
+      createdEvents?.forEach(event => {
+        if (event.status === 'cancelled') return;
+        if (status && event.status !== status) return;
+
+        const approvedBookings = event.venue_bookings?.filter(vb => {
+          if (venueStatus) {
+            return vb.status === venueStatus;
+          }
+          return vb.status === 'approved';
+        }) || [];
+
+        if (approvedBookings.length > 0) {
+          // Use the first approved booking's time (they should all have same time)
+          const booking = approvedBookings[0];
+          const setupMinutes = booking.setup_time || 0;
+          const teardownMinutes = booking.teardown_time || 0;
+          
+          const eventStart = new Date(new Date(booking.requested_start_datetime).getTime() - setupMinutes * 60000);
+          const eventEnd = new Date(new Date(booking.requested_end_datetime).getTime() + teardownMinutes * 60000);
+
+          if (start && eventStart < new Date(start)) return;
+          if (end && eventEnd > new Date(end)) return;
+
+          calendarEvents.push({
+            id: event.id,
+            title: event.event_name,
+            start: eventStart.toISOString(),
+            end: eventEnd.toISOString(),
+            type: 'created',
+            eventType: event.event_type,
+            status: event.status,
+            venueStatus: booking.status,
+            description: event.description,
+            venues: approvedBookings.map(b => b.venue).filter(v => v)
+          });
+        }
+      });
+
+      // Sort by start time
+      calendarEvents.sort((a, b) => new Date(a.start) - new Date(b.start));
+
+      res.status(200).json({
+        events: calendarEvents,
+        count: calendarEvents.length
       });
     } catch (error) {
       console.error('Error in recordAttendance:', error);

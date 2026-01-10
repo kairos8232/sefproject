@@ -239,6 +239,23 @@ class EventController {
         });
       }
 
+      // Check for time conflicts (organizer automatically participates once venue is approved)
+      const Participation = require('../models/Participation');
+      const conflictCheck = await Participation.checkTimeConflict(
+        userId, 
+        eventData.start_datetime, 
+        eventData.end_datetime
+      );
+      if (conflictCheck.hasConflict) {
+        const conflict = conflictCheck.conflictingEvent;
+        const conflictType = conflict.type === 'participation' 
+          ? 'you are participating in' 
+          : 'you have created with venue request';
+        return res.status(409).json({ 
+          error: `Time conflict: ${conflictType} "${conflict.name}" (${new Date(conflict.start).toLocaleString()} - ${new Date(conflict.end).toLocaleString()})`
+        });
+      }
+
       // Create event
       const newEvent = await Event.create(eventData);
 

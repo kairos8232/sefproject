@@ -149,6 +149,115 @@ class Participation {
     }
   }
 
+  // Check for time conflicts
+  static async checkTimeConflict(userId, startDatetime, endDatetime, excludeEventId = null) {
+    try {
+      // Get all user's registered participations
+      const { data: participations, error: partError } = await supabase
+        .from('event_participation')
+        .select(`
+          event_id,
+          event:event_id (
+            id,
+            event_name,
+            start_datetime,
+            end_datetime,
+            status
+          )
+        `)
+        .eq('user_id', userId)
+        .eq('status', 'registered');
+
+      if (partError) throw partError;
+
+      // Get all events created by user with approved or pending venue bookings
+      const { data: createdEvents, error: eventsError } = await supabase
+        .from('events')
+        .select(`
+          id,
+          event_name,
+          start_datetime,
+          end_datetime,
+          status,
+          venue_bookings (
+            status,
+            setup_time,
+            teardown_time,
+            requested_start_datetime,
+            requested_end_datetime
+          )
+        `)
+        .eq('organizer_id', userId);
+
+      if (eventsError) throw eventsError;
+
+      const requestStart = new Date(startDatetime);
+      const requestEnd = new Date(endDatetime);
+
+      // Check participating events
+      for (const part of participations || []) {
+        if (!part.event || part.event.id === excludeEventId) continue;
+        if (part.event.status === 'cancelled' || part.event.status === 'completed') continue;
+
+        const eventStart = new Date(part.event.start_datetime);
+        const eventEnd = new Date(part.event.end_datetime);
+
+        if (requestStart < eventEnd && requestEnd > eventStart) {
+          return {
+            hasConflict: true,
+            conflictingEvent: {
+              id: part.event.id,
+              name: part.event.event_name,
+              type: 'participation',
+              start: part.event.start_datetime,
+              end: part.event.end_datetime
+            }
+          };
+        }
+      }
+
+      // Check created events with approved or pending venue bookings
+      for (const event of createdEvents || []) {
+        if (event.id === excludeEventId) continue;
+        if (event.status === 'cancelled' || event.status === 'completed') continue;
+
+        const approvedOrPending = event.venue_bookings?.filter(
+          vb => vb.status === 'approved' || vb.status === 'pending'
+        ) || [];
+
+        if (approvedOrPending.length > 0) {
+          // Use venue booking times (includes setup/teardown)
+          for (const vb of approvedOrPending) {
+            const setupMinutes = vb.setup_time || 0;
+            const teardownMinutes = vb.teardown_time || 0;
+            
+            const eventStart = new Date(new Date(vb.requested_start_datetime).getTime() - setupMinutes * 60000);
+            const eventEnd = new Date(new Date(vb.requested_end_datetime).getTime() + teardownMinutes * 60000);
+
+            if (requestStart < eventEnd && requestEnd > eventStart) {
+              return {
+                hasConflict: true,
+                conflictingEvent: {
+                  id: event.id,
+                  name: event.event_name,
+                  type: 'created',
+                  start: eventStart.toISOString(),
+                  end: eventEnd.toISOString(),
+                  venueStatus: vb.status
+                }
+              };
+            }
+          }
+        }
+      }
+
+      return { hasConflict: false };
+    } catch (error) {
+      console.error('Error checking time conflict:', error);
+      throw error;
+    }
+  }
+
   // Count participants for an event by status
   static async getEventParticipationCount(eventId, status = 'registered') {
     try {

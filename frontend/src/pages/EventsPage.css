@@ -191,6 +191,19 @@
   font-weight: 600;
 }
 
+.organizer-you-badge {
+  display: inline-block;
+  margin-left: 10px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
+  background-color: #cce5ff;
+  color: #004085;
+
+}
+
 .ep-loading {
   text-align: center;
   padding: 40px;

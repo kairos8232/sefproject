@@ -28,6 +28,7 @@ function EventDetailsPage() {
   const isManagementView = location.state?.fromMyEvents;
   const fromEventsPage = location.state?.fromEventsPage;
   const fromHome = location.state?.fromHome;
+  const fromCalendar = location.state?.fromCalendar;
   const eventFilter = location.state?.filter;
 
   const loadEventDetails = useCallback(async () => {
@@ -37,6 +38,16 @@ function EventDetailsPage() {
       setError('');
       const data = await eventService.getEventById(id);
       setEvent(data.event);
+      
+      // Load participation status for all users
+      try {
+        console.log('[EventDetailsPage] Loading participation status for event:', id);
+        const statusData = await participationService.getEventStatus(id);
+        console.log('[EventDetailsPage] Participation status loaded:', statusData);
+        setParticipationStatus(statusData);
+      } catch (err) {
+        console.error('[EventDetailsPage] Error loading participation status:', err);
+      }
       
       const isCreator = userId && data.event.organizer_id === userId;
       
@@ -57,14 +68,6 @@ function EventDetailsPage() {
         } catch (err) {
           console.error('Error loading resources:', err);
         }
-      }
-      
-      // Load participation status
-      try {
-        const statusData = await participationService.getEventStatus(id);
-        setParticipationStatus(statusData);
-      } catch (err) {
-        console.error('Error loading participation status:', err);
       }
     } catch (err) {
       setError(err);
@@ -105,6 +108,7 @@ function EventDetailsPage() {
         // Reload participation status
         const newStatusData = await participationService.getEventStatus(id);
         setParticipationStatus(newStatusData);
+        setActionLoading(false);
       }
     } catch (err) {
       // Check if event is full
@@ -141,9 +145,31 @@ function EventDetailsPage() {
     loadEventDetails();
   }, [loadEventDetails]);
 
+  // Reload participation status when returning from registration form
+  useEffect(() => {
+    const reloadStatus = async () => {
+      if (location.state?.registrationComplete) {
+        console.log('[EventDetailsPage] Registration complete detected, reloading status');
+        try {
+          const statusData = await participationService.getEventStatus(id);
+          console.log('[EventDetailsPage] Updated participation status:', statusData);
+          setParticipationStatus(statusData);
+          if (location.state?.message) {
+            setActionMessage(location.state.message);
+          }
+        } catch (err) {
+          console.error('[EventDetailsPage] Error reloading participation status:', err);
+        }
+      }
+    };
+    reloadStatus();
+  }, [location.state?.registrationComplete, location.state?.message, id]);
+
   const handleBackToEvents = () => {
     // Navigate back to the page user came from
-    if (fromHome) {
+    if (fromCalendar) {
+      navigate('/my-calendar');
+    } else if (fromHome) {
       navigate('/home');
     } else if (isManagementView) {
       navigate('/my-events');
@@ -210,7 +236,7 @@ function EventDetailsPage() {
       <div className="event-details-container">
         <div className="ed-error-message">{error}</div>
         <button onClick={handleBackToEvents} className="ed-back-button">
-          {fromHome ? 'Back to Home' : (isManagementView ? 'Back to My Events' : 'Back to Events')}
+          {fromCalendar ? 'Back to My Calendar' : (fromHome ? 'Back to Home' : (isManagementView ? 'Back to My Events' : 'Back to Events'))}
         </button>
       </div>
     );
@@ -221,7 +247,7 @@ function EventDetailsPage() {
       <div className="event-details-container">
         <div className="ed-error-message">Event not found</div>
         <button onClick={handleBackToEvents} className="ed-back-button">
-          {fromHome ? 'Back to Home' : (isManagementView ? 'Back to My Events' : 'Back to Events')}
+          {fromCalendar ? 'Back to My Calendar' : (fromHome ? 'Back to Home' : (isManagementView ? 'Back to My Events' : 'Back to Events'))}
         </button>
       </div>
     );
@@ -235,7 +261,7 @@ function EventDetailsPage() {
           <p>View event information and manage your registration</p>
         </div>
         <button onClick={handleBackToEvents} className="ed-back-button">
-          {fromHome ? 'Back to Home' : (isManagementView ? 'Back to My Events' : 'Back to Events')}
+          {fromCalendar ? 'Back to My Calendar' : (fromHome ? 'Back to Home' : (isManagementView ? 'Back to My Events' : 'Back to Events'))}
         </button>
       </div>
 
@@ -386,8 +412,8 @@ function EventDetailsPage() {
           </div>
         )}
 
-        {/* Participation Actions - Only show if NOT in management view, NOT from home, and NOT administrator */}
-        {!isManagementView && !fromHome && (event.status === 'upcoming' || event.status === 'ongoing') && currentUser?.role !== 'administrator' && (
+        {/* Participation Actions - Only show if NOT in management view, NOT administrator, and NOT event creator */}
+        {!isManagementView && (event.status === 'upcoming' || event.status === 'ongoing') && currentUser?.role !== 'administrator' && event.organizer_id !== userId && (
           <div className="ed-participation-actions">
             {actionMessage && (
               <div className={`ed-action-message ${actionMessage.includes('Success') || actionMessage.includes('cancel') ? 'ed-success' : 'ed-error'}`}>
@@ -399,7 +425,7 @@ function EventDetailsPage() {
               <div className="ed-registration-closed">
                 🔒 Registration Closed
               </div>
-            ) : participationStatus?.status === 'registered' ? (
+            ) : (participationStatus?.status === 'registered' || participationStatus?.isRegistered) ? (
               <button 
                 onClick={handleCancel} 
                 disabled={actionLoading}

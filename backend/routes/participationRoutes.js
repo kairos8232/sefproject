@@ -9,6 +9,9 @@ router.use(AuthController.verifyToken);
 // Get user's all participations
 router.get('/my', ParticipationController.getMyParticipations);
 
+// Get calendar data (participations + created events with approved venues)
+router.get('/calendar', ParticipationController.getCalendarData);
+
 // Get participation status for a specific event
 router.get('/event/:eventId/status', ParticipationController.getStatus);
 

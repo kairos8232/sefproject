@@ -168,11 +168,11 @@ function CustomRegistrationFormPage() {
       await registrationFieldService.saveResponses(eventId, finalParticipationId, responses);
       console.log('[CustomRegistrationForm] Responses saved successfully');
       
-      // Navigate to success page or my events
-      navigate('/my-events', {
+      // Navigate back to event details page with success flag
+      navigate(`/events/${eventId}`, {
         state: { 
-          message: 'Registration completed successfully!',
-          fromCustomForm: true
+          registrationComplete: true,
+          message: 'Registration completed successfully!'
         }
       });
     } catch (err) {
