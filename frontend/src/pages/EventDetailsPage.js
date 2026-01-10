@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useToast } from '../contexts/ToastContext';
+import ConfirmModal from '../components/ConfirmModal';
 import eventService from '../services/eventService';
 import participationService from '../services/participationService';
 import registrationFieldService from '../services/registrationFieldService';
@@ -17,12 +19,13 @@ function EventDetailsPage() {
   const [error, setError] = useState('');
   const [participationStatus, setParticipationStatus] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
-  const [actionMessage, setActionMessage] = useState('');
+  const [showCancelModal, setShowCancelModal] = useState(false);
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const currentUser = authService.getCurrentUser();
   const userId = currentUser?.id;
+  const { showSuccess, showError } = useToast();
   
   // Check if user came from My Events page (management view)
   const isManagementView = location.state?.fromMyEvents;
@@ -83,12 +86,11 @@ function EventDetailsPage() {
   const handleRegister = async () => {
     try {
       setActionLoading(true);
-      setActionMessage('');
       
       // Check if user is already registered
       const statusData = await participationService.getEventStatus(id);
       if (statusData.isRegistered) {
-        setActionMessage('You are already registered for this event');
+        showError('You are already registered for this event');
         setActionLoading(false);
         return;
       }
@@ -104,7 +106,7 @@ function EventDetailsPage() {
       } else {
         // No custom fields, create participation immediately
         await participationService.register(id);
-        setActionMessage('Successfully registered for event!');
+        showSuccess('Registered successfully!');
         // Reload participation status
         const newStatusData = await participationService.getEventStatus(id);
         setParticipationStatus(newStatusData);
@@ -113,29 +115,28 @@ function EventDetailsPage() {
     } catch (err) {
       // Check if event is full
       if (err && typeof err === 'string' && err.toLowerCase().includes('full')) {
-        setActionMessage('This event is full. Registration capacity has been reached.');
+        showError('This event is full. Registration capacity has been reached.');
       } else {
-      setActionMessage(err);
+        showError(err || 'Failed to register for event');
       }
       setActionLoading(false);
     }
   };
 
-  const handleCancel = async () => {
-    if (!window.confirm('Are you sure you want to cancel your registration?')) {
-      return;
-    }
-    
+  const handleCancelClick = () => {
+    setShowCancelModal(true);
+  };
+
+  const handleCancelConfirm = async () => {
     try {
       setActionLoading(true);
-      setActionMessage('');
       await participationService.cancel(id);
-      setActionMessage('Registration cancelled successfully');
+      showSuccess('Registration cancelled successfully');
       // Reload participation status
       const statusData = await participationService.getEventStatus(id);
       setParticipationStatus(statusData);
     } catch (err) {
-      setActionMessage(err);
+      showError(err || 'Failed to cancel registration');
     } finally {
       setActionLoading(false);
     }
@@ -155,7 +156,7 @@ function EventDetailsPage() {
           console.log('[EventDetailsPage] Updated participation status:', statusData);
           setParticipationStatus(statusData);
           if (location.state?.message) {
-            setActionMessage(location.state.message);
+            showSuccess('Registered successfully!');
           }
         } catch (err) {
           console.error('[EventDetailsPage] Error reloading participation status:', err);
@@ -163,7 +164,7 @@ function EventDetailsPage() {
       }
     };
     reloadStatus();
-  }, [location.state?.registrationComplete, location.state?.message, id]);
+  }, [location.state?.registrationComplete, location.state?.message, id, showSuccess]);
 
   const handleBackToEvents = () => {
     // Navigate back to the page user came from
@@ -274,7 +275,7 @@ function EventDetailsPage() {
             </span>
             {participationStatus?.isRegistered && (
               <span className="ed-status-badge ed-status-registered">
-                ✓ Registered
+                Registered
               </span>
             )}
           </div>
@@ -415,19 +416,13 @@ function EventDetailsPage() {
         {/* Participation Actions - Only show if NOT in management view, NOT administrator, and NOT event creator */}
         {!isManagementView && (event.status === 'upcoming' || event.status === 'ongoing') && currentUser?.role !== 'administrator' && event.organizer_id !== userId && (
           <div className="ed-participation-actions">
-            {actionMessage && (
-              <div className={`ed-action-message ${actionMessage.includes('Success') || actionMessage.includes('cancel') ? 'ed-success' : 'ed-error'}`}>
-                {actionMessage}
-              </div>
-            )}
-
             {event.registration_status === 'closed' ? (
               <div className="ed-registration-closed">
                 🔒 Registration Closed
               </div>
             ) : (participationStatus?.status === 'registered' || participationStatus?.isRegistered) ? (
               <button 
-                onClick={handleCancel} 
+                onClick={handleCancelClick} 
                 disabled={actionLoading}
                 className="ed-cancel-button"
               >
@@ -444,6 +439,18 @@ function EventDetailsPage() {
             )}
           </div>
         )}
+
+        {/* Cancel Registration Confirmation Modal */}
+        <ConfirmModal
+          isOpen={showCancelModal}
+          onClose={() => setShowCancelModal(false)}
+          onConfirm={handleCancelConfirm}
+          title="Cancel Registration"
+          message="Are you sure you want to cancel your registration for this event?"
+          confirmText="Yes, Cancel"
+          cancelText="No, Keep Registration"
+          danger={true}
+        />
       </div>
     </div>
   );

@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import facultyService from '../services/facultyService';
 import venueService from '../services/venueService';
+import { useToast } from '../contexts/ToastContext';
 import './FacultyVenueManagementPage.css';
 
 const FacultyVenueManagementPage = () => {
   const navigate = useNavigate();
+  const { showSuccess, showError } = useToast();
   
   React.useEffect(() => {
     document.title = 'Faculty & Venue Management - CESMS';
@@ -29,8 +31,6 @@ const FacultyVenueManagementPage = () => {
   
   // Common state
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   
   // Filters
   const [facultyFilters, setFacultyFilters] = useState({
@@ -104,7 +104,7 @@ const FacultyVenueManagementPage = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      setError('');
+      showError('');
       
       const token = localStorage.getItem('token');
       if (!token) {
@@ -114,7 +114,7 @@ const FacultyVenueManagementPage = () => {
       
       const payload = JSON.parse(atob(token.split('.')[1]));
       if (payload.role !== 'administrator') {
-        setError('Access denied. Only administrators can manage faculties and venues.');
+        showError('Access denied. Only administrators can manage faculties and venues.');
         setLoading(false);
         return;
       }
@@ -144,7 +144,7 @@ const FacultyVenueManagementPage = () => {
       setLoading(false);
     } catch (err) {
       console.error('Error loading data:', err);
-      setError(err.response?.data?.message || 'Failed to load data');
+      showError(err.response?.data?.message || 'Failed to load data');
       setLoading(false);
     }
   };
@@ -157,16 +157,16 @@ const FacultyVenueManagementPage = () => {
   const handleCreateFaculty = async (e) => {
     e.preventDefault();
     try {
-      setError('');
-      setSuccess('');
+      showError('');
+      showSuccess('');
       await facultyService.createFaculty(facultyFormData);
-      setSuccess('Faculty created successfully!');
+      showSuccess('Faculty created successfully!');
       setShowCreateFacultyModal(false);
       setFacultyFormData({ code: '', name: '', description: '' });
       loadData();
     } catch (err) {
       console.error('Error creating faculty:', err);
-      setError(err.response?.data?.message || 'Failed to create faculty');
+      showError(err.response?.data?.message || 'Failed to create faculty');
     }
   };
 
@@ -183,31 +183,31 @@ const FacultyVenueManagementPage = () => {
   const handleEditFaculty = async (e) => {
     e.preventDefault();
     try {
-      setError('');
-      setSuccess('');
+      showError('');
+      showSuccess('');
       await facultyService.updateFaculty(selectedFaculty.id, facultyFormData);
-      setSuccess('Faculty updated successfully!');
+      showSuccess('Faculty updated successfully!');
       setShowEditFacultyModal(false);
       setSelectedFaculty(null);
       setFacultyFormData({ code: '', name: '', description: '' });
       loadData();
     } catch (err) {
       console.error('Error updating faculty:', err);
-      setError(err.response?.data?.message || 'Failed to update faculty');
+      showError(err.response?.data?.message || 'Failed to update faculty');
     }
   };
 
   const handleFacultyStatusToggle = async (faculty) => {
     try {
-      setError('');
-      setSuccess('');
+      showError('');
+      showSuccess('');
       const newStatus = faculty.status === 'active' ? 'inactive' : 'active';
       await facultyService.updateFacultyStatus(faculty.id, newStatus);
-      setSuccess(`Faculty ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully!`);
+      showSuccess(`Faculty ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully!`);
       loadData();
     } catch (err) {
       console.error('Error updating faculty status:', err);
-      setError(err.response?.data?.message || 'Failed to update faculty status');
+      showError(err.response?.data?.message || 'Failed to update faculty status');
     }
   };
 
@@ -215,16 +215,16 @@ const FacultyVenueManagementPage = () => {
   const handleCreateVenue = async (e) => {
     e.preventDefault();
     try {
-      setError('');
-      setSuccess('');
+      showError('');
+      showSuccess('');
       await venueService.createVenue(venueFormData);
-      setSuccess('Venue created successfully!');
+      showSuccess('Venue created successfully!');
       setShowCreateVenueModal(false);
       setVenueFormData({ faculty_id: '', code: '', name: '', location: '', capacity: '' });
       loadData();
     } catch (err) {
       console.error('Error creating venue:', err);
-      setError(err.response?.data?.message || 'Failed to create venue');
+      showError(err.response?.data?.message || 'Failed to create venue');
     }
   };
 
@@ -243,41 +243,41 @@ const FacultyVenueManagementPage = () => {
   const handleEditVenue = async (e) => {
     e.preventDefault();
     try {
-      setError('');
-      setSuccess('');
+      showError('');
+      showSuccess('');
       await venueService.updateVenue(selectedVenue.id, venueFormData);
-      setSuccess('Venue updated successfully!');
+      showSuccess('Venue updated successfully!');
       setShowEditVenueModal(false);
       setSelectedVenue(null);
       setVenueFormData({ faculty_id: '', code: '', name: '', location: '', capacity: '' });
       loadData();
     } catch (err) {
       console.error('Error updating venue:', err);
-      setError(err.response?.data?.message || 'Failed to update venue');
+      showError(err.response?.data?.message || 'Failed to update venue');
     }
   };
 
   const handleVenueStatusToggle = async (venue) => {
     try {
-      setError('');
-      setSuccess('');
+      showError('');
+      showSuccess('');
       const newStatus = venue.status === 'active' ? 'inactive' : 'active';
       await venueService.updateVenueStatus(venue.id, newStatus);
-      setSuccess(`Venue ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully!`);
+      showSuccess(`Venue ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully!`);
       loadData();
     } catch (err) {
       console.error('Error updating venue status:', err);
-      setError(err.response?.data?.message || 'Failed to update venue status');
+      showError(err.response?.data?.message || 'Failed to update venue status');
     }
   };
 
   const handleToggleAllVenues = async (newStatus) => {
     try {
-      setError('');
-      setSuccess('');
+      showError('');
+      showSuccess('');
 
       if (selectedVenueIds.length === 0) {
-        setError('Please select venues to update');
+        showError('Please select venues to update');
         return;
       }
 
@@ -287,12 +287,12 @@ const FacultyVenueManagementPage = () => {
       );
       
       await Promise.all(updatePromises);
-      setSuccess(`${selectedVenueIds.length} venue(s) ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully!`);
+      showSuccess(`${selectedVenueIds.length} venue(s) ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully!`);
       setSelectedVenueIds([]);
       loadData();
     } catch (err) {
       console.error('Error toggling selected venues:', err);
-      setError(err.response?.data?.message || 'Failed to update venues status');
+      showError(err.response?.data?.message || 'Failed to update venues status');
     }
   };
 
@@ -332,8 +332,7 @@ const FacultyVenueManagementPage = () => {
         </div>
       </div>
 
-      {error && <div className="error-message">{error}</div>}
-      {success && <div className="success-message">{success}</div>}
+      {/* Success and error messages now shown via toast */}
 
       <div className="fvm-management-sections">
         {/* ======================================== */}
@@ -371,24 +370,8 @@ const FacultyVenueManagementPage = () => {
               <option value="">All Status</option>
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
-            </select>            {venues.length > 0 && (
-              <div className="fvm-select-all-container">
-                <button
-                  className="fvm-btn fvm-btn-success"
-                  onClick={() => handleToggleAllVenues('active')}
-                  title="Activate all visible venues"
-                >
-                  ✅ Enable All
-                </button>
-                <button
-                  className="fvm-btn fvm-btn-danger"
-                  onClick={() => handleToggleAllVenues('inactive')}
-                  title="Deactivate all visible venues"
-                >
-                  🚫 Disable All
-                </button>
-              </div>
-            )}          </div>
+            </select>    
+            </div>
 
           <div className="faculty-cards">
             {faculties.length === 0 ? (

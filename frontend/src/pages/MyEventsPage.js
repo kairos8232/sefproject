@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useToast } from '../contexts/ToastContext';
+import ConfirmModal from '../components/ConfirmModal';
 import eventService from '../services/eventService';
 import authService from '../services/authService';
 import venueBookingService from '../services/venueBookingService';
@@ -14,7 +16,8 @@ function MyEventsPage() {
   const [totalEvents, setTotalEvents] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
+  const [highlightedEventId, setHighlightedEventId] = useState(null);
+  const [deleteModalEvent, setDeleteModalEvent] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
@@ -27,6 +30,7 @@ function MyEventsPage() {
   const location = useLocation();
   const user = authService.getCurrentUser();
   const userId = user?.id; // Extract primitive to prevent re-renders
+  const { showSuccess, showError } = useToast();
 
   // Check authentication
   useEffect(() => {
@@ -35,6 +39,25 @@ function MyEventsPage() {
       return;
     }
   }, [user, navigate]);
+
+  // Show success toast for new event creation and highlight
+  useEffect(() => {
+    if (location.state?.showSuccessToast) {
+      showSuccess('Event created successfully!');
+      
+      if (location.state?.newEventId) {
+        setHighlightedEventId(location.state.newEventId);
+        
+        // Remove highlight after 3 seconds
+        setTimeout(() => {
+          setHighlightedEventId(null);
+        }, 3000);
+      }
+      
+      // Clear the state
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state, showSuccess]);
 
   // Check if attendance recording is available (1 hour before start until end time)
   const isAttendanceAvailable = (event) => {
@@ -266,15 +289,6 @@ function MyEventsPage() {
   useEffect(() => {
     document.title = 'My Events - CESMS';
     loadMyEvents();
-    
-    // Check for success message from navigation
-    if (location.state?.message) {
-      setSuccessMessage(location.state.message);
-      // Clear the message after 5 seconds
-      setTimeout(() => setSuccessMessage(''), 5000);
-      // Clear the state to prevent showing message on refresh
-      window.history.replaceState({}, document.title);
-    }
   }, [filter, location, loadMyEvents]);
 
   const handleEditEvent = (eventId) => {
@@ -306,25 +320,10 @@ function MyEventsPage() {
 
     try {
       await eventService.toggleRegistrationStatus(event.id);
-      setSuccessMessage(`Registration ${action === 'open' ? 'opened' : 'closed'} successfully`);
-      setTimeout(() => setSuccessMessage(''), 3000);
+      showSuccess(`Registration ${action === 'open' ? 'opened' : 'closed'} successfully`);
       loadMyEvents(); // Reload to get updated status
     } catch (err) {
-      alert(err?.response?.data?.error || `Failed to ${actionText} registration`);
-    }
-  };
-
-  const handleDeleteEvent = async (eventId, eventName) => {
-    if (!window.confirm(`Are you sure you want to delete "${eventName}"?`)) {
-      return;
-    }
-
-    try {
-      await eventService.deleteEvent(eventId);
-      setEvents(events.filter(e => e.id !== eventId));
-      alert('Event deleted successfully');
-    } catch (err) {
-      alert(err || 'Failed to delete event');
+      showError(err?.response?.data?.error || `Failed to ${actionText} registration`);
     }
   };
 
@@ -365,6 +364,50 @@ function MyEventsPage() {
       if (firstBooking) {
         navigate('/request-resources', { state: { event, venueBooking: firstBooking } });
       }
+    }
+  };
+
+  const handleDeleteEventClick = (event) => {
+    setDeleteModalEvent(event);
+  };
+
+  const handleDeleteEventConfirm = async () => {
+    if (!deleteModalEvent) return;
+    
+    const eventToDelete = deleteModalEvent;
+    
+    try {
+      // Optimistically remove from UI
+      setEvents(events.filter(e => e.id !== eventToDelete.id));
+      
+      // Show toast with undo option
+      let undoTimeout;
+      showSuccess(`Event "${eventToDelete.event_name}" deleted successfully`, {
+        duration: 5000,
+        onUndo: async () => {
+          clearTimeout(undoTimeout);
+          // Restore the event in UI
+          await loadMyEvents();
+          showSuccess('Event restored');
+        }
+      });
+      
+      // Actually delete after 5 seconds
+      undoTimeout = setTimeout(async () => {
+        try {
+          await eventService.deleteEvent(eventToDelete.id);
+        } catch (err) {
+          console.error('Failed to delete event:', err);
+          showError('Failed to delete event');
+          // Reload events to restore
+          loadMyEvents();
+        }
+      }, 5000);
+      
+    } catch (err) {
+      showError(err || 'Failed to delete event');
+      // Reload events to restore
+      loadMyEvents();
     }
   };
 
@@ -410,12 +453,6 @@ function MyEventsPage() {
           </button>
         </div>
       </div>
-
-      {successMessage && (
-        <div className="me-success-notification">
-          ✅ {successMessage}
-        </div>
-      )}
 
       <div className="me-filter-section">
         <div className="me-filter-group">
@@ -546,7 +583,10 @@ function MyEventsPage() {
               </thead>
               <tbody>
                 {events.map((event) => (
-                  <tr key={event.id}>
+                  <tr 
+                    key={event.id}
+                    className={highlightedEventId === event.id ? 'highlighted-event' : ''}
+                  >
                     <td className="event-name-cell">
                       <div className="event-name">{event.event_name}</div>
                       {event.description && (
@@ -636,7 +676,7 @@ function MyEventsPage() {
                         ✏️
                       </button>
                       <button 
-                        onClick={() => handleDeleteEvent(event.id, event.event_name)}
+                        onClick={() => handleDeleteEventClick(event)}
                         className="action-button delete-button"
                         title="Delete Event"
                       >
@@ -650,6 +690,18 @@ function MyEventsPage() {
           </div>
         </>
       )}
+
+      {/* Delete Event Confirmation Modal */}
+      <ConfirmModal
+        isOpen={!!deleteModalEvent}
+        onClose={() => setDeleteModalEvent(null)}
+        onConfirm={handleDeleteEventConfirm}
+        title="Delete Event"
+        message={`Are you sure you want to delete "${deleteModalEvent?.event_name}"? This action can be undone within 5 seconds.`}
+        confirmText="Yes, Delete Event"
+        cancelText="Cancel"
+        danger={true}
+      />
     </div>
   );
 }

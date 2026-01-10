@@ -421,6 +421,29 @@
   background-color: #f5c6cb;
 }
 
+.my-events-container .cancel-event-button {
+  background-color: #fff3cd;
+}
+
+.my-events-container .cancel-event-button:hover {
+  background-color: #ffe5a1;
+}
+
+/* Highlighted event animation */
+.highlighted-event {
+  animation: highlightPulse 2s ease-in-out;
+  background-color: #e3f2fd !important;
+}
+
+@keyframes highlightPulse {
+  0%, 100% {
+    background-color: transparent;
+  }
+  50% {
+    background-color: #bbdefb;
+  }
+}
+
 /* Messages */
 .me-error-message {
   background-color: #f8d7da;

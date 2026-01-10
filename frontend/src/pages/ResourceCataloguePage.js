@@ -2,18 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import resourceCategoryService from '../services/resourceCategoryService';
 import resourceTypeService from '../services/resourceTypeService';
+import { useToast } from '../contexts/ToastContext';
 import './ResourceCataloguePage.css';
 
 const ResourceCataloguePage = () => {
   const navigate = useNavigate();
+  const { showSuccess, showError } = useToast();
   
   React.useEffect(() => {
     document.title = 'Resource Catalogue - CESMS';
   }, []);
   
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
 
   // Categories state
   const [categories, setCategories] = useState([]);
@@ -97,7 +97,6 @@ const ResourceCataloguePage = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      setError('');
 
       const token = localStorage.getItem('token');
       if (!token) {
@@ -107,7 +106,7 @@ const ResourceCataloguePage = () => {
 
       const payload = JSON.parse(atob(token.split('.')[1]));
       if (payload.role !== 'administrator') {
-        setError('Access denied. Only administrators can manage resources.');
+        showError('Access denied. Only administrators can manage resources.');
         setLoading(false);
         return;
       }
@@ -127,7 +126,7 @@ const ResourceCataloguePage = () => {
       setLoading(false);
     } catch (err) {
       console.error('Error loading resources:', err);
-      setError(err.response?.data?.error || 'Failed to load resources');
+      showError(err.response?.data?.error || 'Failed to load resources');
       setLoading(false);
     }
   };
@@ -139,17 +138,14 @@ const ResourceCataloguePage = () => {
   const handleCreateCategory = async (e) => {
     e.preventDefault();
     try {
-      setError('');
-      setSuccess('');
-
       await resourceCategoryService.createCategory(categoryFormData);
-      setSuccess('Category created successfully!');
+      showSuccess('Category created successfully!');
       setShowCreateCategoryModal(false);
       setCategoryFormData({ code: '', name: '', description: '' });
       loadData();
     } catch (err) {
       console.error('Error creating category:', err);
-      setError(err.response?.data?.error || 'Failed to create category');
+      showError(err.response?.data?.error || 'Failed to create category');
     }
   };
 
@@ -166,33 +162,27 @@ const ResourceCataloguePage = () => {
   const handleEditCategory = async (e) => {
     e.preventDefault();
     try {
-      setError('');
-      setSuccess('');
-
       await resourceCategoryService.updateCategory(selectedCategory.id, categoryFormData);
-      setSuccess('Category updated successfully!');
+      showSuccess('Category updated successfully!');
       setShowEditCategoryModal(false);
       setSelectedCategory(null);
       setCategoryFormData({ code: '', name: '', description: '' });
       loadData();
     } catch (err) {
       console.error('Error updating category:', err);
-      setError(err.response?.data?.error || 'Failed to update category');
+      showError(err.response?.data?.error || 'Failed to update category');
     }
   };
 
   const handleToggleCategoryStatus = async (category) => {
     try {
-      setError('');
-      setSuccess('');
-
       const newStatus = category.status === 'active' ? 'inactive' : 'active';
       await resourceCategoryService.updateCategoryStatus(category.id, newStatus);
-      setSuccess(`Category ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully!`);
+      showSuccess(`Category ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully!`);
       loadData();
     } catch (err) {
       console.error('Error toggling category status:', err);
-      setError(err.response?.data?.error || 'Failed to update category status');
+      showError(err.response?.data?.error || 'Failed to update category status');
     }
   };
 
@@ -207,11 +197,8 @@ const ResourceCataloguePage = () => {
   const handleCreateType = async (e) => {
     e.preventDefault();
     try {
-      setError('');
-      setSuccess('');
-
       await resourceTypeService.createType(typeFormData);
-      setSuccess('Resource type created successfully!');
+      showSuccess('Resource type created successfully!');
       setShowCreateTypeModal(false);
       setTypeFormData({
         category_id: '',
@@ -226,7 +213,7 @@ const ResourceCataloguePage = () => {
       loadData();
     } catch (err) {
       console.error('Error creating resource type:', err);
-      setError(err.response?.data?.error || 'Failed to create resource type');
+      showError(err.response?.data?.error || 'Failed to create resource type');
     }
   };
 
@@ -248,11 +235,8 @@ const ResourceCataloguePage = () => {
   const handleEditType = async (e) => {
     e.preventDefault();
     try {
-      setError('');
-      setSuccess('');
-
       await resourceTypeService.updateType(selectedType.id, typeFormData);
-      setSuccess('Resource type updated successfully!');
+      showSuccess('Resource type updated successfully!');
       setShowEditTypeModal(false);
       setSelectedType(null);
       setTypeFormData({
@@ -268,32 +252,26 @@ const ResourceCataloguePage = () => {
       loadData();
     } catch (err) {
       console.error('Error updating resource type:', err);
-      setError(err.response?.data?.error || 'Failed to update resource type');
+      showError(err.response?.data?.error || 'Failed to update resource type');
     }
   };
 
   const handleToggleTypeStatus = async (type) => {
     try {
-      setError('');
-      setSuccess('');
-
       const newStatus = type.status === 'active' ? 'inactive' : 'active';
       await resourceTypeService.updateTypeStatus(type.id, newStatus);
-      setSuccess(`Resource type ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully!`);
+      showSuccess(`Resource type ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully!`);
       loadData();
     } catch (err) {
       console.error('Error toggling resource type status:', err);
-      setError(err.response?.data?.error || 'Failed to update resource type status');
+      showError(err.response?.data?.error || 'Failed to update resource type status');
     }
   };
 
   const handleToggleAllTypes = async (newStatus) => {
     try {
-      setError('');
-      setSuccess('');
-
       if (selectedTypeIds.length === 0) {
-        setError('Please select resource types to update');
+        showError('Please select resource types to update');
         return;
       }
 
@@ -303,12 +281,12 @@ const ResourceCataloguePage = () => {
       );
       
       await Promise.all(updatePromises);
-      setSuccess(`${selectedTypeIds.length} resource type(s) ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully!`);
+      showSuccess(`${selectedTypeIds.length} resource type(s) ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully!`);
       setSelectedTypeIds([]);
       loadData();
     } catch (err) {
       console.error('Error toggling selected resource types:', err);
-      setError(err.response?.data?.error || 'Failed to update resource types status');
+      showError(err.response?.data?.error || 'Failed to update resource types status');
     }
   };
 
@@ -346,8 +324,7 @@ const ResourceCataloguePage = () => {
         </div>
       </div>
 
-      {error && <div className="rcp-error-message">{error}</div>}
-      {success && <div className="rcp-success-message">{success}</div>}
+      {/* Success and error messages now shown via toast */}
 
       <div className="rcp-resource-sections">
         {/* ======================================== */}

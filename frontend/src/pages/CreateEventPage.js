@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useToast } from '../contexts/ToastContext';
 import eventService from '../services/eventService';
 import authService from '../services/authService';
 import { fromDateTimeLocalInput } from '../utils/dateUtils';
@@ -9,6 +10,7 @@ function CreateEventPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const user = authService.getCurrentUser();
+  const { showError } = useToast();
 
   // Set page title
   React.useEffect(() => {
@@ -131,12 +133,17 @@ function CreateEventPage() {
       const result = await eventService.createEvent(eventData);
       console.log('Event created successfully:', result);
       
-      alert('Event created successfully!');
-      navigate('/my-events', { state: { message: 'Event created successfully!' } });
+      // Navigate to My Events with success toast and highlight new event
+      navigate('/my-events', { 
+        state: { 
+          newEventId: result.event?.id,
+          showSuccessToast: true
+        } 
+      });
     } catch (error) {
       console.error('Create event error:', error);
       const errorMessage = error?.response?.data?.error || error?.message || error || 'Failed to create event';
-      alert(errorMessage);
+      showError(errorMessage);
     } finally {
       setSubmitting(false);
     }

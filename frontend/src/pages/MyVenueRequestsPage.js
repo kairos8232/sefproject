@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import venueBookingService from '../services/venueBookingService';
 import { formatDateTime } from '../utils/dateUtils';
+import { useToast } from '../contexts/ToastContext';
+import ConfirmModal from '../components/ConfirmModal';
 import './MyVenueRequestsPage.css';
 
 function MyVenueRequestsPage() {
@@ -14,7 +16,9 @@ function MyVenueRequestsPage() {
   const [periodFilter, setPeriodFilter] = useState('all');
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
+  const [cancelModalBooking, setCancelModalBooking] = useState(null);
   const navigate = useNavigate();
+  const { showSuccess, showError } = useToast();
 
   const loadMyBookings = useCallback(async () => {
     document.title = 'My Venue Requests - CESMS';
@@ -127,17 +131,30 @@ function MyVenueRequestsPage() {
   };
 
   const handleCancelBooking = async (bookingId, eventName) => {
-    if (!window.confirm(`Are you sure you want to cancel the venue booking for "${eventName}"?`)) {
-      return;
-    }
+    const bookingToCancel = cancelModalBooking;
+    setCancelModalBooking(null);
 
-    try {
-      await venueBookingService.cancelBooking(bookingId);
-      loadMyBookings();
-      alert('Venue booking cancelled successfully');
-    } catch (err) {
-      alert(err.response?.data?.error || 'Failed to cancel booking');
-    }
+    // Optimistic update
+    setBookings(bookings.filter(b => b.id !== bookingToCancel.id));
+
+    let undoTimeout;
+    showSuccess(`Venue booking for "${eventName}" cancelled successfully`, {
+      duration: 5000,
+      onUndo: async () => {
+        clearTimeout(undoTimeout);
+        await loadMyBookings();
+        showSuccess('Booking restored');
+      }
+    });
+
+    undoTimeout = setTimeout(async () => {
+      try {
+        await venueBookingService.cancelBooking(bookingId);
+      } catch (err) {
+        showError(err.response?.data?.error || 'Failed to cancel booking');
+        await loadMyBookings();
+      }
+    }, 5000);
   };
 
   const getStatusBadgeClass = (status) => {
@@ -303,7 +320,7 @@ function MyVenueRequestsPage() {
                     </button>
                     {booking.status === 'pending' && (
                       <button 
-                        onClick={() => handleCancelBooking(booking.id, booking.event?.event_name)}
+                        onClick={() => setCancelModalBooking(booking)}
                         className="mvr-action-button mvr-delete-button"
                         title="Cancel Request"
                       >
@@ -317,6 +334,16 @@ function MyVenueRequestsPage() {
           </table>
         </div>
         </>
+      )}
+
+      {cancelModalBooking && (
+        <ConfirmModal
+          title="Cancel Venue Booking"
+          message={`Are you sure you want to cancel the venue booking for "${cancelModalBooking.event?.event_name}"? This action can be undone within 5 seconds.`}
+          onConfirm={() => handleCancelBooking(cancelModalBooking.id, cancelModalBooking.event?.event_name)}
+          onCancel={() => setCancelModalBooking(null)}
+          danger
+        />
       )}
     </div>
   );

@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import authService from '../services/authService';
+import { useToast } from '../contexts/ToastContext';
 import './EditProfilePage.css';
 
 function EditProfilePage() {
   const navigate = useNavigate();
+  const { showSuccess, showError } = useToast();
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
@@ -16,23 +16,23 @@ function EditProfilePage() {
     confirmPassword: ''
   });
 
-  useEffect(() => {
-    document.title = 'Edit Profile - CESMS';
-    loadUserData();
-  }, []);
-
-  const loadUserData = async () => {
+  const loadUserData = useCallback(async () => {
     try {
       setLoading(true);
       const currentUser = await authService.getCurrentUser();
       setUser(currentUser);
     } catch (err) {
-      setError('Failed to load user data');
+      showError('Failed to load user data');
       console.error('Load user error:', err);
     } finally {
       setLoading(false);
     }
-  };
+  }, [showError]);
+
+  useEffect(() => {
+    document.title = 'Edit Profile - CESMS';
+    loadUserData();
+  }, [loadUserData]);
 
   const handlePasswordChange = (e) => {
     const { name, value } = e.target;
@@ -45,17 +45,19 @@ function EditProfilePage() {
   const handleChangePassword = async (e) => {
     e.preventDefault();
     try {
-      setError('');
-      setSuccess('');
-
       // Validate passwords
       if (passwordData.newPassword !== passwordData.confirmPassword) {
-        setError('New passwords do not match');
+        showError('New passwords do not match');
         return;
       }
 
       if (passwordData.newPassword.length < 6) {
-        setError('New password must be at least 6 characters');
+        showError('New password must be at least 6 characters');
+        return;
+      }
+
+      if (passwordData.newPassword === passwordData.currentPassword) {
+        showError('New password must be different from current password');
         return;
       }
 
@@ -78,15 +80,14 @@ function EditProfilePage() {
         throw new Error(data.message || 'Failed to change password');
       }
 
-      setSuccess('Password changed successfully!');
+      showSuccess('Password changed successfully!');
       setPasswordData({
         currentPassword: '',
         newPassword: '',
         confirmPassword: ''
       });
-      setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
-      setError(err.message || 'Failed to change password');
+      showError(err.message || 'Failed to change password');
     }
   };
 
@@ -145,8 +146,7 @@ function EditProfilePage() {
             </button>
           </div>
 
-          {error && <div className="epp-error-message">{error}</div>}
-          {success && <div className="epp-success-message">{success}</div>}
+          {/* Success and error messages now shown via toast */}
 
           <div className="epp-content epp-two-column">
             {/* Profile Information */}

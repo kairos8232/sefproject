@@ -514,6 +514,14 @@ class ResourceRequestController {
       const userId = req.user.userId;
       const userRole = req.user.role;
 
+      console.log('🔍 RESOURCE ADMIN OVERRIDE DEBUG:', {
+        requestId,
+        userId,
+        userRole,
+        action: req.body.action,
+        body: req.body
+      });
+
       // Only administrators can override
       if (userRole !== 'administrator') {
         return res.status(403).json({ error: 'Only administrators can override resource requests' });
@@ -568,12 +576,14 @@ class ResourceRequestController {
         result = await ResourceRequest.approve(requestId, userId, approval_notes);
 
       } else if (action === 'reject') {
+        console.log('❌ Processing RESOURCE REJECT action, rejection_reason:', rejection_reason);
         // Admin can reject even if already approved (override)
         if (!rejection_reason) {
           return res.status(400).json({ error: 'Rejection reason is required' });
         }
 
         result = await ResourceRequest.reject(requestId, userId, rejection_reason);
+        console.log('✅ Resource reject result:', result);
 
       } else if (action === 'modify') {
         // Admin can modify request details

@@ -664,6 +664,14 @@ class VenueBookingController {
       const userId = req.user.userId;
       const userRole = req.user.role;
 
+      console.log('🔍 ADMIN OVERRIDE DEBUG:', {
+        bookingId,
+        userId,
+        userRole,
+        action: req.body.action,
+        body: req.body
+      });
+
       // Only administrators can override
       if (userRole !== 'administrator') {
         return res.status(403).json({ error: 'Only administrators can override bookings' });
@@ -685,6 +693,8 @@ class VenueBookingController {
       // Get current booking
       const booking = await VenueBooking.getById(bookingId);
 
+      console.log('📋 Booking found:', booking ? { id: booking.id, status: booking.status } : 'NOT FOUND');
+
       if (!booking) {
         return res.status(404).json({ error: 'Booking not found' });
       }
@@ -697,6 +707,7 @@ class VenueBookingController {
       let result;
 
       if (action === 'approve') {
+        console.log('✅ Processing APPROVE action');
         // Admin can approve even if already approved/rejected (override)
         const adjustments = {
           approval_notes,
@@ -733,14 +744,17 @@ class VenueBookingController {
         result = await VenueBooking.adminApproveWithAdjustments(bookingId, userId, adjustments);
         
       } else if (action === 'reject') {
+        console.log('❌ Processing REJECT action, rejection_reason:', rejection_reason);
         // Admin can reject even if already approved (override)
         if (!rejection_reason) {
           return res.status(400).json({ error: 'Rejection reason is required' });
         }
 
-        result = await VenueBooking.rejectWithReason(bookingId, userId, rejection_reason);
+        result = await VenueBooking.rejectWithReason(bookingId, userId, rejection_reason, true);
+        console.log('✅ Reject result:', result);
         
       } else if (action === 'modify') {
+        console.log('📝 Processing MODIFY action');
         // Admin can modify booking details
         const updateData = {};
 
@@ -803,14 +817,17 @@ class VenueBookingController {
         return res.status(400).json({ error: 'Invalid action. Must be approve, reject, or modify' });
       }
 
+      console.log('✅ SUCCESS - Returning result for action:', action);
+      
       res.json({
         success: true,
         message: `Booking ${action}d successfully by administrator`,
         booking: result
       });
     } catch (error) {
-      console.error('Admin override booking error:', error);
-      res.status(500).json({ error: 'Failed to override booking' });
+      console.error('❌ ADMIN OVERRIDE ERROR:', error);
+      console.error('Error stack:', error.stack);
+      res.status(500).json({ error: error.message || 'Failed to override booking' });
     }
   }
 

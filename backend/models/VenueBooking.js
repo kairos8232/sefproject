@@ -394,18 +394,22 @@ class VenueBooking {
   }
 
   // Reject booking with reason
-  static async rejectWithReason(id, approverId, rejectionReason) {
+  static async rejectWithReason(id, approverId, rejectionReason, allowOverride = false) {
     try {
       const booking = await this.getById(id);
       
-      // Check if booking is still pending
-      if (booking.status !== 'pending') {
+      console.log('🔍 rejectWithReason called:', { id, approverId, rejectionReason, allowOverride, currentStatus: booking?.status });
+      
+      // Check if booking is still pending (unless override is allowed)
+      if (!allowOverride && booking.status !== 'pending') {
         throw new Error(`Booking is already ${booking.status}`);
       }
 
       if (!rejectionReason || rejectionReason.trim().length < 10) {
         throw new Error('Rejection reason must be at least 10 characters');
       }
+
+      console.log('✅ Validation passed, updating booking...');
 
       const { data, error } = await supabase
         .from('venue_bookings')
@@ -420,10 +424,15 @@ class VenueBooking {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Database error:', error);
+        throw error;
+      }
+      
+      console.log('✅ Booking rejected successfully:', data);
       return data;
     } catch (error) {
-      console.error('Error rejecting venue booking:', error);
+      console.error('❌ Error in rejectWithReason:', error);
       throw error;
     }
   }

@@ -2,16 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import userService from '../services/userService';
 import facultyService from '../services/facultyService';
+import { useToast } from '../contexts/ToastContext';
 import './UserManagementPage.css';
 
 function UserManagementPage() {
   const navigate = useNavigate();
+  const { showSuccess, showError } = useToast();
   const [users, setUsers] = useState([]);
   const [allUsers, setAllUsers] = useState([]); // Store all users for client-side filtering
   const [faculties, setFaculties] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [currentUser, setCurrentUser] = useState(null);
 
   // Filters
@@ -74,7 +74,6 @@ function UserManagementPage() {
   const loadData = async () => {
     try {
       setLoading(true);
-      setError('');
 
       // Get current user from token
       const token = localStorage.getItem('token');
@@ -84,7 +83,7 @@ function UserManagementPage() {
 
         // Check if user is admin
         if (payload.role !== 'administrator') {
-          setError('Access denied. Only administrators can manage users.');
+          showError('Access denied. Only administrators can manage users.');
           setLoading(false);
           return;
         }
@@ -100,7 +99,7 @@ function UserManagementPage() {
       setFaculties(facultiesData.faculties || []);
     } catch (err) {
       console.error('Error loading data:', err);
-      setError(err.response?.data?.message || 'Failed to load users');
+      showError(err.response?.data?.message || 'Failed to load users');
     } finally {
       setLoading(false);
     }
@@ -134,13 +133,12 @@ function UserManagementPage() {
 
   const handleBulkStatusChange = async (newStatus) => {
     if (selectedUsers.length === 0) {
-      setError('Please select at least one user');
+      showError('Please select at least one user');
       return;
     }
 
     try {
       setLoading(true);
-      setError('');
       
       // Update all selected users
       await Promise.all(
@@ -149,13 +147,12 @@ function UserManagementPage() {
         )
       );
       
-      setSuccess(`Successfully ${newStatus === 'active' ? 'activated' : 'deactivated'} ${selectedUsers.length} user(s)`);
+      showSuccess(`Successfully ${newStatus === 'active' ? 'activated' : 'deactivated'} ${selectedUsers.length} user(s)`);
       setSelectedUsers([]);
       setSelectAll(false);
       await loadData();
-      setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to update users');
+      showError(err.response?.data?.message || 'Failed to update users');
     } finally {
       setLoading(false);
     }
@@ -164,12 +161,9 @@ function UserManagementPage() {
   const handleCreateUser = async (e) => {
     e.preventDefault();
     try {
-      setError('');
-      setSuccess('');
-
       // Validate faculty requirement
       if ((formData.role === 'student' || formData.role === 'faculty_manager') && !formData.faculty_id) {
-        setError('Faculty is required for students and faculty managers.');
+        showError('Faculty is required for students and faculty managers.');
         return;
       }
 
@@ -177,31 +171,28 @@ function UserManagementPage() {
       if (formData.staff_id) {
         const existingUser = allUsers.find(u => u.staff_id && u.staff_id.toLowerCase() === formData.staff_id.toLowerCase());
         if (existingUser) {
-          setError(`ID "${formData.staff_id}" is already in use by ${existingUser.name}`);
+          showError(`ID "${formData.staff_id}" is already in use by ${existingUser.name}`);
           return;
         }
       }
 
       await userService.createUser(formData);
-      setSuccess('User created successfully!');
+      showSuccess('User created successfully!');
       setShowCreateModal(false);
       setFormData({ name: '', email: '', password: '', role: 'student', faculty_id: '', staff_id: '' });
       loadData();
     } catch (err) {
       console.error('Error creating user:', err);
-      setError(err.response?.data?.message || 'Failed to create user');
+      showError(err.response?.data?.message || 'Failed to create user');
     }
   };
 
   const handleEditUser = async (e) => {
     e.preventDefault();
     try {
-      setError('');
-      setSuccess('');
-
       // Validate faculty requirement for current role
       if ((formData.role === 'student' || formData.role === 'faculty_manager') && !formData.faculty_id) {
-        setError('Faculty is required for students and faculty managers.');
+        showError('Faculty is required for students and faculty managers.');
         return;
       }
 
@@ -213,7 +204,7 @@ function UserManagementPage() {
           u.staff_id.toLowerCase() === formData.staff_id.toLowerCase()
         );
         if (existingUser) {
-          setError(`ID "${formData.staff_id}" is already in use by ${existingUser.name}`);
+          showError(`ID "${formData.staff_id}" is already in use by ${existingUser.name}`);
           return;
         }
       }
@@ -229,9 +220,9 @@ function UserManagementPage() {
       // If role changed, update role separately
       if (formData.role !== originalRole) {
         await userService.updateUserRole(selectedUser.id, formData.role, formData.faculty_id || null);
-        setSuccess('User updated successfully! Role changed.');
+        showSuccess('User updated successfully! Role changed.');
       } else {
-        setSuccess('User updated successfully!');
+        showSuccess('User updated successfully!');
       }
 
       setShowEditModal(false);
@@ -239,49 +230,43 @@ function UserManagementPage() {
       loadData();
     } catch (err) {
       console.error('Error updating user:', err);
-      setError(err.response?.data?.message || 'Failed to update user');
+      showError(err.response?.data?.message || 'Failed to update user');
     }
   };
 
   const handleStatusToggle = async (user) => {
     try {
-      setError('');
-      setSuccess('');
-
       const newStatus = user.status === 'active' ? 'inactive' : 'active';
       await userService.updateUserStatus(user.id, newStatus);
-      setSuccess(`User ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully!`);
+      showSuccess(`User ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully!`);
       loadData();
     } catch (err) {
       console.error('Error updating status:', err);
-      setError(err.response?.data?.message || 'Failed to update user status');
+      showError(err.response?.data?.message || 'Failed to update user status');
     }
   };
 
   const handleResetPassword = async (e) => {
     e.preventDefault();
     try {
-      setError('');
-      setSuccess('');
-
       if (passwordData.password !== passwordData.confirmPassword) {
-        setError('Passwords do not match');
+        showError('Passwords do not match');
         return;
       }
 
       if (passwordData.password.length < 6) {
-        setError('Password must be at least 6 characters');
+        showError('Password must be at least 6 characters');
         return;
       }
 
       await userService.resetPassword(selectedUser.id, passwordData.password);
-      setSuccess('Password reset successfully!');
+      showSuccess('Password reset successfully!');
       setShowPasswordModal(false);
       setPasswordData({ password: '', confirmPassword: '' });
       setSelectedUser(null);
     } catch (err) {
       console.error('Error resetting password:', err);
-      setError(err.response?.data?.message || 'Failed to reset password');
+      showError(err.response?.data?.message || 'Failed to reset password');
     }
   };
 
@@ -357,8 +342,7 @@ function UserManagementPage() {
         </div>
       </div>
 
-      {error && <div className="error-message">{error}</div>}
-      {success && <div className="success-message">{success}</div>}
+      {/* Success and error messages now shown via toast */}
 
       {/* Filters */}
       <div className="filters-section">

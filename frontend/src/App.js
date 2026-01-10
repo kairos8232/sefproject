@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { ToastProvider } from './contexts/ToastContext';
 import LoginPage from './pages/LoginPage';
 import HomePage from './pages/HomePage';
 import EventsPage from './pages/EventsPage';
@@ -33,7 +34,8 @@ import ReportsAnalyticsPage from './pages/ReportsAnalyticsPage';
 
 function App() {
   return (
-    <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+    <ToastProvider>
+      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/home" element={<HomePage />} />
@@ -68,6 +70,7 @@ function App() {
         <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>
     </Router>
+    </ToastProvider>
   );
 }
 

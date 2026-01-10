@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import adminOverrideService from '../services/adminOverrideService';
 import { formatDateTime, toDateTimeLocalInput, fromDateTimeLocalInput } from '../utils/dateUtils';
 import CalendarView from '../components/CalendarView';
+import { useToast } from '../contexts/ToastContext';
 import './BookingRequestsManagementPage.css';
 
 const BookingRequestsManagementPage = () => {
   const navigate = useNavigate();
+  const { showSuccess, showError } = useToast();
   
   React.useEffect(() => {
     document.title = 'Booking Requests Management - CESMS';
@@ -25,14 +27,6 @@ const BookingRequestsManagementPage = () => {
   const [selectedResource, setSelectedResource] = useState(null);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [filters, setFilters] = useState({
-    status: '',
-    search: '',
-    sort_by: 'created_at',
-    sort_order: 'desc'
-  });
   
   // Venue-specific filters
   const [venueSearchQuery, setVenueSearchQuery] = useState('');
@@ -47,7 +41,6 @@ const BookingRequestsManagementPage = () => {
   
   // Resource-specific filters
   const [resourceEventSearch, setResourceEventSearch] = useState('');
-  const [resourceTypeFilter, setResourceTypeFilter] = useState('all');
   const [resourceSearchQuery, setResourceSearchQuery] = useState('');
   const [resourcePeriodFilter, setResourcePeriodFilter] = useState('all');
   const [resourceCustomStartDate, setResourceCustomStartDate] = useState('');
@@ -67,31 +60,27 @@ const BookingRequestsManagementPage = () => {
     try {
       setLoading(true);
       // Don't send search filter to backend (doesn't work with nested fields)
-      const { search, ...backendFilters } = filters;
-      const data = await adminOverrideService.getAllVenueBookings(backendFilters);
+      const data = await adminOverrideService.getAllVenueBookings({});
       setVenueBookings(data.bookings || []);
-      setError('');
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to load venue bookings');
+      showError(err.response?.data?.error || 'Failed to load venue bookings');
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, [showError]);
 
   const loadResourceRequests = useCallback(async () => {
     try {
       setLoading(true);
       // Don't send search filter to backend (doesn't work with nested fields)
-      const { search, ...backendFilters } = filters;
-      const data = await adminOverrideService.getAllResourceRequests(backendFilters);
+      const data = await adminOverrideService.getAllResourceRequests({});
       setResourceRequests(data.requests || []);
-      setError('');
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to load resource requests');
+      showError(err.response?.data?.error || 'Failed to load resource requests');
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, [showError]);
 
   useEffect(() => {
     if (activeTab === 'venue') {
@@ -181,10 +170,6 @@ const BookingRequestsManagementPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewMode, activeTab, loadVenueBookings, loadResourceRequests]);
 
-  const handleFilterChange = (key, value) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
-  };
-
   const openModal = (item, action) => {
     setSelectedItem(item);
     setModalAction(action);
@@ -250,8 +235,6 @@ const BookingRequestsManagementPage = () => {
 
   const handleSubmitOverride = async (e) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
 
     try {
       // Convert datetime-local input values back to ISO format for the API
@@ -265,7 +248,7 @@ const BookingRequestsManagementPage = () => {
           submissionData.approved_end_datetime = fromDateTimeLocalInput(submissionData.approved_end_datetime);
         }
         await adminOverrideService.overrideVenueBooking(selectedItem.id, submissionData);
-        setSuccess('Venue booking updated successfully');
+        showSuccess('Venue booking updated successfully');
         loadVenueBookings();
       } else {
         if (submissionData.usage_start_datetime) {
@@ -275,12 +258,12 @@ const BookingRequestsManagementPage = () => {
           submissionData.usage_end_datetime = fromDateTimeLocalInput(submissionData.usage_end_datetime);
         }
         await adminOverrideService.overrideResourceRequest(selectedItem.id, submissionData);
-        setSuccess('Resource request updated successfully');
+        showSuccess('Resource request updated successfully');
         loadResourceRequests();
       }
       closeModal();
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to update request');
+      showError(err.response?.data?.error || 'Failed to update request');
     }
   };
 
@@ -308,8 +291,7 @@ const BookingRequestsManagementPage = () => {
         </div>
       </div>
 
-      {error && <div className="brm-error-message">{error}</div>}
-      {success && <div className="brm-success-message">{success}</div>}
+      {/* Success and error messages now shown via toast */}
 
       {/* Tabs */}
       <div className="brm-tabs">

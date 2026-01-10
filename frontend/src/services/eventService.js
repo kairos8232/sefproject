@@ -101,6 +101,16 @@ const eventService = {
       throw error.response?.data?.error || 'Failed to toggle registration status';
     }
   },
+
+  // Cancel event (update status to cancelled)
+  cancelEvent: async (eventId) => {
+    try {
+      const response = await api.put(`/events/${eventId}`, { status: 'cancelled' });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data?.error || 'Failed to cancel event';
+    }
+  },
 };
 
 export default eventService;

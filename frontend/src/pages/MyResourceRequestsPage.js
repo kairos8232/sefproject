@@ -2,13 +2,14 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import resourceRequestService from '../services/resourceRequestService';
 import { formatDateTime } from '../utils/dateUtils';
+import { useToast } from '../contexts/ToastContext';
+import ConfirmModal from '../components/ConfirmModal';
 import './MyResourceRequestsPage.css';
 
 function MyResourceRequestsPage() {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
   const [filter, setFilter] = useState('all');
   const [eventSearch, setEventSearch] = useState('');
   const [resourceTypeFilter, setResourceTypeFilter] = useState('all');
@@ -17,8 +18,10 @@ function MyResourceRequestsPage() {
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
   const [resourceCategories, setResourceCategories] = useState([]);
+  const [cancelModalRequest, setCancelModalRequest] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
+  const { showSuccess, showError } = useToast();
 
   const loadMyRequests = useCallback(async () => {
     document.title = 'My Resource Requests - CESMS';
@@ -153,25 +156,36 @@ function MyResourceRequestsPage() {
 
     // Check for success message from navigation
     if (location.state?.message) {
-      setSuccessMessage(location.state.message);
-      setTimeout(() => setSuccessMessage(''), 5000);
+      showSuccess(location.state.message);
       window.history.replaceState({}, document.title);
     }
-  }, [filter, location, loadMyRequests]);
+  }, [filter, location, loadMyRequests, showSuccess]);
 
   const handleCancelRequest = async (requestId, resourceName) => {
-    if (!window.confirm(`Are you sure you want to cancel the request for "${resourceName}"?`)) {
-      return;
-    }
+    const requestToCancel = cancelModalRequest;
+    setCancelModalRequest(null);
 
-    try {
-      await resourceRequestService.cancel(requestId);
-      setSuccessMessage('Resource request cancelled successfully');
-      loadMyRequests();
-      setTimeout(() => setSuccessMessage(''), 5000);
-    } catch (err) {
-      alert(err.response?.data?.error || 'Failed to cancel request');
-    }
+    // Optimistic update
+    setRequests(requests.filter(r => r.id !== requestToCancel.id));
+
+    let undoTimeout;
+    showSuccess(`Resource request for "${resourceName}" cancelled successfully`, {
+      duration: 5000,
+      onUndo: async () => {
+        clearTimeout(undoTimeout);
+        await loadMyRequests();
+        showSuccess('Request restored');
+      }
+    });
+
+    undoTimeout = setTimeout(async () => {
+      try {
+        await resourceRequestService.cancel(requestId);
+      } catch (err) {
+        showError(err.response?.data?.error || 'Failed to cancel request');
+        await loadMyRequests();
+      }
+    }, 5000);
   };
 
   const getStatusBadgeClass = (status) => {
@@ -214,9 +228,9 @@ function MyResourceRequestsPage() {
         </button>
       </div>
 
-      {successMessage && (
+      {/* Success messages now shown via toast */}
+      {false && (
         <div className="mrr-success-notification">
-          ✅ {successMessage}
         </div>
       )}
 
@@ -369,7 +383,7 @@ function MyResourceRequestsPage() {
                         </button>
                         {request.status === 'pending' && (
                           <button
-                            onClick={() => handleCancelRequest(request.id, request.resource?.name)}
+                            onClick={() => setCancelModalRequest(request)}
                             className="mrr-action-button mrr-cancel-button"
                             title="Cancel Request"
                           >
@@ -384,6 +398,16 @@ function MyResourceRequestsPage() {
             </table>
           </div>
         </>
+      )}
+
+      {cancelModalRequest && (
+        <ConfirmModal
+          title="Cancel Resource Request"
+          message={`Are you sure you want to cancel the request for "${cancelModalRequest.resource?.name}"? This action can be undone within 5 seconds.`}
+          onConfirm={() => handleCancelRequest(cancelModalRequest.id, cancelModalRequest.resource?.name)}
+          onCancel={() => setCancelModalRequest(null)}
+          danger
+        />
       )}
     </div>
   );

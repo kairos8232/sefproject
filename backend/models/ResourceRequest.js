@@ -157,6 +157,8 @@ class ResourceRequest {
   // Reject resource request
   static async reject(id, approvedBy, rejectionReason) {
     try {
+      console.log('🔍 ResourceRequest.reject called:', { id, approvedBy, rejectionReason });
+      
       const { data, error } = await supabase
         .from('resource_requests')
         .update({
@@ -169,10 +171,15 @@ class ResourceRequest {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Database error in reject:', error);
+        throw error;
+      }
+      
+      console.log('✅ Resource request rejected successfully:', data);
       return data;
     } catch (error) {
-      console.error('Error rejecting resource request:', error);
+      console.error('❌ Error rejecting resource request:', error);
       throw error;
     }
   }

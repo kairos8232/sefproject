@@ -187,7 +187,7 @@ function MyCalendarPage() {
           </p>
         </div>
         <button onClick={() => navigate('/home')} className="cal-back-button">
-          ← Back to Home
+          Back to Home
         </button>
       </div>
 
