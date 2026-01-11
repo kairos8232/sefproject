@@ -5,7 +5,8 @@ class Session {
   static async createSession(userId, role, token) {
     try {
       const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 7); // 7 days expiry
+      // 15 minutes expiry for browser sessions
+      expiresAt.setMinutes(expiresAt.getMinutes() + 15);
 
       const { data, error } = await supabase
         .from('sessions')

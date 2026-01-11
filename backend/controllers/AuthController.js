@@ -50,7 +50,8 @@ class AuthController {
           facultyId: user.faculty_id || null
         },
         process.env.JWT_SECRET,
-        { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+        // Default JWT lifetime: 15 minutes for browser sessions
+        { expiresIn: process.env.JWT_EXPIRES_IN || '15m' }
       );
 
       // Create session in database

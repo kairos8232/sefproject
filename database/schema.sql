@@ -79,7 +79,7 @@ CREATE TABLE sessions (
   role VARCHAR(50) NOT NULL, -- Duplicated from users for quick access
   token TEXT NOT NULL UNIQUE, -- JWT token
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-  expires_at TIMESTAMP WITH TIME ZONE NOT NULL
+  expires_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT (CURRENT_TIMESTAMP + INTERVAL '15 minutes')
 );
 
 -- Index for faster token lookups
@@ -178,6 +178,7 @@ CREATE TABLE venue_bookings (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
   venue_id UUID NOT NULL REFERENCES venues(id) ON DELETE CASCADE,
+  package_id UUID, -- Groups multiple venue bookings into one package (NULL for legacy single bookings)
   requester_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   requested_start_datetime TIMESTAMP WITH TIME ZONE NOT NULL,
   requested_end_datetime TIMESTAMP WITH TIME ZONE NOT NULL,
@@ -205,6 +206,8 @@ CREATE INDEX idx_venue_bookings_status ON venue_bookings(status);
 CREATE INDEX idx_venue_bookings_requested_start ON venue_bookings(requested_start_datetime);
 CREATE INDEX idx_venue_bookings_requested_end ON venue_bookings(requested_end_datetime);
 CREATE INDEX idx_venue_bookings_approved_user_id ON venue_bookings(approved_user_id);
+-- Index for package queries (added by migration)
+CREATE INDEX idx_venue_bookings_package_id ON venue_bookings(package_id);
 
 -- ========================================
 -- Table: event_invitations
@@ -350,6 +353,7 @@ CREATE TABLE resource_requests (
   event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
   venue_booking_id UUID NOT NULL REFERENCES venue_bookings(id) ON DELETE CASCADE,
   resource_id UUID NOT NULL REFERENCES resource_types(id) ON DELETE CASCADE,
+  package_id UUID, -- Groups multiple resource requests into one package (NULL for legacy single requests)
   requester_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   requested_quantity INTEGER NOT NULL,
   usage_start_datetime TIMESTAMP WITH TIME ZONE NOT NULL,
@@ -374,6 +378,8 @@ CREATE INDEX idx_resource_requests_status ON resource_requests(status);
 CREATE INDEX idx_resource_requests_usage_start ON resource_requests(usage_start_datetime);
 CREATE INDEX idx_resource_requests_usage_end ON resource_requests(usage_end_datetime);
 CREATE INDEX idx_resource_requests_approved_by ON resource_requests(approved_by);
+-- Index for package queries (added by migration)
+CREATE INDEX idx_resource_requests_package_id ON resource_requests(package_id);
 
 -- ========================================
 -- Row Level Security (RLS)
@@ -2583,3 +2589,229 @@ VALUES (
   'Dean''s meeting with department heads',
   (SELECT id FROM users WHERE email = 'robert.chen@fom.edu' LIMIT 1)
 );
+
+-- ========================================
+-- APPENDED TEST DATA: package booking sample (from test_data/complete_package_test_data.sql)
+-- Note: verification queries omitted to keep schema file focused on data
+-- ========================================
+
+-- STEP 1: Create Test Users
+INSERT INTO users (id, email, name, password, role, staff_id, status, created_at, updated_at)
+VALUES (
+  '11111111-1111-1111-1111-111111111111',
+  'organizer@university.edu',
+  'John Organizer',
+  '$2b$10$abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOP',
+  'event_organizer',
+  'ORG001',
+  'active',
+  CURRENT_TIMESTAMP,
+  CURRENT_TIMESTAMP
+);
+
+INSERT INTO users (id, email, name, password, role, faculty_id, staff_id, status, created_at, updated_at)
+VALUES (
+  '22222222-2222-2222-2222-222222222222',
+  'fmanager@university.edu',
+  'Sarah Faculty Manager',
+  '$2b$10$abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOP',
+  'faculty_manager',
+  '33333333-3333-3333-3333-333333333333',
+  'FM001',
+  'active',
+  CURRENT_TIMESTAMP,
+  CURRENT_TIMESTAMP
+);
+
+-- STEP 2: Create Test Faculty
+INSERT INTO faculties (id, code, name, description, status, created_at, updated_at)
+VALUES (
+  '33333333-3333-3333-3333-333333333333',
+  'FCI',
+  'Faculty of Computing and Informatics',
+  'Faculty managing computing and IT programs',
+  'active',
+  CURRENT_TIMESTAMP,
+  CURRENT_TIMESTAMP
+);
+
+-- STEP 3: Create Test Venues
+INSERT INTO venues (id, faculty_id, code, name, location, capacity, status, created_at, updated_at)
+VALUES (
+  '44444444-4444-4444-4444-444444444444',
+  '33333333-3333-3333-3333-333333333333',
+  'AUD-FCI-01',
+  'Main Auditorium',
+  'Ground Floor, Block A',
+  300,
+  'active',
+  CURRENT_TIMESTAMP,
+  CURRENT_TIMESTAMP
+);
+
+INSERT INTO venues (id, faculty_id, code, name, location, capacity, status, created_at, updated_at)
+VALUES (
+  '55555555-5555-5555-5555-555555555555',
+  '33333333-3333-3333-3333-333333333333',
+  'LH-FCI-01',
+  'Lecture Hall 1',
+  'Level 2, Block A',
+  100,
+  'active',
+  CURRENT_TIMESTAMP,
+  CURRENT_TIMESTAMP
+);
+
+INSERT INTO venues (id, faculty_id, code, name, location, capacity, status, created_at, updated_at)
+VALUES (
+  '66666666-6666-6666-6666-666666666666',
+  '33333333-3333-3333-3333-333333333333',
+  'LH-FCI-02',
+  'Lecture Hall 2',
+  'Level 2, Block A',
+  100,
+  'active',
+  CURRENT_TIMESTAMP,
+  CURRENT_TIMESTAMP
+);
+
+-- STEP 4: Create Resource Categories
+INSERT INTO resource_categories (id, code, name, description, status, created_at, updated_at)
+VALUES 
+  ('77777777-7777-7777-7777-777777777777', 'AV', 'Audio/Visual', 'Audio visual equipment', 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  ('88888888-8888-8888-8888-888888888888', 'FURN', 'Furniture', 'Tables, chairs, etc.', 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  ('99999999-9999-9999-9999-999999999999', 'IT', 'IT Equipment', 'Computers, routers, etc.', 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+
+-- STEP 5: Create Resource Types
+INSERT INTO resource_types (id, category_id, code, name, description, total_quantity, available_quantity, unit, status, managed_by, created_at, updated_at)
+VALUES (
+  'aaaaaaaa-1111-1111-1111-111111111111',
+  '77777777-7777-7777-7777-777777777777',
+  'PROJ-HD',
+  'HD Projector',
+  'High definition projector with HDMI',
+  10,
+  10,
+  'units',
+  'active',
+  '22222222-2222-2222-2222-222222222222',
+  CURRENT_TIMESTAMP,
+  CURRENT_TIMESTAMP
+);
+
+INSERT INTO resource_types (id, category_id, code, name, description, total_quantity, available_quantity, unit, status, managed_by, created_at, updated_at)
+VALUES (
+  'bbbbbbbb-2222-2222-2222-222222222222',
+  '77777777-7777-7777-7777-777777777777',
+  'MIC-WL',
+  'Wireless Microphone',
+  'Professional wireless microphone system',
+  20,
+  20,
+  'units',
+  'active',
+  '22222222-2222-2222-2222-222222222222',
+  CURRENT_TIMESTAMP,
+  CURRENT_TIMESTAMP
+);
+
+INSERT INTO resource_types (id, category_id, code, name, description, total_quantity, available_quantity, unit, status, managed_by, created_at, updated_at)
+VALUES (
+  'cccccccc-3333-3333-3333-333333333333',
+  '88888888-8888-8888-8888-888888888888',
+  'CHR-STD',
+  'Standard Chair',
+  'Stackable event chairs',
+  500,
+  500,
+  'units',
+  'active',
+  '22222222-2222-2222-2222-222222222222',
+  CURRENT_TIMESTAMP,
+  CURRENT_TIMESTAMP
+);
+
+INSERT INTO resource_types (id, category_id, code, name, description, total_quantity, available_quantity, unit, status, managed_by, created_at, updated_at)
+VALUES (
+  'dddddddd-4444-4444-4444-444444444444',
+  '88888888-8888-8888-8888-888888888888',
+  'WB-MOB',
+  'Mobile Whiteboard',
+  'Portable whiteboard with stand',
+  15,
+  15,
+  'units',
+  'active',
+  '22222222-2222-2222-2222-222222222222',
+  CURRENT_TIMESTAMP,
+  CURRENT_TIMESTAMP
+);
+
+-- STEP 6: Create Test Event
+INSERT INTO events (
+  id,
+  organizer_id,
+  event_name,
+  description,
+  visibility,
+  event_type,
+  status,
+  registration_status,
+  expected_attendees,
+  registration_limit,
+  start_datetime,
+  end_datetime,
+  created_at,
+  updated_at
+) VALUES (
+  'eeeeeeee-5555-5555-5555-555555555555',
+  '11111111-1111-1111-1111-111111111111',
+  'Annual Tech Conference 2026',
+  'A large-scale technology conference requiring multiple venues and resources. This event demonstrates the package booking feature with 3 venue bookings and 4 resource requests.',
+  'public',
+  'conference',
+  'upcoming',
+  'open',
+  250,
+  300,
+  '2026-02-15 09:00:00+08',
+  '2026-02-15 17:00:00+08',
+  CURRENT_TIMESTAMP,
+  CURRENT_TIMESTAMP
+);
+
+-- ========================================
+-- MIGRATIONS MERGED: 2026-01-09 .. 2026-01-10
+-- 1) Add `staff_id` to users
+-- 2) Add `registration_limit` to events
+-- 3) Ensure `package_id` support for venue_bookings and resource_requests (idempotent)
+-- ========================================
+
+-- Migration: Add staff_id column to users table
+-- Description: Student ID (matric number) and Staff ID for organizers/managers/admins
+ALTER TABLE users ADD COLUMN IF NOT EXISTS staff_id VARCHAR(50) UNIQUE;
+
+-- Add index for staff_id lookups
+CREATE INDEX IF NOT EXISTS idx_users_staff_id ON users(staff_id);
+
+-- Add comment to explain the field
+COMMENT ON COLUMN users.staff_id IS 'Student ID (matric number) for students, Staff ID for event organizers/administrators/faculty managers';
+
+-- Migration: Add registration_limit column to events table
+-- Purpose: Allow event organizers to set optional registration limits
+ALTER TABLE events ADD COLUMN IF NOT EXISTS registration_limit INTEGER;
+COMMENT ON COLUMN events.registration_limit IS 'Optional limit for event registrations. If NULL, uses venue capacity from approved booking.';
+
+-- Migration: Add package support for venue bookings and resource requests
+-- Purpose: Allow multiple venues and resources to be requested as a single package
+ALTER TABLE venue_bookings ADD COLUMN IF NOT EXISTS package_id UUID;
+ALTER TABLE resource_requests ADD COLUMN IF NOT EXISTS package_id UUID;
+
+-- Create indexes for package queries (idempotent)
+CREATE INDEX IF NOT EXISTS idx_venue_bookings_package_id ON venue_bookings(package_id);
+CREATE INDEX IF NOT EXISTS idx_resource_requests_package_id ON resource_requests(package_id);
+
+-- Add comments
+COMMENT ON COLUMN venue_bookings.package_id IS 'Groups multiple venue bookings into one package request. NULL for legacy single bookings.';
+COMMENT ON COLUMN resource_requests.package_id IS 'Groups multiple resource requests into one package request. NULL for legacy single requests.';
+

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import authService from '../services/authService';
+import { useToast } from '../contexts/ToastContext';
 import './LoginPage.css';
 
 function LoginPage() {
@@ -13,27 +14,25 @@ function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const { showSuccess, showError } = useToast();
+
   useEffect(() => {
     document.title = 'Login - CESMS';
-    // Check for session expired from URL
+    // Check for session expired from URL and show toast
     const params = new URLSearchParams(location.search);
     if (params.get('expired') === 'true') {
-      setInfo('Your session has expired.');
+      showError('Your session has expired. Please sign in again.');
       // Clear URL params
       window.history.replaceState({}, '', '/login');
-      // Auto-dismiss after 3 seconds
-      setTimeout(() => setInfo(''), 3000);
     }
-    
-    // Check for logout message
+
+    // Show logout or info messages via toast (if passed via navigation state)
     if (location.state?.message) {
-      setInfo(location.state.message);
+      showSuccess(location.state.message);
       // Clear state so refresh doesn't show it again
       window.history.replaceState({}, '');
-      // Auto-dismiss after 3 seconds
-      setTimeout(() => setInfo(''), 3000);
     }
-  }, [location]);
+  }, [location, showSuccess, showError]);
 
   // Validate email format
   const isValidEmail = (email) => {
