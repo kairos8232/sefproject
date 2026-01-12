@@ -16,22 +16,23 @@ const resourceCategoryRoutes = require('./routes/resourceCategoryRoutes');
 const resourceTypeRoutes = require('./routes/resourceTypeRoutes');
 const systemSettingRoutes = require('./routes/systemSettingRoutes');
 const reportRoutes = require('./routes/reportRoutes');
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware - CORS must be configured properly
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: ['http://localhost:3000', 'http://localhost:3001'],
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range'],
+  maxAge: 600
 }));
 app.use(express.json());
 
 // Handle OPTIONS requests globally (CORS preflight)
-app.options('*', (req, res) => {
-  res.status(200).end();
-});
+app.options('*', cors());
 
 // Routes
 app.use('/api/auth', authRoutes);
