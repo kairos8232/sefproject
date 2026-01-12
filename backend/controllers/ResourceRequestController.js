@@ -3,6 +3,7 @@ const Resource = require('../models/Resource');
 const VenueBooking = require('../models/VenueBooking');
 const Event = require('../models/Event');
 const SystemSetting = require('../models/SystemSetting');
+const EmailService = require('../services/EmailService');
 
 class ResourceRequestController {
   // Get all resource requests (faculty managers only)
@@ -236,6 +237,18 @@ class ResourceRequestController {
       // Get complete request with relations
       const completeRequest = await ResourceRequest.getById(newRequest.id);
 
+      // Send confirmation email to requester
+      const User = require('../models/User');
+      const requester = await User.findById(userId);
+      if (requester && requester.email) {
+        await EmailService.sendResourceRequestConfirmation(
+          requester.email,
+          requester.name,
+          [{ resource_name: resource.name, quantity: requestData.requested_quantity }],
+          event
+        ).catch(err => console.error('Failed to send resource request confirmation:', err));
+      }
+
       res.status(201).json({
         success: true,
         message: 'Resource request submitted successfully',
@@ -348,6 +361,18 @@ class ResourceRequestController {
       // Get complete request with relations
       const completeRequest = await ResourceRequest.getById(approvedRequest.id);
 
+      // Send approval email to requester
+      const User = require('../models/User');
+      const requester = await User.findById(request.event.organizer_id);
+      if (requester && requester.email) {
+        await EmailService.sendResourceRequestApproved(
+          requester.email,
+          requester.name,
+          [{ resource_name: request.resource.name, quantity: request.requested_quantity }],
+          request.event
+        ).catch(err => console.error('Failed to send resource approval email:', err));
+      }
+
       res.json({
         success: true,
         message: 'Resource request approved successfully',
@@ -428,6 +453,17 @@ class ResourceRequestController {
 
       // Get complete request with relations
       const completeRequest = await ResourceRequest.getById(cancelledRequest.id);
+
+      // Send cancellation email to requester
+      const User = require('../models/User');
+      const requester = await User.findById(userId);
+      if (requester && requester.email) {
+        await EmailService.sendResourceRequestCancelled(
+          requester.email,
+          requester.name,
+          request.event.event_name
+        ).catch(err => console.error('Failed to send resource cancellation email:', err));
+      }
 
       res.json({
         success: true,

@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastProvider } from './contexts/ToastContext';
 import LoginPage from './pages/LoginPage';
+import OTPVerificationPage from './pages/OTPVerificationPage';
 import HomePage from './pages/HomePage';
 import EventsPage from './pages/EventsPage';
 import EventDetailsPage from './pages/EventDetailsPage';
@@ -38,6 +39,7 @@ function App() {
       <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/verify-otp" element={<OTPVerificationPage />} />
         <Route path="/home" element={<HomePage />} />
         <Route path="/profile" element={<EditProfilePage />} />
         <Route path="/my-calendar" element={<MyCalendarPage />} />

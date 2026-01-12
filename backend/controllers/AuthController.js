@@ -3,6 +3,8 @@ const jwt = require('jsonwebtoken');
 const supabase = require('../config/supabase');
 const User = require('../models/User');
 const Session = require('../models/Session');
+const TwoFactorAuth = require('../models/TwoFactorAuth');
+const EmailService = require('../services/EmailService');
 
 class AuthController {
   // Login method
@@ -42,7 +44,37 @@ class AuthController {
         });
       }
 
-      // Generate JWT token
+      // Check if 2FA is required (only for configured email)
+      const allowed2FAEmail = process.env.ALLOWED_2FA_EMAIL;
+      const requires2FA = allowed2FAEmail && email === allowed2FAEmail;
+
+      if (requires2FA) {
+        // Generate and send 2FA code via email
+        const code = TwoFactorAuth.generateCode();
+        await TwoFactorAuth.storeCode(user.id, code);
+        
+        // In development, optionally print the OTP to server logs
+        if (process.env.DEV_SHOW_OTP === 'true') {
+          console.log('OTP for', user.email, ':', code);
+        }
+        
+        // Send OTP to user's email
+        try {
+          await EmailService.send2FACode(user.email, code, user.name);
+        } catch (emailError) {
+          // Continue anyway - code is stored, user can try to resend
+        }
+
+        // Return success response indicating OTP has been sent
+        return res.json({
+          success: true,
+          requiresOTP: true,
+          message: 'Verification code sent to your email',
+          email: user.email
+        });
+      }
+
+      // For other users, bypass 2FA and generate token immediately
       const token = jwt.sign(
         { 
           userId: user.id, 
@@ -50,14 +82,12 @@ class AuthController {
           facultyId: user.faculty_id || null
         },
         process.env.JWT_SECRET,
-        // Default JWT lifetime: 15 minutes for browser sessions
         { expiresIn: process.env.JWT_EXPIRES_IN || '15m' }
       );
 
-      // Create session in database
+      // Create session
       await Session.createSession(user.id, user.role, token);
 
-      // Return success response
       res.json({
         success: true,
         token,
@@ -71,9 +101,11 @@ class AuthController {
       });
 
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('❌ Login error:', error);
+      console.error('Error stack:', error.stack);
       res.status(500).json({ 
-        error: 'An error occurred during login' 
+        error: 'An error occurred during login',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
       });
     }
   }
@@ -202,6 +234,94 @@ class AuthController {
     } catch (error) {
       console.error('Change password error:', error);
       res.status(500).json({ message: 'Failed to change password' });
+    }
+  }
+
+  // Send 2FA Code
+  async send2FACode(req, res) {
+    try {
+      const { email } = req.body;
+
+      if (!email) {
+        return res.status(400).json({ error: 'Email is required' });
+      }
+
+      // Find user by email
+      const user = await User.findByEmail(email);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      // Generate and store 2FA code
+      const code = TwoFactorAuth.generateCode();
+      await TwoFactorAuth.storeCode(user.id, code);
+
+      if (process.env.DEV_SHOW_OTP === 'true') {
+        console.warn('🔔 DEV_SHOW_OTP enabled - OTP for', user.email, 'is:', code);
+      }
+
+      // Send email with 2FA code
+      await EmailService.send2FACode(user.email, code, user.name);
+
+      res.json({
+        success: true,
+        message: '2FA code sent to your email'
+      });
+    } catch (error) {
+      console.error('Send 2FA code error:', error);
+      res.status(500).json({ error: 'Failed to send 2FA code' });
+    }
+  }
+
+  // Verify 2FA Code
+  async verify2FACode(req, res) {
+    try {
+      const { email, code } = req.body;
+
+      if (!email || !code) {
+        return res.status(400).json({ error: 'Email and code are required' });
+      }
+
+      // Find user
+      const user = await User.findByEmail(email);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      // Verify code
+      const verification = await TwoFactorAuth.verifyCode(user.id, code);
+      if (!verification.valid) {
+        return res.status(401).json({ error: verification.message });
+      }
+
+      // Generate JWT token after successful 2FA
+      const token = jwt.sign(
+        { 
+          userId: user.id, 
+          role: user.role,
+          facultyId: user.faculty_id || null
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: process.env.JWT_EXPIRES_IN || '15m' }
+      );
+
+      // Create session
+      await Session.createSession(user.id, user.role, token);
+
+      res.json({
+        success: true,
+        token,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+          facultyId: user.faculty_id
+        }
+      });
+    } catch (error) {
+      console.error('Verify 2FA code error:', error);
+      res.status(500).json({ error: 'Failed to verify 2FA code' });
     }
   }
 }

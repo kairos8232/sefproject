@@ -8,7 +8,6 @@ function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [info, setInfo] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
@@ -68,11 +67,20 @@ function LoginPage() {
     setLoading(true);
 
     try {
-      // Call login API
-      await authService.login(email, password);
+      // Call login API - now returns requiresOTP: true
+      const response = await authService.login(email, password);
       
-      // Redirect to home on success
-      navigate('/home');
+      // Check if OTP is required
+      if (response.requiresOTP) {
+        // Navigate to OTP verification page with email
+        navigate('/verify-otp', { 
+          state: { email: response.email || email },
+          replace: true 
+        });
+      } else {
+        // Old flow (shouldn't happen with new backend)
+        navigate('/home');
+      }
     } catch (err) {
       // Show error message
       setError(err);
@@ -170,16 +178,6 @@ function LoginPage() {
               </div>
             </div>
 
-            {/* Info message */}
-            {info && (
-              <div className="info-message">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
-                  <path d="M12 16V12M12 8H12.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                </svg>
-                {info}
-              </div>
-            )}
 
             {/* Error message */}
             {error && (

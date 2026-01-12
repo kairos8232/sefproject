@@ -2,6 +2,7 @@ const VenueBooking = require('../models/VenueBooking');
 const Venue = require('../models/Venue');
 const Event = require('../models/Event');
 const SystemSetting = require('../models/SystemSetting');
+const EmailService = require('../services/EmailService');
 
 class VenueBookingController {
   // Get all venue bookings (admin/faculty manager)
@@ -224,6 +225,19 @@ class VenueBookingController {
       // Get complete booking with relations
       const completeBooking = await VenueBooking.getById(newBooking.id);
 
+      // Send confirmation email to requester
+      const User = require('../models/User');
+      const requester = await User.findById(userId);
+      if (requester && requester.email) {
+        await EmailService.sendVenueBookingConfirmation(
+          requester.email,
+          requester.name,
+          completeBooking,
+          venue,
+          event
+        ).catch(err => console.error('Failed to send venue booking confirmation:', err));
+      }
+
       res.status(201).json({
         success: true,
         message: 'Venue booking submitted successfully',
@@ -333,6 +347,18 @@ class VenueBookingController {
       }
 
       const cancelledBooking = await VenueBooking.cancel(bookingId, cancellation_reason);
+
+      // Send cancellation email to requester
+      const User = require('../models/User');
+      const requester = await User.findById(userId);
+      if (requester && requester.email) {
+        await EmailService.sendVenueBookingCancelled(
+          requester.email,
+          requester.name,
+          booking.venue.name,
+          booking.event.event_name
+        ).catch(err => console.error('Failed to send venue cancellation email:', err));
+      }
 
       res.json({
         success: true,
@@ -548,6 +574,19 @@ class VenueBookingController {
       };
 
       const approvedBooking = await VenueBooking.approveWithAdjustments(bookingId, userId, adjustments);
+
+      // Send approval email to requester
+      const User = require('../models/User');
+      const requester = await User.findById(booking.event.organizer_id);
+      if (requester && requester.email) {
+        await EmailService.sendVenueBookingApproved(
+          requester.email,
+          requester.name,
+          approvedBooking,
+          booking.venue,
+          booking.event
+        ).catch(err => console.error('Failed to send venue approval email:', err));
+      }
 
       res.json({
         success: true,

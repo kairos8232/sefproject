@@ -1,5 +1,6 @@
 const Participation = require('../models/Participation');
 const Event = require('../models/Event');
+const EmailService = require('../services/EmailService');
 
 class ParticipationController {
   // Register for an event
@@ -74,7 +75,22 @@ class ParticipationController {
       const newCount = currentCount + 1;
       if (capacityLimit && newCount >= capacityLimit) {
         await Event.update(eventId, { registration_status: 'closed' });
+        
+        // Send email to all registered participants about capacity reached
+        const participants = await Participation.getEventParticipants(eventId);
+        await EmailService.sendRegistrationClosedNotification(
+          participants.filter(p => p.status === 'registered'),
+          event,
+          'capacity'
+        ).catch(err => console.error('Failed to send capacity notification:', err));
       }
+
+      // Send confirmation email to the user
+      await EmailService.sendRegistrationConfirmation(
+        req.user.email || event.organizer?.email,
+        req.user.name || 'User',
+        event
+      ).catch(err => console.error('Failed to send registration confirmation:', err));
 
       res.status(201).json({
         message,

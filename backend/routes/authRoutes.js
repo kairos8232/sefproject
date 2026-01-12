@@ -17,6 +17,10 @@ router.post(
 // Logout route
 router.post('/logout', AuthController.logout);
 
+// 2FA routes
+router.post('/2fa/send', AuthController.send2FACode);
+router.post('/2fa/verify', AuthController.verify2FACode);
+
 // Update profile (protected route)
 router.put('/profile', AuthController.verifyToken, AuthController.updateProfile);
 

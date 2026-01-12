@@ -1,5 +1,6 @@
 const Event = require('../models/Event');
 const SystemSetting = require('../models/SystemSetting');
+const EmailService = require('../services/EmailService');
 
 class EventController {
   // UC-03: Browse Events - Get list of events
@@ -259,6 +260,17 @@ class EventController {
       // Create event
       const newEvent = await Event.create(eventData);
 
+      // Send confirmation email to organizer
+      const User = require('../models/User');
+      const organizer = await User.findById(userId);
+      if (organizer && organizer.email) {
+        await EmailService.sendEventCreatedConfirmation(
+          organizer.email,
+          organizer.name,
+          newEvent
+        ).catch(err => console.error('Failed to send event creation email:', err));
+      }
+
       res.status(201).json({
         success: true,
         message: 'Event created successfully',
@@ -302,6 +314,18 @@ class EventController {
       // Update event
       const updatedEvent = await Event.update(id, eventData);
 
+      // Send email to all registered participants if event details changed
+      if (eventData.start_datetime || eventData.end_datetime || eventData.event_name) {
+        const Participation = require('../models/Participation');
+        const participants = await Participation.getEventParticipants(id);
+        if (participants.length > 0) {
+          await EmailService.sendEventUpdatedNotification(
+            participants.filter(p => p.status === 'registered'),
+            updatedEvent
+          ).catch(err => console.error('Failed to send event update emails:', err));
+        }
+      }
+
       res.json({
         success: true,
         message: 'Event updated successfully',
@@ -329,6 +353,16 @@ class EventController {
       // Only organizer or administrator can delete event
       if (event.organizer_id !== userId && userRole !== 'administrator') {
         return res.status(403).json({ error: 'Not authorized to delete this event' });
+      }
+
+      // Notify all registered participants before deletion
+      const Participation = require('../models/Participation');
+      const participants = await Participation.getEventParticipants(eventId);
+      if (participants.length > 0) {
+        await EmailService.sendEventDeletedNotification(
+          participants.filter(p => p.status === 'registered'),
+          event.event_name
+        ).catch(err => console.error('Failed to send event deletion emails:', err));
       }
 
       // Delete event
@@ -500,6 +534,28 @@ class EventController {
 
       // Update registration status
       const updatedEvent = await Event.update(id, { registration_status: newStatus });
+
+      // Send email notifications based on status change
+      const Participation = require('../models/Participation');
+      const participants = await Participation.getEventParticipants(id);
+      
+      if (newStatus === 'closed' && participants.length > 0) {
+        // Notify participants that registration is closed
+        await EmailService.sendRegistrationClosedNotification(
+          participants.filter(p => p.status === 'registered'),
+          updatedEvent,
+          'manual'
+        ).catch(err => console.error('Failed to send registration closed emails:', err));
+      } else if (newStatus === 'open') {
+        // Notify interested users that registration reopened
+        // For now, notify existing participants (could be expanded to interested users list)
+        if (participants.length > 0) {
+          await EmailService.sendRegistrationReopenedNotification(
+            participants.map(p => p.user),
+            updatedEvent
+          ).catch(err => console.error('Failed to send registration reopened emails:', err));
+        }
+      }
 
       res.json({
         success: true,

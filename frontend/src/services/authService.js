@@ -47,6 +47,8 @@ const authService = {
     try {
       const response = await api.post('/auth/login', { email, password });
       
+      // New flow: backend sends OTP, doesn't return token yet
+      // Only store token if it exists (old flow compatibility)
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.user));

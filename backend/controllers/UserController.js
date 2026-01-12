@@ -44,7 +44,7 @@ class UserController {
         });
       }
 
-      const { name, email, password, role, faculty_id } = req.body;
+      const { name, email, password, role, faculty_id, staff_id } = req.body;
 
       // Validate required fields
       if (!name || !email || !password || !role) {
@@ -91,6 +91,10 @@ class UserController {
       if (faculty_id) {
         userData.faculty_id = faculty_id;
       }
+      
+      if (staff_id) {
+        userData.staff_id = staff_id;
+      }
 
       const newUser = await User.create(userData);
 
@@ -115,7 +119,7 @@ class UserController {
       }
 
       const { id } = req.params;
-      const { name, email, faculty_id } = req.body;
+      const { name, email, faculty_id, staff_id } = req.body;
 
       // Get existing user
       const existingUser = await User.findById(id);
@@ -146,6 +150,7 @@ class UserController {
       if (name) updates.name = name;
       if (email) updates.email = email;
       if (faculty_id !== undefined) updates.faculty_id = faculty_id;
+      if (staff_id !== undefined) updates.staff_id = staff_id;
 
       const updatedUser = await User.update(id, updates);
 

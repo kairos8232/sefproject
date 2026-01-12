@@ -3,11 +3,11 @@ import './Toast.css';
 
 function Toast({ message, type = 'success', onClose, duration = 5000, onUndo }) {
   useEffect(() => {
-    if (duration && !onUndo) {
+    if (duration) {
       const timer = setTimeout(onClose, duration);
       return () => clearTimeout(timer);
     }
-  }, [duration, onClose, onUndo]);
+  }, [duration, onClose]);
 
   const getIcon = () => {
     switch (type) {
