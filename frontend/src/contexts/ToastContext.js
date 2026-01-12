@@ -20,7 +20,7 @@ export function ToastProvider({ children }) {
       id,
       message,
       type,
-      duration: options.duration !== undefined ? options.duration : 5000,
+      duration: options.duration !== undefined ? options.duration : 3000,
       onUndo: options.onUndo,
     };
 

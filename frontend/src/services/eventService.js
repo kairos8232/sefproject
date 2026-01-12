@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -74,6 +74,16 @@ const eventService = {
     }
   },
 
+  // Cancel event (update status to cancelled)
+  cancelEvent: async (id) => {
+    try {
+      const response = await api.patch(`/events/${id}/cancel`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data?.error || 'Failed to cancel event';
+    }
+  },
+
   // Delete event
   deleteEvent: async (id) => {
     try {
@@ -99,16 +109,6 @@ const eventService = {
       return response.data;
     } catch (error) {
       throw error.response?.data?.error || 'Failed to toggle registration status';
-    }
-  },
-
-  // Cancel event (update status to cancelled)
-  cancelEvent: async (eventId) => {
-    try {
-      const response = await api.put(`/events/${eventId}`, { status: 'cancelled' });
-      return response.data;
-    } catch (error) {
-      throw error.response?.data?.error || 'Failed to cancel event';
     }
   },
 };

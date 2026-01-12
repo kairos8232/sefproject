@@ -2,6 +2,26 @@ const Event = require('../models/Event');
 const SystemSetting = require('../models/SystemSetting');
 
 class EventController {
+  // Helper: Calculate event status based on current time
+  calculateEventStatus = (event) => {
+    // Don't override cancelled status
+    if (event.status === 'cancelled') {
+      return 'cancelled';
+    }
+
+    const now = new Date();
+    const startTime = new Date(event.start_datetime);
+    const endTime = new Date(event.end_datetime);
+
+    if (now < startTime) {
+      return 'upcoming';
+    } else if (now >= startTime && now <= endTime) {
+      return 'ongoing';
+    } else {
+      return 'completed';
+    }
+  }
+
   // UC-03: Browse Events - Get list of events
   getEvents = async (req, res) => {
     try {
@@ -18,10 +38,16 @@ class EventController {
       else if (visibility) {
         events = await Event.getByVisibility(visibility);
       }
-      // Default: Get all upcoming and ongoing events
+      // Default: Get all events
       else {
         events = await Event.getAll();
       }
+
+      // Update event status based on current time for non-cancelled events
+      events = events.map(event => ({
+        ...event,
+        status: this.calculateEventStatus(event)
+      }));
 
       // Filter events based on visibility rules
       const filteredEvents = await this.filterEventsByVisibility(events, currentUser);
@@ -61,6 +87,9 @@ class EventController {
           error: 'You do not have permission to view this event' 
         });
       }
+
+      // Update event status based on current time
+      event.status = this.calculateEventStatus(event);
 
       res.json({
         success: true,
@@ -251,8 +280,23 @@ class EventController {
         const conflictType = conflict.type === 'participation' 
           ? 'you are participating in' 
           : 'you have created with venue request';
+        
+        // Format dates without seconds and in a cleaner format
+        const startDate = new Date(conflict.start);
+        const endDate = new Date(conflict.end);
+        const formatOptions = {
+          month: 'numeric',
+          day: 'numeric',
+          year: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        };
+        const startFormatted = startDate.toLocaleString('en-US', formatOptions);
+        const endFormatted = endDate.toLocaleString('en-US', formatOptions);
+        
         return res.status(409).json({ 
-          error: `Time conflict: ${conflictType} "${conflict.name}" (${new Date(conflict.start).toLocaleString()} - ${new Date(conflict.end).toLocaleString()})`
+          error: `Time conflict: ${conflictType} "${conflict.name}" (${startFormatted} - ${endFormatted})`
         });
       }
 
@@ -312,6 +356,99 @@ class EventController {
       res.status(500).json({ error: 'Failed to update event' });
     }
   }
+
+  // Cancel event (update status to cancelled)
+  cancelEvent = async (req, res) => {
+    try {
+      const eventId = req.params.id;
+      const userId = req.user.userId;
+      const userRole = req.user.role;
+      const supabase = require('../config/supabase');
+
+      // Get event to check ownership
+      const event = await Event.getById(eventId);
+      
+      if (!event) {
+        return res.status(404).json({ error: 'Event not found' });
+      }
+
+      // Only organizer or administrator can cancel event
+      if (event.organizer_id !== userId && userRole !== 'administrator') {
+        return res.status(403).json({ error: 'Not authorized to cancel this event' });
+      }
+
+      // Check if already cancelled
+      if (event.status === 'cancelled') {
+        return res.status(400).json({ error: 'Event is already cancelled' });
+      }
+
+      // Begin transaction-like operations with error tracking
+      const errors = [];
+
+      // 1. Cancel event
+      try {
+        await Event.cancel(eventId);
+      } catch (error) {
+        console.error('Failed to cancel event:', error);
+        return res.status(500).json({ 
+          error: 'Failed to cancel event',
+          details: process.env.NODE_ENV === 'development' ? error.message : undefined
+        });
+      }
+
+      // 2. Cancel all associated venue bookings
+      try {
+        const { error: venueError } = await supabase
+          .from('venue_bookings')
+          .update({ 
+            status: 'cancelled',
+            updated_at: new Date().toISOString()
+          })
+          .eq('event_id', eventId)
+          .in('status', ['pending', 'approved']);
+
+        if (venueError) throw venueError;
+      } catch (error) {
+        console.error('Error cancelling venue bookings:', error);
+        errors.push('Some venue bookings could not be cancelled');
+      }
+
+      // 3. Cancel all associated resource requests
+      try {
+        const { error: resourceError } = await supabase
+          .from('resource_requests')
+          .update({ 
+            status: 'cancelled',
+            updated_at: new Date().toISOString()
+          })
+          .eq('event_id', eventId)
+          .in('status', ['pending', 'approved']);
+
+        if (resourceError) throw resourceError;
+      } catch (error) {
+        console.error('Error cancelling resource requests:', error);
+        errors.push('Some resource requests could not be cancelled');
+      }
+
+      // Return success with any warnings
+      const message = errors.length > 0
+        ? `Event cancelled with warnings: ${errors.join(', ')}`
+        : 'Event cancelled successfully. All associated venue bookings and resource requests have been cancelled.';
+
+      res.json({
+        success: true,
+        message,
+        warnings: errors.length > 0 ? errors : undefined
+      });
+    } catch (error) {
+      console.error('Cancel event error:', error);
+      res.status(500).json({ 
+        error: 'Failed to cancel event',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  }
+
   // Delete event
   deleteEvent = async (req, res) => {
     try {

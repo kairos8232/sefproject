@@ -323,6 +323,17 @@ class ResourceRequestController {
         return res.status(404).json({ error: 'Resource request not found' });
       }
 
+      // Check if the associated event is cancelled or completed
+      if (request.event_id) {
+        const event = await Event.getById(request.event_id);
+        if (event && (event.status === 'cancelled' || event.status === 'completed')) {
+          return res.status(400).json({ 
+            error: `Cannot modify resource request for ${event.status} events`,
+            eventStatus: event.status
+          });
+        }
+      }
+
       if (request.status !== 'pending') {
         return res.status(400).json({ error: 'Can only approve pending requests' });
       }
@@ -379,6 +390,17 @@ class ResourceRequestController {
       
       if (!request) {
         return res.status(404).json({ error: 'Resource request not found' });
+      }
+
+      // Check if the associated event is cancelled or completed
+      if (request.event_id) {
+        const event = await Event.getById(request.event_id);
+        if (event && (event.status === 'cancelled' || event.status === 'completed')) {
+          return res.status(400).json({ 
+            error: `Cannot modify resource request for ${event.status} events`,
+            eventStatus: event.status
+          });
+        }
       }
 
       if (request.status !== 'pending') {
@@ -514,13 +536,7 @@ class ResourceRequestController {
       const userId = req.user.userId;
       const userRole = req.user.role;
 
-      console.log('🔍 RESOURCE ADMIN OVERRIDE DEBUG:', {
-        requestId,
-        userId,
-        userRole,
-        action: req.body.action,
-        body: req.body
-      });
+
 
       // Only administrators can override
       if (userRole !== 'administrator') {
@@ -576,14 +592,14 @@ class ResourceRequestController {
         result = await ResourceRequest.approve(requestId, userId, approval_notes);
 
       } else if (action === 'reject') {
-        console.log('❌ Processing RESOURCE REJECT action, rejection_reason:', rejection_reason);
+
         // Admin can reject even if already approved (override)
         if (!rejection_reason) {
           return res.status(400).json({ error: 'Rejection reason is required' });
         }
 
         result = await ResourceRequest.reject(requestId, userId, rejection_reason);
-        console.log('✅ Resource reject result:', result);
+
 
       } else if (action === 'modify') {
         // Admin can modify request details

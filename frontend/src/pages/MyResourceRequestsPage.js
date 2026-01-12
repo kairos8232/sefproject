@@ -32,12 +32,7 @@ function MyResourceRequestsPage() {
       const data = await resourceRequestService.getMyRequests();
       let allRequests = data.requests || [];
       
-      console.log('All requests:', allRequests);
-      console.log('Resource type filter:', resourceTypeFilter);
       if (allRequests.length > 0) {
-        console.log('Sample request:', allRequests[0]);
-        console.log('Sample resource:', allRequests[0].resource);
-        console.log('Sample category:', allRequests[0].resource?.category);
       }
       
       // Apply event name filter
@@ -49,13 +44,10 @@ function MyResourceRequestsPage() {
       
       // Apply resource type filter (match by category name)
       if (resourceTypeFilter !== 'all') {
-        console.log('Filtering by category:', resourceTypeFilter);
         allRequests = allRequests.filter(r => {
           const categoryName = r.resource?.category?.name;
-          console.log(`Request ${r.id}: category = ${categoryName}, matches = ${categoryName === resourceTypeFilter}`);
           return categoryName === resourceTypeFilter;
         });
-        console.log('After type filter:', allRequests.length, 'requests');
       }
       
       // Apply resource search filter
@@ -151,7 +143,6 @@ function MyResourceRequestsPage() {
   }, []);
 
   useEffect(() => {
-    console.log('useEffect triggered - filters changed');
     loadMyRequests();
 
     // Check for success message from navigation

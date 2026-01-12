@@ -524,6 +524,17 @@ class VenueBookingController {
         return res.status(404).json({ error: 'Booking request not found' });
       }
 
+      // Check if the associated event is cancelled or completed
+      if (booking.event_id) {
+        const event = await Event.getById(booking.event_id);
+        if (event && (event.status === 'cancelled' || event.status === 'completed')) {
+          return res.status(400).json({ 
+            error: `Cannot modify venue booking for ${event.status} events`,
+            eventStatus: event.status
+          });
+        }
+      }
+
       // Verify the booking is for a venue in the faculty manager's faculty
       if (booking.venue.faculty_id !== facultyId) {
         return res.status(403).json({ error: 'This booking is not for a venue in your faculty' });
@@ -588,6 +599,17 @@ class VenueBookingController {
 
       if (!booking) {
         return res.status(404).json({ error: 'Booking request not found' });
+      }
+
+      // Check if the associated event is cancelled or completed
+      if (booking.event_id) {
+        const event = await Event.getById(booking.event_id);
+        if (event && (event.status === 'cancelled' || event.status === 'completed')) {
+          return res.status(400).json({ 
+            error: `Cannot modify venue booking for ${event.status} events`,
+            eventStatus: event.status
+          });
+        }
       }
 
       // Verify the booking is for a venue in the faculty manager's faculty
@@ -693,7 +715,7 @@ class VenueBookingController {
       // Get current booking
       const booking = await VenueBooking.getById(bookingId);
 
-      console.log('📋 Booking found:', booking ? { id: booking.id, status: booking.status } : 'NOT FOUND');
+
 
       if (!booking) {
         return res.status(404).json({ error: 'Booking not found' });
@@ -707,7 +729,7 @@ class VenueBookingController {
       let result;
 
       if (action === 'approve') {
-        console.log('✅ Processing APPROVE action');
+
         // Admin can approve even if already approved/rejected (override)
         const adjustments = {
           approval_notes,
@@ -744,17 +766,17 @@ class VenueBookingController {
         result = await VenueBooking.adminApproveWithAdjustments(bookingId, userId, adjustments);
         
       } else if (action === 'reject') {
-        console.log('❌ Processing REJECT action, rejection_reason:', rejection_reason);
+
         // Admin can reject even if already approved (override)
         if (!rejection_reason) {
           return res.status(400).json({ error: 'Rejection reason is required' });
         }
 
         result = await VenueBooking.rejectWithReason(bookingId, userId, rejection_reason, true);
-        console.log('✅ Reject result:', result);
+
         
       } else if (action === 'modify') {
-        console.log('📝 Processing MODIFY action');
+
         // Admin can modify booking details
         const updateData = {};
 
@@ -817,7 +839,7 @@ class VenueBookingController {
         return res.status(400).json({ error: 'Invalid action. Must be approve, reject, or modify' });
       }
 
-      console.log('✅ SUCCESS - Returning result for action:', action);
+
       
       res.json({
         success: true,
@@ -825,8 +847,7 @@ class VenueBookingController {
         booking: result
       });
     } catch (error) {
-      console.error('❌ ADMIN OVERRIDE ERROR:', error);
-      console.error('Error stack:', error.stack);
+      console.error('Admin override error:', error);
       res.status(500).json({ error: error.message || 'Failed to override booking' });
     }
   }

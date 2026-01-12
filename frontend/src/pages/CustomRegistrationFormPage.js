@@ -126,9 +126,7 @@ function CustomRegistrationFormPage() {
       // If we need to create participation first, do it now
       if (requiresRegistration && !participationId) {
         try {
-          console.log('[CustomRegistrationForm] Creating participation for event:', eventId);
           const result = await participationService.register(eventId);
-          console.log('[CustomRegistrationForm] Participation created:', result);
           finalParticipationId = result.participation?.id;
           setParticipationId(finalParticipationId);
         } catch (regError) {
@@ -166,7 +164,6 @@ function CustomRegistrationFormPage() {
       });
 
       await registrationFieldService.saveResponses(eventId, finalParticipationId, responses);
-      console.log('[CustomRegistrationForm] Responses saved successfully');
       
       // Navigate back to event details page with success flag
       navigate(`/events/${eventId}`, {

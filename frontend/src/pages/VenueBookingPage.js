@@ -3,12 +3,14 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import venueBookingService from '../services/venueBookingService';
 import facultyService from '../services/facultyService';
 import { toDateTimeLocalInput, fromDateTimeLocalInput, formatDateTime } from '../utils/dateUtils';
+import { useToast } from '../contexts/ToastContext';
 import './VenueBookingPage.css';
 
 function VenueBookingPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const event = location.state?.event;
+  const { showSuccess, showError } = useToast();
 
   const [formData, setFormData] = useState({
     requested_start_datetime: event ? toDateTimeLocalInput(event.start_datetime) : '',
@@ -148,10 +150,9 @@ function VenueBookingPage() {
 
       const result = await venueBookingService.createPackage(packageData);
       
-      // Success - navigate to my events page
-      navigate('/my-events', {
-        state: { message: 'Venue package submitted successfully!' }
-      });
+      // Success - show toast and navigate to my events page
+      showSuccess('Venue package submitted successfully!');
+      navigate('/my-events');
     } catch (err) {
       console.error('Submit booking error:', err);
       setError(err.response?.data?.error || 'Failed to submit venue booking package');

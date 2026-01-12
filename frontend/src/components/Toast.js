@@ -1,12 +1,12 @@
 import React, { useEffect } from 'react';
 import './Toast.css';
 
-function Toast({ message, type = 'success', onClose, duration = 5000, onUndo }) {
+function Toast({ message, type = 'success', onClose, duration = 3000, onUndo }) {
   useEffect(() => {
-    if (duration && !onUndo) {
-      const timer = setTimeout(onClose, duration);
-      return () => clearTimeout(timer);
-    }
+    // Always auto-dismiss: 3s for regular, 5s for undo
+    const timeoutDuration = onUndo ? 5000 : (duration || 3000);
+    const timer = setTimeout(onClose, timeoutDuration);
+    return () => clearTimeout(timer);
   }, [duration, onClose, onUndo]);
 
   const getIcon = () => {

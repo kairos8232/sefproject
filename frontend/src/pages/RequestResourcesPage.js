@@ -2,12 +2,14 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import resourceRequestService from '../services/resourceRequestService';
 import { formatDateTime } from '../utils/dateUtils';
+import { useToast } from '../contexts/ToastContext';
 import './RequestResourcesPage.css';
 
 function RequestResourcesPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { event, venueBooking } = location.state || {};
+  const { showSuccess, showError } = useToast();
 
   const [resources, setResources] = useState([]);
   const [selectedResources, setSelectedResources] = useState([]);
@@ -118,9 +120,8 @@ function RequestResourcesPage() {
       await resourceRequestService.createPackage(packageData);
 
       // Show success message and navigate back to my events
-      navigate('/my-events', {
-        state: { message: 'Resource package submitted successfully!' }
-      });
+      showSuccess('Resource package submitted successfully!');
+      navigate('/my-events');
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to submit resource package');
       console.error('Submit request error:', err);

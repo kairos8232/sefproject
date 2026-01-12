@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5001/api/venue-availability';
+const API_URL = 'http://localhost:5000/api/venue-availability';
 
 // Add auth token to requests
 axios.interceptors.request.use((config) => {

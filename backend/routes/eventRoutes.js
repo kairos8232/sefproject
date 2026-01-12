@@ -21,6 +21,10 @@ router.post('/', AuthController.verifyToken, EventController.createEvent);
 // PUT /api/events/:id
 router.put('/:id', AuthController.verifyToken, EventController.updateEvent);
 
+// Cancel event (protected route)
+// PATCH /api/events/:id/cancel
+router.patch('/:id/cancel', AuthController.verifyToken, EventController.cancelEvent);
+
 // Delete event (protected route)
 // DELETE /api/events/:id
 router.delete('/:id', AuthController.verifyToken, EventController.deleteEvent);

@@ -1,7 +1,7 @@
 const supabase = require('../config/supabase');
 
 class Event {
-  // Get all events (upcoming and ongoing)
+  // Get all events (all statuses)
   static async getAll() {
     try {
       const { data, error } = await supabase
@@ -30,7 +30,6 @@ class Event {
             )
           )
         `)
-        .in('status', ['upcoming', 'ongoing'])
         .order('start_datetime', { ascending: true });
 
       if (error) throw error;
@@ -223,6 +222,48 @@ class Event {
       return data;
     } catch (error) {
       console.error('Error updating event:', error);
+      throw error;
+    }
+  }
+
+  // Cancel event (update status to cancelled)
+  static async cancel(id) {
+    try {
+      const { data, error } = await supabase
+        .from('events')
+        .update({ 
+          status: 'cancelled',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error cancelling event:', error);
+      throw error;
+    }
+  }
+
+  // Update event status (for auto-calculation persistence)
+  static async updateStatus(id, status) {
+    try {
+      const { data, error } = await supabase
+        .from('events')
+        .update({ 
+          status,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error updating event status:', error);
       throw error;
     }
   }

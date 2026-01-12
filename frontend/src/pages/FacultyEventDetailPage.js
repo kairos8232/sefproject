@@ -100,14 +100,11 @@ function FacultyEventDetailPage() {
 
   // Group venue bookings by package_id - only approved ones
   const venueBookings = (event.venue_bookings || []).filter(b => b.status === 'approved');
-  console.log('[FacultyEventDetail] Total venue bookings:', venueBookings.length);
-  console.log('[FacultyEventDetail] Venue bookings:', venueBookings);
   
   const venuePackages = {};
   const standaloneVenueBookings = [];
   
   venueBookings.forEach(booking => {
-    console.log('[FacultyEventDetail] Processing booking:', booking.id, 'package_id:', booking.package_id);
     if (booking.package_id) {
       if (!venuePackages[booking.package_id]) {
         venuePackages[booking.package_id] = [];
@@ -118,8 +115,6 @@ function FacultyEventDetailPage() {
     }
   });
   
-  console.log('[FacultyEventDetail] Venue packages:', Object.keys(venuePackages).length);
-  console.log('[FacultyEventDetail] Standalone bookings:', standaloneVenueBookings.length);
 
   const booking = event.venue_bookings?.[0]; // Keep for backward compatibility
 

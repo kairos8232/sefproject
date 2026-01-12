@@ -129,9 +129,7 @@ function CreateEventPage() {
         end_datetime: fromDateTimeLocalInput(formData.end_datetime)
       };
 
-      console.log('Creating event with data:', eventData);
       const result = await eventService.createEvent(eventData);
-      console.log('Event created successfully:', result);
       
       // Navigate to My Events with success toast and highlight new event
       navigate('/my-events', { 

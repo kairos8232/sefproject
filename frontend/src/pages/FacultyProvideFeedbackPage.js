@@ -32,8 +32,6 @@ const FacultyProvideFeedbackPage = () => {
       // Load event details
       const response = await getFacultyEventById(eventId);
       const eventData = response.event || response; // Handle both response formats
-      console.log('Event data received:', eventData);
-      console.log('Response structure:', response);
       setEvent(eventData);
       
       // Check if user already provided feedback

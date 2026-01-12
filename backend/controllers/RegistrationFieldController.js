@@ -223,8 +223,7 @@ class RegistrationFieldController {
         return res.status(400).json({ error: 'Participation ID and responses array are required' });
       }
 
-      console.log('[RegistrationField] Verifying participation:', { participationId, userId: req.user.userId, eventId });
-      console.log('[RegistrationField] Request body:', req.body);
+
 
       // Verify the participation belongs to the current user
       const { data: participation, error: participationError } = await supabase

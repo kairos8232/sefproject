@@ -320,7 +320,10 @@ function MyVenueRequestsPage() {
                     </button>
                     {booking.status === 'pending' && (
                       <button 
-                        onClick={() => setCancelModalBooking(booking)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setCancelModalBooking(booking);
+                        }}
                         className="mvr-action-button mvr-delete-button"
                         title="Cancel Request"
                       >
@@ -338,9 +341,11 @@ function MyVenueRequestsPage() {
 
       {cancelModalBooking && (
         <ConfirmModal
+          isOpen={true}
           title="Cancel Venue Booking"
           message={`Are you sure you want to cancel the venue booking for "${cancelModalBooking.event?.event_name}"? This action can be undone within 5 seconds.`}
           onConfirm={() => handleCancelBooking(cancelModalBooking.id, cancelModalBooking.event?.event_name)}
+          onClose={() => setCancelModalBooking(null)}
           onCancel={() => setCancelModalBooking(null)}
           danger
         />

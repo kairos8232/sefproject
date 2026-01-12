@@ -8,7 +8,7 @@ function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [info, setInfo] = useState('');
+  const [sessionExpiredMsg, setSessionExpiredMsg] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
@@ -18,9 +18,19 @@ function LoginPage() {
 
   useEffect(() => {
     document.title = 'Login - CESMS';
-    // Check for session expired from URL and show toast
+    
+    // Check for session expired flag in localStorage
+    const sessionExpired = localStorage.getItem('sessionExpired');
+    if (sessionExpired === 'true') {
+      setSessionExpiredMsg('Your session has expired. Please login again.');
+      showError('Your session has expired. Please login again.');
+      localStorage.removeItem('sessionExpired'); // Clear the flag
+    }
+    
+    // Check for session expired from URL (backup method)
     const params = new URLSearchParams(location.search);
     if (params.get('expired') === 'true') {
+      setSessionExpiredMsg('Your session has expired. Please login again.');
       showError('Your session has expired. Please sign in again.');
       // Clear URL params
       window.history.replaceState({}, '', '/login');
@@ -170,14 +180,15 @@ function LoginPage() {
               </div>
             </div>
 
-            {/* Info message */}
-            {info && (
-              <div className="info-message">
+            {/* Session Expired Warning */}
+            {sessionExpiredMsg && (
+              <div className="error-message" style={{ backgroundColor: '#fff3cd', color: '#856404', borderColor: '#ffc107' }}>
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
-                  <path d="M12 16V12M12 8H12.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2"/>
+                  <circle cx="12" cy="12" r="3" fill="currentColor"/>
                 </svg>
-                {info}
+                {sessionExpiredMsg}
               </div>
             )}
 

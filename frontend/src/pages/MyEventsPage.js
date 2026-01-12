@@ -17,7 +17,7 @@ function MyEventsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [highlightedEventId, setHighlightedEventId] = useState(null);
-  const [deleteModalEvent, setDeleteModalEvent] = useState(null);
+  const [cancelModalEvent, setCancelModalEvent] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
@@ -74,23 +74,15 @@ function MyEventsPage() {
       setLoading(true);
       setError('');
       
-      console.log('[MyEvents] Starting loadMyEvents, userId:', userId);
-      
       if (!userId) {
-        console.log('[MyEvents] No userId, redirecting to login');
         navigate('/login');
         return;
       }
       
       const data = await eventService.getAllEvents();
-      console.log('[MyEvents] Raw API response:', data);
-      console.log('[MyEvents] Total events from API:', data.events?.length);
-      console.log('[MyEvents] All event organizer_ids:', data.events?.map(e => ({ name: e.event_name, organizer_id: e.organizer_id })));
       
       // Filter events created by current user
       let myEvents = data.events.filter(e => e.organizer_id === userId);
-      console.log('[MyEvents] Events created by current user:', myEvents.length);
-      console.log('[MyEvents] My events:', myEvents);
       
       // Store total count before applying filter
       setTotalEvents(myEvents.length);
@@ -187,6 +179,30 @@ function MyEventsPage() {
           }
         }
       }
+      
+      // Sort events by priority: ongoing → upcoming → completed → cancelled
+      // Within each status group, sort by start_datetime
+      const statusPriority = {
+        'ongoing': 1,
+        'upcoming': 2,
+        'completed': 3,
+        'cancelled': 4
+      };
+      
+      myEvents.sort((a, b) => {
+        const priorityDiff = statusPriority[a.status] - statusPriority[b.status];
+        if (priorityDiff !== 0) {
+          return priorityDiff;
+        }
+        // Within same status, sort by start_datetime
+        // For ongoing/upcoming: earliest first
+        // For completed/cancelled: latest first
+        if (a.status === 'ongoing' || a.status === 'upcoming') {
+          return new Date(a.start_datetime) - new Date(b.start_datetime);
+        } else {
+          return new Date(b.start_datetime) - new Date(a.start_datetime);
+        }
+      });
       
       setEvents(myEvents);
       console.log('[MyEvents] Final filtered events to display:', myEvents.length);
@@ -367,45 +383,60 @@ function MyEventsPage() {
     }
   };
 
-  const handleDeleteEventClick = (event) => {
-    setDeleteModalEvent(event);
+  const handleCancelEventClick = (event) => {
+    setCancelModalEvent(event);
   };
 
-  const handleDeleteEventConfirm = async () => {
-    if (!deleteModalEvent) return;
+  const handleCancelEventConfirm = async () => {
+    if (!cancelModalEvent) return;
     
-    const eventToDelete = deleteModalEvent;
+    const eventToCancel = cancelModalEvent;
+    const originalStatus = eventToCancel.status;
+    setCancelModalEvent(null);
     
     try {
-      // Optimistically remove from UI
-      setEvents(events.filter(e => e.id !== eventToDelete.id));
+      // Optimistically update status to cancelled in UI
+      setEvents(events.map(e => 
+        e.id === eventToCancel.id 
+          ? { ...e, status: 'cancelled' } 
+          : e
+      ));
       
       // Show toast with undo option
       let undoTimeout;
-      showSuccess(`Event "${eventToDelete.event_name}" deleted successfully`, {
-        duration: 5000,
+      showSuccess(`Event "${eventToCancel.event_name}" cancelled successfully`, {
         onUndo: async () => {
           clearTimeout(undoTimeout);
-          // Restore the event in UI
-          await loadMyEvents();
-          showSuccess('Event restored');
+          // Restore the original status in UI and backend
+          setEvents(events.map(e => 
+            e.id === eventToCancel.id 
+              ? { ...e, status: originalStatus } 
+              : e
+          ));
+          try {
+            await eventService.updateEvent(eventToCancel.id, { status: originalStatus });
+            showSuccess('Event restored');
+          } catch (err) {
+            showError('Failed to restore event');
+            await loadMyEvents();
+          }
         }
       });
       
-      // Actually delete after 5 seconds
+      // Actually cancel after 5 seconds (if not undone)
       undoTimeout = setTimeout(async () => {
         try {
-          await eventService.deleteEvent(eventToDelete.id);
+          await eventService.cancelEvent(eventToCancel.id);
         } catch (err) {
-          console.error('Failed to delete event:', err);
-          showError('Failed to delete event');
+          console.error('Failed to cancel event:', err);
+          showError('Failed to cancel event');
           // Reload events to restore
           loadMyEvents();
         }
       }, 5000);
       
     } catch (err) {
-      showError(err || 'Failed to delete event');
+      showError(err || 'Failed to cancel event');
       // Reload events to restore
       loadMyEvents();
     }
@@ -627,61 +658,65 @@ function MyEventsPage() {
                       >
                         👁️
                       </button>
-                      {!eventBookings[event.id] && (
-                        <button 
-                          onClick={() => handleBookVenue(event)}
-                          className="action-button book-button"
-                          title="Book Venue"
-                        >
-                          📍
-                        </button>
+                      {event.status !== 'cancelled' && event.status !== 'completed' && (
+                        <>
+                          {!eventBookings[event.id] && (
+                            <button 
+                              onClick={() => handleBookVenue(event)}
+                              className="action-button book-button"
+                              title="Book Venue"
+                            >
+                              📍
+                            </button>
+                          )}
+                          {eventBookings[event.id] && !eventResources[event.id] && (
+                            <button 
+                              onClick={() => handleRequestResources(event)}
+                              className="action-button resource-button"
+                              title="Request Resources"
+                            >
+                              📦
+                            </button>
+                          )}
+                          {isAttendanceAvailable(event) && (
+                            <button 
+                              onClick={() => handleRecordAttendance(event)}
+                              className="action-button attendance-button"
+                              title="Record Attendance"
+                            >
+                              📋
+                            </button>
+                          )}
+                          <button 
+                            onClick={() => navigate(`/my-events/${event.id}/customize-form`)}
+                            className="action-button customize-form-button"
+                            title="Customize Registration Form"
+                          >
+                            📝
+                          </button>
+                          <button 
+                            onClick={() => handleToggleRegistration(event)}
+                            className={`action-button ${event.registration_status === 'open' ? 'close-reg-button' : 'open-reg-button'}`}
+                            title={event.registration_status === 'open' ? 'Close Registration' : 'Open Registration'}
+                          >
+                            {event.registration_status === 'open' ? '🔒' : '🔓'}
+                          </button>
+                          <button 
+                            onClick={() => handleEditEvent(event.id)}
+                            className="action-button edit-button"
+                            title="Edit Event"
+                          >
+                            ✏️
+                          </button>
+                          <button 
+                            onClick={() => handleCancelEventClick(event)}
+                            className="action-button delete-button"
+                            title="Cancel Event"
+                          >
+                            ❌
+                          </button>
+                        </>
                       )}
-                      {eventBookings[event.id] && !eventResources[event.id] && (
-                        <button 
-                          onClick={() => handleRequestResources(event)}
-                          className="action-button resource-button"
-                          title="Request Resources"
-                        >
-                          📦
-                        </button>
-                      )}
-                      {isAttendanceAvailable(event) && (
-                        <button 
-                          onClick={() => handleRecordAttendance(event)}
-                          className="action-button attendance-button"
-                          title="Record Attendance"
-                        >
-                          📋
-                        </button>
-                      )}
-                      <button 
-                        onClick={() => navigate(`/my-events/${event.id}/customize-form`)}
-                        className="action-button customize-form-button"
-                        title="Customize Registration Form"
-                      >
-                        📝
-                      </button>
-                      <button 
-                        onClick={() => handleToggleRegistration(event)}
-                        className={`action-button ${event.registration_status === 'open' ? 'close-reg-button' : 'open-reg-button'}`}
-                        title={event.registration_status === 'open' ? 'Close Registration' : 'Open Registration'}
-                      >
-                        {event.registration_status === 'open' ? '🔒' : '🔓'}
-                      </button>
-                      <button 
-                        onClick={() => handleEditEvent(event.id)}
-                        className="action-button edit-button"
-                        title="Edit Event"
-                      >
-                        ✏️
-                      </button>
-                      <button 
-                        onClick={() => handleDeleteEventClick(event)}
-                        className="action-button delete-button"
-                        title="Delete Event"
-                      >
-                        🗑️
-                      </button>
                     </td>
                   </tr>
                 ))}
@@ -691,15 +726,15 @@ function MyEventsPage() {
         </>
       )}
 
-      {/* Delete Event Confirmation Modal */}
+      {/* Cancel Event Confirmation Modal */}
       <ConfirmModal
-        isOpen={!!deleteModalEvent}
-        onClose={() => setDeleteModalEvent(null)}
-        onConfirm={handleDeleteEventConfirm}
-        title="Delete Event"
-        message={`Are you sure you want to delete "${deleteModalEvent?.event_name}"? This action can be undone within 5 seconds.`}
-        confirmText="Yes, Delete Event"
-        cancelText="Cancel"
+        isOpen={!!cancelModalEvent}
+        onClose={() => setCancelModalEvent(null)}
+        onConfirm={handleCancelEventConfirm}
+        title="Cancel Event"
+        message={`Are you sure you want to cancel "${cancelModalEvent?.event_name}"? This action can be undone within 5 seconds.`}
+        confirmText="Yes, Cancel Event"
+        cancelText="No, Keep Event"
         danger={true}
       />
     </div>

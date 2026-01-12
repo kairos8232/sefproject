@@ -28,7 +28,6 @@ const RecordAttendancePage = () => {
         return;
       }
 
-      console.log('[RecordAttendancePage] Loading event:', eventId);
 
       // Load event details
       const eventResponse = await fetch(`http://localhost:5001/api/events/${eventId}`, {
@@ -38,7 +37,6 @@ const RecordAttendancePage = () => {
         }
       });
 
-      console.log('[RecordAttendancePage] Event response status:', eventResponse.status);
 
       if (!eventResponse.ok) {
         const eventData = await eventResponse.json();
@@ -46,12 +44,10 @@ const RecordAttendancePage = () => {
       }
 
       const eventData = await eventResponse.json();
-      console.log('[RecordAttendancePage] Event loaded:', eventData.event?.event_name);
       setEvent(eventData.event);
 
       // Load participants
       const participantsUrl = `http://localhost:5001/api/participation/event/${eventId}/participants`;
-      console.log('[RecordAttendancePage] Fetching participants from:', participantsUrl);
       
       const participantsResponse = await fetch(participantsUrl, {
         headers: {
@@ -60,7 +56,6 @@ const RecordAttendancePage = () => {
         }
       });
 
-      console.log('[RecordAttendancePage] Participants response status:', participantsResponse.status);
 
       if (!participantsResponse.ok) {
         const participantsData = await participantsResponse.json();
@@ -69,7 +64,6 @@ const RecordAttendancePage = () => {
       }
 
       const participantsData = await participantsResponse.json();
-      console.log('[RecordAttendancePage] Participants loaded:', participantsData.participants?.length);
       setParticipants(participantsData.participants || []);
 
       // Initialize attendance map based on current status

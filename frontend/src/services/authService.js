@@ -33,8 +33,10 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !error.config.url.includes('/auth/login')) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      // Redirect to login with message
-      window.location.href = '/login?expired=true';
+      // Set a flag to show session expired message
+      localStorage.setItem('sessionExpired', 'true');
+      // Redirect to login
+      window.location.href = '/login';
     }
     return Promise.reject(error);
   }
