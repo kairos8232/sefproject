@@ -2,17 +2,17 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getFacultyEventById } from '../services/facultyEventService';
 import { createFeedback, updateFeedback, getUserFeedbackForEvent } from '../services/feedbackService';
+import { useToast } from '../contexts/ToastContext';
 import './FacultyProvideFeedbackPage.css';
 
 const FacultyProvideFeedbackPage = () => {
   const { eventId } = useParams();
   const navigate = useNavigate();
+  const { showSuccess, showError } = useToast();
   
   const [event, setEvent] = useState(null);
   const [existingFeedback, setExistingFeedback] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   
   const [feedbackForm, setFeedbackForm] = useState({
     venue_condition_rating: 0,
@@ -25,9 +25,24 @@ const FacultyProvideFeedbackPage = () => {
 
   const loadEventAndFeedback = useCallback(async () => {
     document.title = 'Provide Feedback - CESMS';
+    
+    // Validate eventId format
+    if (!eventId) {
+      showError('Event ID is missing');
+      setLoading(false);
+      return;
+    }
+    
+    // UUID format validation
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(eventId)) {
+      showError(`Invalid event ID format: ${eventId}`);
+      setLoading(false);
+      return;
+    }
+    
     try {
       setLoading(true);
-      setError('');
       
       // Load event details
       const response = await getFacultyEventById(eventId);
@@ -59,10 +74,10 @@ const FacultyProvideFeedbackPage = () => {
       console.error('Error loading event:', err);
       console.error('Error response:', err.response?.data);
       const errorMessage = err.response?.data?.error || err.message || 'Failed to load event information';
-      setError(errorMessage);
+      showError(errorMessage);
       setLoading(false);
     }
-  }, [eventId]);
+  }, [eventId, showError]);
 
   useEffect(() => {
     loadEventAndFeedback();
@@ -74,19 +89,16 @@ const FacultyProvideFeedbackPage = () => {
     // Validate required fields
     if (!feedbackForm.venue_condition_rating || !feedbackForm.event_organization_rating || 
         !feedbackForm.cleanliness_rating || !feedbackForm.overall_rating) {
-      setError('Please provide all ratings (1-5 stars)');
+      showError('Please provide all ratings (1-5 stars)');
       return;
     }
     
     if (!feedbackForm.comments || feedbackForm.comments.trim() === '') {
-      setError('Please provide comments');
+      showError('Please provide comments');
       return;
     }
     
     try {
-      setError('');
-      setSuccess('');
-      
       const feedbackData = {
         event_id: eventId,
         ...feedbackForm
@@ -95,21 +107,21 @@ const FacultyProvideFeedbackPage = () => {
       if (existingFeedback) {
         // Update existing feedback
         await updateFeedback(existingFeedback.id, feedbackData);
-        setSuccess('Feedback updated successfully! Redirecting...');
+        showSuccess('Feedback updated successfully!');
       } else {
         // Create new feedback
         await createFeedback(feedbackData);
-        setSuccess('Feedback submitted successfully! Redirecting...');
+        showSuccess('Feedback submitted successfully!');
       }
       
-      // Redirect back to faculty events page after 2 seconds
+      // Redirect back to faculty events page after 1 second
       setTimeout(() => {
         navigate('/faculty-events');
-      }, 2000);
+      }, 1000);
       
     } catch (err) {
       console.error('Error submitting feedback:', err);
-      setError(err.response?.data?.error || 'Failed to submit feedback');
+      showError(err.response?.data?.error || 'Failed to submit feedback');
     }
   };
 
@@ -172,32 +184,6 @@ const FacultyProvideFeedbackPage = () => {
     );
   }
 
-  if (error) {
-    return (
-      <div className="faculty-events-page">
-        <div className="page-header">
-          <div>
-            <h1>📝 Provide Feedback</h1>
-            <p>Error loading event</p>
-          </div>
-          <button onClick={() => navigate('/faculty-events')} className="back-button">
-            ← Back to Events
-          </button>
-        </div>
-        <div className="feedback-container">
-          <div className="error-message">
-            <strong>Error:</strong> {error}
-            <br /><br />
-            <small>Event ID: {eventId}</small>
-          </div>
-          <button onClick={() => navigate('/faculty-events')} className="back-button" style={{ marginTop: '20px' }}>
-            ← Back to Events
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   if (!event) {
     return (
       <div className="faculty-events-page">
@@ -249,10 +235,6 @@ const FacultyProvideFeedbackPage = () => {
             </div>
           </div>
         </div>
-
-        {/* Error/Success Messages */}
-        {error && <div className="error-message">{error}</div>}
-        {success && <div className="success-message">{success}</div>}
 
         {/* Feedback Submission Info */}
         {existingFeedback && (

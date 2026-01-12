@@ -232,6 +232,11 @@ class EventController {
       // Set organizer_id to current user
       eventData.organizer_id = userId;
 
+      // Convert empty strings to null for optional integer fields
+      if (eventData.registration_limit === '') eventData.registration_limit = null;
+      if (eventData.expected_attendees === '') eventData.expected_attendees = null;
+      if (eventData.max_participants === '') eventData.max_participants = null;
+
       // Set default visibility to campuswide if not specified
       if (!eventData.visibility) {
         eventData.visibility = 'campuswide';
@@ -320,6 +325,11 @@ class EventController {
       const { id } = req.params;
       const userId = req.user.userId;
       const eventData = req.body;
+
+      // Convert empty strings to null for optional integer fields
+      if (eventData.registration_limit === '') eventData.registration_limit = null;
+      if (eventData.expected_attendees === '') eventData.expected_attendees = null;
+      if (eventData.max_participants === '') eventData.max_participants = null;
 
       // Auto-close registration when event status changes to completed
       if (eventData.status === 'completed') {
@@ -551,6 +561,15 @@ class EventController {
       const { id } = req.params;
       const { role, facultyId } = req.user;
 
+      // Validate UUID format
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!id || !uuidRegex.test(id)) {
+        console.error('Invalid event ID format:', id);
+        return res.status(400).json({ 
+          error: `Invalid event ID format: ${id}` 
+        });
+      }
+
       // Only faculty managers can access this
       if (role !== 'faculty_manager') {
         return res.status(403).json({ 
@@ -580,7 +599,7 @@ class EventController {
     } catch (error) {
       console.error('Get faculty event details error:', error);
       res.status(500).json({ 
-        error: 'An error occurred while fetching event details' 
+        error: error.message || 'An error occurred while fetching event details' 
       });
     }
   }

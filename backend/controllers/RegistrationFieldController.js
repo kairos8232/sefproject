@@ -84,7 +84,7 @@ class RegistrationFieldController {
         return res.status(404).json({ error: 'Event not found' });
       }
 
-      if (event.created_by !== req.user.userId && req.user.role !== 'administrator') {
+      if (event.organizer_id !== req.user.userId && req.user.role !== 'administrator') {
         return res.status(403).json({ error: 'Not authorized to modify this event' });
       }
 
@@ -122,7 +122,7 @@ class RegistrationFieldController {
         return res.status(404).json({ error: 'Event not found' });
       }
 
-      if (event.created_by !== req.user.userId && req.user.role !== 'administrator') {
+      if (event.organizer_id !== req.user.userId && req.user.role !== 'administrator') {
         return res.status(403).json({ error: 'Not authorized to modify this event' });
       }
 
@@ -167,7 +167,7 @@ class RegistrationFieldController {
         return res.status(404).json({ error: 'Event not found' });
       }
 
-      if (event.created_by !== req.user.userId && req.user.role !== 'administrator') {
+      if (event.organizer_id !== req.user.userId && req.user.role !== 'administrator') {
         return res.status(403).json({ error: 'Not authorized to modify this event' });
       }
 
@@ -201,7 +201,7 @@ class RegistrationFieldController {
         return res.status(404).json({ error: 'Event not found' });
       }
 
-      if (event.created_by !== req.user.userId && req.user.role !== 'administrator') {
+      if (event.organizer_id !== req.user.userId && req.user.role !== 'administrator') {
         return res.status(403).json({ error: 'Not authorized to modify this event' });
       }
 
@@ -257,10 +257,95 @@ class RegistrationFieldController {
       
       // Validate responses
       for (const field of fields) {
+        const response = responses.find(r => r.field_id === field.id);
+        const value = response?.response_value || response?.response_values;
+        
+        // Check required
         if (field.is_required) {
-          const response = responses.find(r => r.field_id === field.id);
-          if (!response || (!response.response_value && !response.response_values)) {
+          if (!response || (!response.response_value && (!response.response_values || response.response_values.length === 0))) {
             return res.status(400).json({ error: `Field "${field.label}" is required` });
+          }
+        }
+        
+        // Apply validation_rules if present and value exists
+        if (value && field.validation_rules) {
+          const rules = field.validation_rules;
+          const fieldValue = response.response_value;
+          const fieldValues = response.response_values;
+          
+          // String validations
+          if (fieldValue && typeof fieldValue === 'string') {
+            // Min length
+            if (rules.minLength && fieldValue.length < rules.minLength) {
+              return res.status(400).json({ 
+                error: `"${field.label}" must be at least ${rules.minLength} characters` 
+              });
+            }
+            
+            // Max length
+            if (rules.maxLength && fieldValue.length > rules.maxLength) {
+              return res.status(400).json({ 
+                error: `"${field.label}" must not exceed ${rules.maxLength} characters` 
+              });
+            }
+            
+            // Pattern (regex)
+            if (rules.pattern) {
+              const regex = new RegExp(rules.pattern);
+              if (!regex.test(fieldValue)) {
+                const message = rules.message || `"${field.label}" format is invalid`;
+                return res.status(400).json({ error: message });
+              }
+            }
+            
+            // Allowed values
+            if (rules.allowed && Array.isArray(rules.allowed)) {
+              if (!rules.allowed.includes(fieldValue)) {
+                return res.status(400).json({ 
+                  error: `"${field.label}" must be one of: ${rules.allowed.join(', ')}` 
+                });
+              }
+            }
+          }
+          
+          // Number validations
+          if (fieldValue && (field.field_type === 'number' || typeof fieldValue === 'number')) {
+            const numValue = parseFloat(fieldValue);
+            
+            if (isNaN(numValue)) {
+              return res.status(400).json({ error: `"${field.label}" must be a valid number` });
+            }
+            
+            // Min value
+            if (rules.min !== undefined && numValue < rules.min) {
+              return res.status(400).json({ 
+                error: `"${field.label}" must be at least ${rules.min}` 
+              });
+            }
+            
+            // Max value
+            if (rules.max !== undefined && numValue > rules.max) {
+              return res.status(400).json({ 
+                error: `"${field.label}" must not exceed ${rules.max}` 
+              });
+            }
+          }
+          
+          // Array validations (for checkbox fields)
+          if (fieldValues && Array.isArray(fieldValues)) {
+            // Min items
+            if (rules.minItems && fieldValues.length < rules.minItems) {
+              return res.status(400).json({ 
+                error: `"${field.label}" requires at least ${rules.minItems} selection(s)` 
+              });
+            }
+            
+            // Max items
+            if (rules.maxItems && fieldValues.length > rules.maxItems) {
+              return res.status(400).json({ 
+                error: `"${field.label}" allows at most ${rules.maxItems} selection(s)` 
+              });
+            }
           }
         }
       }
@@ -309,7 +394,7 @@ class RegistrationFieldController {
         return res.status(404).json({ error: 'Event not found' });
       }
 
-      if (event.created_by !== req.user.userId && req.user.role !== 'administrator') {
+      if (event.organizer_id !== req.user.userId && req.user.role !== 'administrator') {
         return res.status(403).json({ error: 'Not authorized to view responses' });
       }
 

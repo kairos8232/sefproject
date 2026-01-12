@@ -17,6 +17,9 @@ router.post(
 // Logout route
 router.post('/logout', AuthController.logout);
 
+// Refresh access token
+router.post('/refresh', AuthController.refresh);
+
 // Update profile (protected route)
 router.put('/profile', AuthController.verifyToken, AuthController.updateProfile);
 

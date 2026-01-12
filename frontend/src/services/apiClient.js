@@ -9,6 +9,20 @@ const handleSessionExpired = () => {
   window.location.href = '/login';
 };
 
+const refreshAccessToken = async () => {
+  const response = await fetch(`${API_URL}/auth/refresh`, {
+    method: 'POST',
+    credentials: 'include'
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || !data.token) {
+    return null;
+  }
+  localStorage.setItem('token', data.token);
+  return data.token;
+};
+
 const buildUrl = (pathOrUrl) => {
   if (!pathOrUrl) {
     return API_URL;
@@ -22,6 +36,7 @@ const buildUrl = (pathOrUrl) => {
 
 const apiClient = axios.create({
   baseURL: API_URL,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -38,14 +53,40 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+let refreshPromise = null;
+
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
     const status = error.response?.status;
     const url = error.config?.url || '';
-    if (status === 401 && !url.includes('/auth/login')) {
-      handleSessionExpired();
+    const shouldSkip = url.includes('/auth/login') || url.includes('/auth/refresh');
+
+    if (status === 401 && !shouldSkip) {
+      if (!refreshPromise) {
+        refreshPromise = axios.post(
+          `${API_URL}/auth/refresh`,
+          {},
+          { withCredentials: true }
+        );
+      }
+
+      try {
+        const refreshResponse = await refreshPromise;
+        refreshPromise = null;
+        const newToken = refreshResponse.data?.token;
+        if (newToken) {
+          localStorage.setItem('token', newToken);
+          error.config.headers.Authorization = `Bearer ${newToken}`;
+          return apiClient.request(error.config);
+        }
+      } catch (refreshError) {
+        refreshPromise = null;
+        handleSessionExpired();
+        return Promise.reject(refreshError);
+      }
     }
+
     return Promise.reject(error);
   }
 );
@@ -65,9 +106,20 @@ const authFetch = async (pathOrUrl, options = {}) => {
   const response = await fetch(buildUrl(pathOrUrl), {
     ...options,
     headers,
+    credentials: 'include',
   });
 
   if (response.status === 401 && !String(pathOrUrl).includes('/auth/login')) {
+    const newToken = await refreshAccessToken();
+    if (newToken) {
+      const retryHeaders = new Headers(headers);
+      retryHeaders.set('Authorization', `Bearer ${newToken}`);
+      return fetch(buildUrl(pathOrUrl), {
+        ...options,
+        headers: retryHeaders,
+        credentials: 'include',
+      });
+    }
     handleSessionExpired();
   }
 

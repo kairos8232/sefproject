@@ -74,8 +74,11 @@ function CustomRegistrationFormPage() {
 
   const validateForm = () => {
     for (const field of fields) {
+      const value = formData[field.id];
+      const rules = field.validation_rules || {};
+      
+      // Check required
       if (field.is_required) {
-        const value = formData[field.id];
         if (field.field_type === 'checkbox') {
           if (!value || value.length === 0) {
             setError(`"${field.label}" is required`);
@@ -89,20 +92,95 @@ function CustomRegistrationFormPage() {
         }
       }
       
+      // Skip validation if no value and not required
+      if (!value || (typeof value === 'string' && value.trim() === '')) {
+        continue;
+      }
+      
       // Email validation
-      if (field.field_type === 'email' && formData[field.id]) {
+      if (field.field_type === 'email') {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(formData[field.id])) {
+        if (!emailRegex.test(value)) {
           setError(`"${field.label}" must be a valid email address`);
           return false;
         }
       }
       
       // Phone validation (basic)
-      if (field.field_type === 'phone' && formData[field.id]) {
+      if (field.field_type === 'phone') {
         const phoneRegex = /^[\d\s\-+()]+$/;
-        if (!phoneRegex.test(formData[field.id])) {
+        if (!phoneRegex.test(value)) {
           setError(`"${field.label}" must be a valid phone number`);
+          return false;
+        }
+      }
+      
+      // Apply validation_rules
+      if (typeof value === 'string') {
+        // Min length
+        if (rules.minLength && value.length < rules.minLength) {
+          setError(`"${field.label}" must be at least ${rules.minLength} characters`);
+          return false;
+        }
+        
+        // Max length
+        if (rules.maxLength && value.length > rules.maxLength) {
+          setError(`"${field.label}" must not exceed ${rules.maxLength} characters`);
+          return false;
+        }
+        
+        // Pattern (regex)
+        if (rules.pattern) {
+          const regex = new RegExp(rules.pattern);
+          if (!regex.test(value)) {
+            const message = rules.message || `"${field.label}" format is invalid`;
+            setError(message);
+            return false;
+          }
+        }
+        
+        // Allowed values
+        if (rules.allowed && Array.isArray(rules.allowed)) {
+          if (!rules.allowed.includes(value)) {
+            setError(`"${field.label}" must be one of: ${rules.allowed.join(', ')}`);
+            return false;
+          }
+        }
+      }
+      
+      // Number validations
+      if (field.field_type === 'number') {
+        const numValue = parseFloat(value);
+        
+        if (isNaN(numValue)) {
+          setError(`"${field.label}" must be a valid number`);
+          return false;
+        }
+        
+        // Min value
+        if (rules.min !== undefined && numValue < rules.min) {
+          setError(`"${field.label}" must be at least ${rules.min}`);
+          return false;
+        }
+        
+        // Max value
+        if (rules.max !== undefined && numValue > rules.max) {
+          setError(`"${field.label}" must not exceed ${rules.max}`);
+          return false;
+        }
+      }
+      
+      // Array validations (checkbox)
+      if (Array.isArray(value)) {
+        // Min items
+        if (rules.minItems && value.length < rules.minItems) {
+          setError(`"${field.label}" requires at least ${rules.minItems} selection(s)`);
+          return false;
+        }
+        
+        // Max items
+        if (rules.maxItems && value.length > rules.maxItems) {
+          setError(`"${field.label}" allows at most ${rules.maxItems} selection(s)`);
           return false;
         }
       }
@@ -183,6 +261,7 @@ function CustomRegistrationFormPage() {
 
   const renderField = (field) => {
     const value = formData[field.id];
+    const rules = field.validation_rules || {};
 
     switch (field.field_type) {
       case 'text':
@@ -192,6 +271,10 @@ function CustomRegistrationFormPage() {
             value={value || ''}
             onChange={(e) => handleInputChange(field.id, e.target.value, field.field_type)}
             required={field.is_required}
+            minLength={rules.minLength}
+            maxLength={rules.maxLength}
+            pattern={rules.pattern}
+            title={rules.message}
           />
         );
       
@@ -201,6 +284,8 @@ function CustomRegistrationFormPage() {
             value={value || ''}
             onChange={(e) => handleInputChange(field.id, e.target.value, field.field_type)}
             required={field.is_required}
+            minLength={rules.minLength}
+            maxLength={rules.maxLength}
             rows="4"
           />
         );
@@ -212,6 +297,8 @@ function CustomRegistrationFormPage() {
             value={value || ''}
             onChange={(e) => handleInputChange(field.id, e.target.value, field.field_type)}
             required={field.is_required}
+            min={rules.min}
+            max={rules.max}
           />
         );
       
@@ -222,6 +309,9 @@ function CustomRegistrationFormPage() {
             value={value || ''}
             onChange={(e) => handleInputChange(field.id, e.target.value, field.field_type)}
             required={field.is_required}
+            minLength={rules.minLength}
+            maxLength={rules.maxLength}
+            pattern={rules.pattern}
           />
         );
       
@@ -233,6 +323,9 @@ function CustomRegistrationFormPage() {
             onChange={(e) => handleInputChange(field.id, e.target.value, field.field_type)}
             required={field.is_required}
             placeholder="e.g., +60 12 345 6789"
+            minLength={rules.minLength}
+            maxLength={rules.maxLength}
+            pattern={rules.pattern}
           />
         );
       
@@ -243,6 +336,8 @@ function CustomRegistrationFormPage() {
             value={value || ''}
             onChange={(e) => handleInputChange(field.id, e.target.value, field.field_type)}
             required={field.is_required}
+            min={rules.min}
+            max={rules.max}
           />
         );
       

@@ -269,6 +269,10 @@
   margin-bottom: 5px;
 }
 
+.my-events-container .registration-status-badge {
+  margin-left: 5px;
+}
+ß
 .my-events-container .event-type-badge,
 .my-events-container .status-badge,
 .my-events-container .visibility-badge,

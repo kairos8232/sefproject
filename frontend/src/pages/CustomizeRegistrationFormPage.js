@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import registrationFieldService from '../services/registrationFieldService';
 import eventService from '../services/eventService';
+import { useToast } from '../contexts/ToastContext';
 import './CustomizeRegistrationFormPage.css';
 
 const FIELD_TYPES = [
@@ -19,14 +20,13 @@ const FIELD_TYPES = [
 function CustomizeRegistrationFormPage() {
   const { eventId } = useParams();
   const navigate = useNavigate();
+  const { showSuccess, showError } = useToast();
   
   const [event, setEvent] = useState(null);
   const [fields, setFields] = useState([]);
   const [hasRegistrations, setHasRegistrations] = useState(false);
   const [canEdit, setCanEdit] = useState(true);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingField, setEditingField] = useState(null);
@@ -42,12 +42,7 @@ function CustomizeRegistrationFormPage() {
     validation_rules: {}
   });
 
-  useEffect(() => {
-    document.title = 'Customize Registration Form - CESMS';
-    loadData();
-  }, [eventId]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       const [eventData, fieldsData] = await Promise.all([
@@ -60,11 +55,16 @@ function CustomizeRegistrationFormPage() {
       setHasRegistrations(fieldsData.hasRegistrations || false);
       setCanEdit(fieldsData.canEdit !== false);
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to load data');
+      showError(err.response?.data?.error || 'Failed to load data');
     } finally {
       setLoading(false);
     }
-  };
+  }, [eventId, showError]);
+
+  useEffect(() => {
+    document.title = 'Customize Registration Form - CESMS';
+    loadData();
+  }, [loadData]);
 
   const handleAddField = () => {
     setFieldForm({
@@ -94,10 +94,8 @@ function CustomizeRegistrationFormPage() {
 
   const handleSaveField = async () => {
     try {
-      setError('');
-      
       if (!fieldForm.label.trim()) {
-        setError('Field label is required');
+        showError('Field label is required');
         return;
       }
 
@@ -105,7 +103,7 @@ function CustomizeRegistrationFormPage() {
       if (['dropdown', 'radio', 'checkbox'].includes(fieldForm.field_type)) {
         const validOptions = fieldForm.options.filter(opt => opt.trim());
         if (validOptions.length === 0) {
-          setError('At least one option is required for this field type');
+          showError('At least one option is required for this field type');
           return;
         }
         // Create a new object to avoid mutation
@@ -113,27 +111,25 @@ function CustomizeRegistrationFormPage() {
         
         if (editingField) {
           await registrationFieldService.updateField(eventId, editingField.id, updatedForm);
-          setSuccess('Field updated successfully');
+          showSuccess('Field updated successfully');
         } else {
           await registrationFieldService.createField(eventId, updatedForm);
-          setSuccess('Field added successfully');
+          showSuccess('Field added successfully');
         }
       } else {
         if (editingField) {
           await registrationFieldService.updateField(eventId, editingField.id, fieldForm);
-          setSuccess('Field updated successfully');
+          showSuccess('Field updated successfully');
         } else {
           await registrationFieldService.createField(eventId, fieldForm);
-          setSuccess('Field added successfully');
+          showSuccess('Field added successfully');
         }
       }
       
       setShowAddModal(false);
       await loadData();
-      
-      setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to save field');
+      showError(err.response?.data?.error || 'Failed to save field');
     }
   };
 
@@ -143,13 +139,11 @@ function CustomizeRegistrationFormPage() {
     }
 
     try {
-      setError('');
       await registrationFieldService.deleteField(eventId, fieldId);
-      setSuccess('Field deleted successfully');
+      showSuccess('Field deleted successfully');
       await loadData();
-      setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to delete field');
+      showError(err.response?.data?.error || 'Failed to delete field');
     }
   };
 
@@ -183,7 +177,7 @@ function CustomizeRegistrationFormPage() {
       await registrationFieldService.reorderFields(eventId, fieldOrders);
       setDraggedIndex(null);
     } catch (err) {
-      setError('Failed to reorder fields');
+      showError('Failed to reorder fields');
       await loadData(); // Reload to reset order
     }
   };
@@ -280,9 +274,6 @@ function CustomizeRegistrationFormPage() {
           Back to My Events
         </button>
       </div>
-
-      {error && <div className="crf-error-message">{error}</div>}
-      {success && <div className="crf-success-message">{success}</div>}
 
       {hasRegistrations && (
         <div className="crf-info-message">
@@ -422,6 +413,131 @@ function CustomizeRegistrationFormPage() {
                 Required field
               </label>
             </div>
+
+            {/* Validation Rules */}
+            {['text', 'textarea', 'email', 'phone'].includes(fieldForm.field_type) && (
+              <div className="crf-form-group">
+                <label>Validation Rules (optional)</label>
+                <div className="crf-validation-inputs">
+                  <div className="crf-validation-row">
+                    <label>Min Length:</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={fieldForm.validation_rules.minLength || ''}
+                      onChange={(e) => setFieldForm({
+                        ...fieldForm,
+                        validation_rules: { ...fieldForm.validation_rules, minLength: e.target.value ? parseInt(e.target.value) : undefined }
+                      })}
+                      placeholder="e.g., 3"
+                    />
+                  </div>
+                  <div className="crf-validation-row">
+                    <label>Max Length:</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={fieldForm.validation_rules.maxLength || ''}
+                      onChange={(e) => setFieldForm({
+                        ...fieldForm,
+                        validation_rules: { ...fieldForm.validation_rules, maxLength: e.target.value ? parseInt(e.target.value) : undefined }
+                      })}
+                      placeholder="e.g., 100"
+                    />
+                  </div>
+                  <div className="crf-validation-row">
+                    <label>Pattern (regex):</label>
+                    <input
+                      type="text"
+                      value={fieldForm.validation_rules.pattern || ''}
+                      onChange={(e) => setFieldForm({
+                        ...fieldForm,
+                        validation_rules: { ...fieldForm.validation_rules, pattern: e.target.value || undefined }
+                      })}
+                      placeholder="e.g., ^[A-Z]{3}\d{6}$"
+                    />
+                  </div>
+                  <div className="crf-validation-row">
+                    <label>Custom Error Message:</label>
+                    <input
+                      type="text"
+                      value={fieldForm.validation_rules.message || ''}
+                      onChange={(e) => setFieldForm({
+                        ...fieldForm,
+                        validation_rules: { ...fieldForm.validation_rules, message: e.target.value || undefined }
+                      })}
+                      placeholder="e.g., Must be 3 letters + 6 digits"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {fieldForm.field_type === 'number' && (
+              <div className="crf-form-group">
+                <label>Validation Rules (optional)</label>
+                <div className="crf-validation-inputs">
+                  <div className="crf-validation-row">
+                    <label>Minimum Value:</label>
+                    <input
+                      type="number"
+                      value={fieldForm.validation_rules.min !== undefined ? fieldForm.validation_rules.min : ''}
+                      onChange={(e) => setFieldForm({
+                        ...fieldForm,
+                        validation_rules: { ...fieldForm.validation_rules, min: e.target.value !== '' ? parseFloat(e.target.value) : undefined }
+                      })}
+                      placeholder="e.g., 0"
+                    />
+                  </div>
+                  <div className="crf-validation-row">
+                    <label>Maximum Value:</label>
+                    <input
+                      type="number"
+                      value={fieldForm.validation_rules.max !== undefined ? fieldForm.validation_rules.max : ''}
+                      onChange={(e) => setFieldForm({
+                        ...fieldForm,
+                        validation_rules: { ...fieldForm.validation_rules, max: e.target.value !== '' ? parseFloat(e.target.value) : undefined }
+                      })}
+                      placeholder="e.g., 100"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {fieldForm.field_type === 'checkbox' && (
+              <div className="crf-form-group">
+                <label>Validation Rules (optional)</label>
+                <div className="crf-validation-inputs">
+                  <div className="crf-validation-row">
+                    <label>Min Selections:</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={fieldForm.validation_rules.minItems || ''}
+                      onChange={(e) => setFieldForm({
+                        ...fieldForm,
+                        validation_rules: { ...fieldForm.validation_rules, minItems: e.target.value ? parseInt(e.target.value) : undefined }
+                      })}
+                      placeholder="e.g., 1"
+                    />
+                  </div>
+                  <div className="crf-validation-row">
+                    <label>Max Selections:</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={fieldForm.validation_rules.maxItems || ''}
+                      onChange={(e) => setFieldForm({
+                        ...fieldForm,
+                        validation_rules: { ...fieldForm.validation_rules, maxItems: e.target.value ? parseInt(e.target.value) : undefined }
+                      })}
+                      placeholder="e.g., 3"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
 
             {['dropdown', 'radio', 'checkbox'].includes(fieldForm.field_type) && (
               <div className="crf-form-group">

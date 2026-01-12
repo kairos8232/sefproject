@@ -505,6 +505,43 @@
   font-size: 1.1rem;
 }
 
+.crf-validation-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  background: #f7fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.crf-validation-row {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  align-items: center;
+  gap: 12px;
+}
+
+.crf-validation-row label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #4a5568;
+  margin: 0;
+}
+
+.crf-validation-row input {
+  padding: 8px 12px;
+  border: 1px solid #cbd5e0;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.crf-validation-row input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
 @media (max-width: 968px) {
   .crf-form-builder-container {
     grid-template-columns: 1fr;
@@ -512,5 +549,10 @@
   
   .crf-field-type-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .crf-validation-row {
+    grid-template-columns: 1fr;
+    gap: 6px;
   }
 }

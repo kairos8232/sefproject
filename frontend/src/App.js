@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { ToastProvider } from './contexts/ToastContext';
 import LoginPage from './pages/LoginPage';
 import HomePage from './pages/HomePage';
@@ -32,11 +32,30 @@ import SystemConfigurationPage from './pages/SystemConfigurationPage';
 import BookingRequestsManagementPage from './pages/BookingRequestsManagementPage';
 import ReportsAnalyticsPage from './pages/ReportsAnalyticsPage';
 import ProtectedRoute from './components/ProtectedRoute';
+import SessionTimeoutModal from './components/SessionTimeoutModal';
+import authService from './services/authService';
 
-function App() {
+const AppContent = () => {
+  const navigate = useNavigate();
+
+  const handleExtendSession = async () => {
+    const success = await authService.refreshAccessToken();
+    if (!success) {
+      throw new Error('Failed to refresh session');
+    }
+  };
+
+  const handleLogout = async () => {
+    await authService.logout();
+    navigate('/login');
+  };
+
   return (
-    <ToastProvider>
-      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+    <>
+      <SessionTimeoutModal 
+        onExtendSession={handleExtendSession}
+        onLogout={handleLogout}
+      />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
@@ -70,7 +89,16 @@ function App() {
         <Route path="/admin/reports" element={<ProtectedRoute><ReportsAnalyticsPage /></ProtectedRoute>} />
         <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>
-    </Router>
+    </>
+  );
+};
+
+function App() {
+  return (
+    <ToastProvider>
+      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <AppContent />
+      </Router>
     </ToastProvider>
   );
 }

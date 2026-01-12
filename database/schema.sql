@@ -92,6 +92,25 @@ CREATE INDEX idx_sessions_user_id ON sessions(user_id);
 CREATE INDEX idx_sessions_expires_at ON sessions(expires_at);
 
 -- ========================================
+-- Table: refresh_tokens
+-- Stores refresh tokens for sliding sessions
+-- ========================================
+CREATE TABLE refresh_tokens (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  token_hash TEXT NOT NULL UNIQUE, -- SHA-256 hash of refresh token
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  revoked_at TIMESTAMP WITH TIME ZONE,
+  user_agent TEXT,
+  ip_address TEXT
+);
+
+CREATE INDEX idx_refresh_tokens_user_id ON refresh_tokens(user_id);
+CREATE INDEX idx_refresh_tokens_token_hash ON refresh_tokens(token_hash);
+CREATE INDEX idx_refresh_tokens_expires_at ON refresh_tokens(expires_at);
+
+-- ========================================
 -- Table: faculties
 -- Stores faculty/department information
 -- ========================================
@@ -387,6 +406,7 @@ CREATE INDEX idx_resource_requests_package_id ON resource_requests(package_id);
 -- Enable RLS on tables
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE refresh_tokens ENABLE ROW LEVEL SECURITY;
 ALTER TABLE faculties ENABLE ROW LEVEL SECURITY;
 ALTER TABLE venues ENABLE ROW LEVEL SECURITY;
 ALTER TABLE events ENABLE ROW LEVEL SECURITY;
@@ -422,6 +442,23 @@ CREATE POLICY "Backend can insert sessions" ON sessions
   WITH CHECK (true);
 
 CREATE POLICY "Backend can delete sessions" ON sessions
+  FOR DELETE
+  USING (true);
+
+-- Backend can manage all refresh_tokens
+CREATE POLICY "Backend can read all refresh_tokens" ON refresh_tokens
+  FOR SELECT
+  USING (true);
+
+CREATE POLICY "Backend can insert refresh_tokens" ON refresh_tokens
+  FOR INSERT
+  WITH CHECK (true);
+
+CREATE POLICY "Backend can update refresh_tokens" ON refresh_tokens
+  FOR UPDATE
+  USING (true);
+
+CREATE POLICY "Backend can delete refresh_tokens" ON refresh_tokens
   FOR DELETE
   USING (true);
 
@@ -2814,4 +2851,3 @@ CREATE INDEX IF NOT EXISTS idx_resource_requests_package_id ON resource_requests
 -- Add comments
 COMMENT ON COLUMN venue_bookings.package_id IS 'Groups multiple venue bookings into one package request. NULL for legacy single bookings.';
 COMMENT ON COLUMN resource_requests.package_id IS 'Groups multiple resource requests into one package request. NULL for legacy single requests.';
-

@@ -1,0 +1,151 @@
+.session-timeout-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.session-timeout-modal {
+  background: white;
+  border-radius: 12px;
+  padding: 32px;
+  max-width: 450px;
+  width: 90%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.session-timeout-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+.session-timeout-modal h2 {
+  color: #d32f2f;
+  margin: 0 0 16px 0;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.session-timeout-modal p {
+  color: #666;
+  margin: 8px 0;
+  font-size: 16px;
+}
+
+.session-timeout-timer {
+  font-size: 48px;
+  font-weight: bold;
+  color: #d32f2f;
+  margin: 20px 0;
+  font-family: 'Courier New', monospace;
+  letter-spacing: 4px;
+}
+
+.session-timeout-message {
+  margin: 20px 0;
+  font-weight: 500;
+  color: #333;
+}
+
+.session-timeout-buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  justify-content: center;
+}
+
+.session-timeout-buttons button {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 140px;
+}
+
+.btn-stay-logged-in {
+  background: #4CAF50;
+  color: white;
+}
+
+.btn-stay-logged-in:hover {
+  background: #45a049;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+}
+
+.btn-logout-now {
+  background: #f5f5f5;
+  color: #666;
+}
+
+.btn-logout-now:hover {
+  background: #e0e0e0;
+  color: #333;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Mobile responsive */
+@media (max-width: 600px) {
+  .session-timeout-modal {
+    padding: 24px;
+  }
+
+  .session-timeout-modal h2 {
+    font-size: 20px;
+  }
+
+  .session-timeout-timer {
+    font-size: 36px;
+  }
+
+  .session-timeout-buttons {
+    flex-direction: column;
+  }
+
+  .session-timeout-buttons button {
+    width: 100%;
+  }
+}

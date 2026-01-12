@@ -56,6 +56,43 @@ const authService = {
     }
   },
 
+  getTokenExpiryTime: () => {
+    const token = localStorage.getItem('token');
+    if (!token) return null;
+
+    try {
+      const payload = token.split('.')[1];
+      const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
+      const decoded = JSON.parse(atob(normalized));
+      if (!decoded?.exp) return null;
+      return decoded.exp * 1000;
+    } catch (error) {
+      return null;
+    }
+  },
+
+  refreshAccessToken: async () => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5001/api'}/auth/refresh`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+      const data = await response.json();
+      if (!response.ok || !data.token) {
+        throw new Error(data.error || 'Failed to refresh session');
+      }
+      localStorage.setItem('token', data.token);
+      
+      // Dispatch event to notify components that token was updated
+      window.dispatchEvent(new Event('tokenUpdated'));
+      
+      return true;
+    } catch (error) {
+      console.error('Token refresh error:', error);
+      return false;
+    }
+  },
+
   clearSession: (markExpired = false) => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');

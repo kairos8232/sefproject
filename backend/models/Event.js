@@ -401,6 +401,10 @@ class Event {
         .single();
 
       if (eventError) {
+        console.error('Error fetching event:', eventError);
+        console.error('Event ID:', eventId);
+        console.error('Error code:', eventError.code);
+        console.error('Error message:', eventError.message);
         if (eventError.code === 'PGRST116') {
           return null;
         }

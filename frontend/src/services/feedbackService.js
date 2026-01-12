@@ -18,7 +18,7 @@ export const getFeedbacksForEvent = async (eventId) => {
 
 // Get user's own feedback for a specific event
 export const getUserFeedbackForEvent = async (eventId) => {
-  const response = await authFetch(`/event-feedbacks/event/${eventId}/my-feedback`, {
+  const response = await authFetch(`/event-feedbacks/user-feedback/${eventId}`, {
     headers: {
       'Content-Type': 'application/json'
     }

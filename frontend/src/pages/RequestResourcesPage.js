@@ -9,7 +9,7 @@ function RequestResourcesPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { event, venueBooking } = location.state || {};
-  const { showSuccess, showError } = useToast();
+  const { showSuccess } = useToast();
 
   const [resources, setResources] = useState([]);
   const [selectedResources, setSelectedResources] = useState([]);

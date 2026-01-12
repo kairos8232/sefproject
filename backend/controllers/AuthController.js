@@ -1,8 +1,25 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const supabase = require('../config/supabase');
 const User = require('../models/User');
 const Session = require('../models/Session');
+const RefreshToken = require('../models/RefreshToken');
+
+const getCookieValue = (req, name) => {
+  const rawCookie = req.headers.cookie;
+  if (!rawCookie) return null;
+  const cookies = rawCookie.split(';').map(part => part.trim());
+  const match = cookies.find((cookie) => cookie.startsWith(`${name}=`));
+  if (!match) return null;
+  return decodeURIComponent(match.split('=').slice(1).join('='));
+};
+
+const getRefreshTokenExpiry = () => {
+  const days = parseInt(process.env.REFRESH_TOKEN_EXPIRES_DAYS, 10);
+  const effectiveDays = Number.isNaN(days) ? 7 : days;
+  return new Date(Date.now() + effectiveDays * 24 * 60 * 60 * 1000);
+};
 
 class AuthController {
   // Login method
@@ -60,6 +77,36 @@ class AuthController {
       // Create session in database aligned with JWT expiry
       await Session.createSession(user.id, user.role, token, expiresAt);
 
+      const refreshToken = crypto.randomBytes(64).toString('hex');
+      const refreshExpiresAt = getRefreshTokenExpiry();
+      
+      console.log('Creating refresh token for user:', user.id);
+      console.log('Refresh token expires at:', refreshExpiresAt);
+      
+      try {
+        const refreshTokenData = await RefreshToken.createToken({
+          userId: user.id,
+          token: refreshToken,
+          expiresAt: refreshExpiresAt,
+          userAgent: req.headers['user-agent'] || null,
+          ipAddress: req.ip || req.connection?.remoteAddress || null
+        });
+        console.log('Refresh token created successfully:', refreshTokenData?.id);
+      } catch (refreshError) {
+        console.error('Error creating refresh token:', refreshError);
+        console.error('Error details:', refreshError.message);
+        console.error('Error code:', refreshError.code);
+        // Don't fail login if refresh token creation fails
+      }
+
+      res.cookie('refresh_token', refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: refreshExpiresAt.getTime() - Date.now(),
+        path: '/api/auth'
+      });
+
       // Return success response
       res.json({
         success: true,
@@ -85,15 +132,87 @@ class AuthController {
   async logout(req, res) {
     try {
       const token = req.headers.authorization?.replace('Bearer ', '');
+      const refreshToken = getCookieValue(req, 'refresh_token');
       
       if (token) {
         await Session.deleteSession(token);
       }
 
+      if (refreshToken) {
+        await RefreshToken.revokeToken(refreshToken);
+      }
+
+      res.clearCookie('refresh_token', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/api/auth'
+      });
+
       res.json({ success: true, message: 'Logged out successfully' });
     } catch (error) {
       console.error('Logout error:', error);
       res.status(500).json({ error: 'An error occurred during logout' });
+    }
+  }
+
+  // Refresh access token using refresh token cookie
+  async refresh(req, res) {
+    try {
+      const refreshToken = getCookieValue(req, 'refresh_token');
+      if (!refreshToken) {
+        return res.status(401).json({ error: 'No refresh token provided' });
+      }
+
+      const storedToken = await RefreshToken.findValidToken(refreshToken);
+      if (!storedToken) {
+        return res.status(401).json({ error: 'Invalid or expired refresh token' });
+      }
+
+      const user = await User.findById(storedToken.user_id);
+      if (!user || user.status !== 'active') {
+        await RefreshToken.revokeToken(refreshToken);
+        return res.status(401).json({ error: 'Invalid user' });
+      }
+
+      await RefreshToken.revokeToken(refreshToken);
+
+      const token = jwt.sign(
+        { 
+          userId: user.id, 
+          role: user.role,
+          facultyId: user.faculty_id || null
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: process.env.JWT_EXPIRES_IN || '15m' }
+      );
+
+      const decodedToken = jwt.decode(token);
+      const expiresAt = decodedToken?.exp ? new Date(decodedToken.exp * 1000) : null;
+      await Session.createSession(user.id, user.role, token, expiresAt);
+
+      const newRefreshToken = crypto.randomBytes(64).toString('hex');
+      const refreshExpiresAt = getRefreshTokenExpiry();
+      await RefreshToken.createToken({
+        userId: user.id,
+        token: newRefreshToken,
+        expiresAt: refreshExpiresAt,
+        userAgent: req.headers['user-agent'] || null,
+        ipAddress: req.ip || req.connection?.remoteAddress || null
+      });
+
+      res.cookie('refresh_token', newRefreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: refreshExpiresAt.getTime() - Date.now(),
+        path: '/api/auth'
+      });
+
+      res.json({ success: true, token });
+    } catch (error) {
+      console.error('Refresh token error:', error);
+      res.status(500).json({ error: 'Failed to refresh session' });
     }
   }
 

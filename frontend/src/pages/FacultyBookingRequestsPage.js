@@ -6,7 +6,6 @@ import './FacultyBookingRequestsPage.css';
 const FacultyBookingRequestsPage = () => {
   const [bookings, setBookings] = useState([]);
   const [allBookings, setAllBookings] = useState([]); // Store all bookings for client-side filtering
-  const [venues, setVenues] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedBooking, setSelectedBooking] = useState(null);
@@ -22,7 +21,6 @@ const FacultyBookingRequestsPage = () => {
 
   // Filters
   const [statusFilter, setStatusFilter] = useState('pending');
-  const [venueFilter, setVenueFilter] = useState('');
   const [eventNameSearch, setEventNameSearch] = useState('');
   const [requesterSearch, setRequesterSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
@@ -46,7 +44,6 @@ const FacultyBookingRequestsPage = () => {
 
       const params = new URLSearchParams();
       if (statusFilter && statusFilter !== '') params.append('status', statusFilter);
-      if (venueFilter) params.append('venue_id', venueFilter);
 
       const response = await authFetch(
         `/venue-bookings/faculty/requests?${params}`,
@@ -69,7 +66,7 @@ const FacultyBookingRequestsPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [statusFilter, venueFilter, navigate]);
+  }, [statusFilter, navigate]);
 
   // Client-side filtering
   useEffect(() => {
@@ -161,17 +158,13 @@ const FacultyBookingRequestsPage = () => {
 
   const fetchVenues = useCallback(async () => {
     try {
-      const token = localStorage.getItem('token');
       const response = await authFetch('/venues', {
         headers: {
           'Content-Type': 'application/json'
         }
       });
 
-      const data = await response.json();
-      if (response.ok) {
-        setVenues(data.venues || []);
-      }
+      await response.json();
     } catch (err) {
     }
   }, []);
@@ -180,7 +173,7 @@ const FacultyBookingRequestsPage = () => {
     document.title = 'Venue Booking Requests - CESMS';
     fetchBookings();
     fetchVenues();
-  }, [fetchBookings, fetchVenues, statusFilter, venueFilter, eventNameSearch, requesterSearch, roleFilter, venueSearch, periodFilter, customStartDate, customEndDate]);
+  }, [fetchBookings, fetchVenues, statusFilter, eventNameSearch, requesterSearch, roleFilter, venueSearch, periodFilter, customStartDate, customEndDate]);
 
   const handleViewDetails = (booking) => {
     navigate(`/faculty/bookings/${booking.id}`);
@@ -352,40 +345,6 @@ const FacultyBookingRequestsPage = () => {
       hour: '2-digit',
       minute: '2-digit'
     });
-  };
-
-  const formatDateRange = (startDatetime, endDatetime) => {
-    if (!startDatetime || !endDatetime) return 'N/A';
-    
-    const start = new Date(startDatetime);
-    const end = new Date(endDatetime);
-    
-    // Check if it's the same day
-    const sameDay = start.toDateString() === end.toDateString();
-    
-    if (sameDay) {
-      return formatDate(startDatetime);
-    } else {
-      // Multi-day event
-      const startStr = start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-      const endStr = end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-      return `${startStr} - ${endStr}`;
-    }
-  };
-
-  const getTimeAgo = (datetime) => {
-    if (!datetime) return '';
-    const now = new Date();
-    const past = new Date(datetime);
-    const diffInMs = now - past;
-    const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
-    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
-    const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
-    
-    if (diffInDays > 0) return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
-    if (diffInHours > 0) return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
-    if (diffInMinutes > 0) return `${diffInMinutes} min${diffInMinutes > 1 ? 's' : ''} ago`;
-    return 'Just now';
   };
 
   return (

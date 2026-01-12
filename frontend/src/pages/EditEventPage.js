@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import eventService from '../services/eventService';
 import authService from '../services/authService';
 import { toDateTimeLocalInput, fromDateTimeLocalInput } from '../utils/dateUtils';
+import { useToast } from '../contexts/ToastContext';
 import './EditEventPage.css';
 
 const eventTypes = [
@@ -27,6 +28,7 @@ function EditEventPage() {
   const navigate = useNavigate();
   const { id } = useParams();
   const user = authService.getCurrentUser();
+  const { showSuccess, showError } = useToast();
 
   // Check if user can change visibility (only event_organizer and administrator)
   const canChangeVisibility = user.role === 'event_organizer' || user.role === 'administrator';
@@ -55,14 +57,14 @@ function EditEventPage() {
 
       // Check if user is the organizer
       if (event.organizer_id !== user.id) {
-        alert('You can only edit your own events');
+        showError('You can only edit your own events');
         navigate('/my-events');
         return;
       }
 
       // Check if event can be edited
       if (event.status === 'completed' || event.status === 'cancelled') {
-        alert('Cannot edit completed or cancelled events');
+        showError('Cannot edit completed or cancelled events');
         navigate('/my-events');
         return;
       }
@@ -88,10 +90,10 @@ function EditEventPage() {
 
       setLoading(false);
     } catch (error) {
-      alert(error || 'Failed to load event');
+      showError(error || 'Failed to load event');
       navigate('/my-events');
     }
-  }, [id, user.id, navigate]);
+  }, [id, user.id, navigate, showError]);
 
   useEffect(() => {
     document.title = 'Edit Event - CESMS';
@@ -149,6 +151,7 @@ function EditEventPage() {
     e.preventDefault();
 
     if (!validateForm()) {
+      showError('Please fix the errors in the form');
       return;
     }
 
@@ -166,10 +169,10 @@ function EditEventPage() {
 
       await eventService.updateEvent(id, eventData);
       
-      alert('Event updated successfully!');
+      showSuccess('Event updated successfully!');
       navigate('/my-events');
     } catch (error) {
-      alert(error || 'Failed to update event');
+      showError(error || 'Failed to update event');
     } finally {
       setSubmitting(false);
     }

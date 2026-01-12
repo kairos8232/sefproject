@@ -323,6 +323,21 @@ CREATE INDEX idx_sessions_token ON sessions(token);
 CREATE INDEX idx_sessions_user_id ON sessions(user_id);
 CREATE INDEX idx_sessions_expires_at ON sessions(expires_at);
 
+CREATE TABLE refresh_tokens (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token_hash TEXT NOT NULL UNIQUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    revoked_at TIMESTAMP WITH TIME ZONE,
+    user_agent TEXT,
+    ip_address TEXT
+);
+
+CREATE INDEX idx_refresh_tokens_user_id ON refresh_tokens(user_id);
+CREATE INDEX idx_refresh_tokens_token_hash ON refresh_tokens(token_hash);
+CREATE INDEX idx_refresh_tokens_expires_at ON refresh_tokens(expires_at);
+
 CREATE TABLE system_settings (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     setting_key VARCHAR(100) UNIQUE NOT NULL,
@@ -397,6 +412,7 @@ $$ LANGUAGE plpgsql;
 -- Enable RLS
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE refresh_tokens ENABLE ROW LEVEL SECURITY;
 ALTER TABLE faculties ENABLE ROW LEVEL SECURITY;
 ALTER TABLE venues ENABLE ROW LEVEL SECURITY;
 ALTER TABLE events ENABLE ROW LEVEL SECURITY;
@@ -430,6 +446,22 @@ CREATE POLICY "Backend can insert sessions" ON sessions
     WITH CHECK (true);
 
 CREATE POLICY "Backend can delete sessions" ON sessions
+    FOR DELETE
+    USING (true);
+
+CREATE POLICY "Backend can read all refresh_tokens" ON refresh_tokens
+    FOR SELECT
+    USING (true);
+
+CREATE POLICY "Backend can insert refresh_tokens" ON refresh_tokens
+    FOR INSERT
+    WITH CHECK (true);
+
+CREATE POLICY "Backend can update refresh_tokens" ON refresh_tokens
+    FOR UPDATE
+    USING (true);
+
+CREATE POLICY "Backend can delete refresh_tokens" ON refresh_tokens
     FOR DELETE
     USING (true);
 
@@ -2051,4 +2083,3 @@ VALUES
     ('faaaaaaaaaaa-ffff-ffff-ffff-ffffffffffff', 'u1000000-0000-4000-8000-00000000000c', 4, 4, 4, 4, 'Great sponsor booths. Networking was fruitful.', 'Have a dedicated networking zone with seating.', '2025-11-18 16:30:00+08');
 
 -- End of bulk test data block
-

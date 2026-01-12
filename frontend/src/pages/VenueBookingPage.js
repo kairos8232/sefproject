@@ -10,7 +10,7 @@ function VenueBookingPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const event = location.state?.event;
-  const { showSuccess, showError } = useToast();
+  const { showSuccess } = useToast();
 
   const [formData, setFormData] = useState({
     requested_start_datetime: event ? toDateTimeLocalInput(event.start_datetime) : '',
@@ -148,7 +148,7 @@ function VenueBookingPage() {
         remarks: formData.remarks || null
       };
 
-      const result = await venueBookingService.createPackage(packageData);
+      await venueBookingService.createPackage(packageData);
       
       // Success - show toast and navigate to my events page
       showSuccess('Venue package submitted successfully!');
