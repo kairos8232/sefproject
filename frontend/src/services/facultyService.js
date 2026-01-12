@@ -1,19 +1,4 @@
-import axios from 'axios';
-
-const API_URL = 'http://localhost:5000/api/faculties';
-
-const api = axios.create({
-  baseURL: API_URL,
-});
-
-// Add token to requests
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+import apiClient from './apiClient';
 
 const facultyService = {
   // Get all faculties with optional filters (admin)
@@ -22,37 +7,37 @@ const facultyService = {
     if (filters.status) params.append('status', filters.status);
     if (filters.search) params.append('search', filters.search);
     
-    const response = await api.get(`/?${params.toString()}`);
+    const response = await apiClient.get(`/faculties?${params.toString()}`);
     return response.data;
   },
 
   // Get all faculties publicly (no auth required)
   getPublicFaculties: async () => {
-    const response = await api.get('/public');
+    const response = await apiClient.get('/faculties/public');
     return response.data;
   },
 
   // Get faculty by ID
   getFacultyById: async (id) => {
-    const response = await axios.get(`${API_URL}/${id}`);
+    const response = await apiClient.get(`/faculties/${id}`);
     return response.data;
   },
 
   // Create new faculty (admin)
   createFaculty: async (facultyData) => {
-    const response = await api.post('/', facultyData);
+    const response = await apiClient.post('/faculties', facultyData);
     return response.data;
   },
 
   // Update faculty (admin)
   updateFaculty: async (facultyId, facultyData) => {
-    const response = await api.put(`/${facultyId}`, facultyData);
+    const response = await apiClient.put(`/faculties/${facultyId}`, facultyData);
     return response.data;
   },
 
   // Update faculty status (admin)
   updateFacultyStatus: async (facultyId, status) => {
-    const response = await api.put(`/${facultyId}/status`, { status });
+    const response = await apiClient.put(`/faculties/${facultyId}/status`, { status });
     return response.data;
   },
 };

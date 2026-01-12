@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import resourceRequestService from '../services/resourceRequestService';
+import { authFetch } from '../services/apiClient';
 import { formatDateTime } from '../utils/dateUtils';
 import { useToast } from '../contexts/ToastContext';
 import ConfirmModal from '../components/ConfirmModal';
@@ -129,10 +130,7 @@ function MyResourceRequestsPage() {
     // Load resource categories for dropdown
     const loadResourceCategories = async () => {
       try {
-        const token = localStorage.getItem('token');
-        const response = await fetch('http://localhost:5001/api/resource-categories', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const response = await authFetch('/resource-categories');
         const data = await response.json();
         setResourceCategories(data.categories || []);
       } catch (err) {

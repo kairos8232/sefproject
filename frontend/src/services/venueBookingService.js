@@ -1,28 +1,4 @@
-import axios from 'axios';
-
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
-
-// Create axios instance with auth interceptor
-const api = axios.create({
-  baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-// Add token to requests
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
+import apiClient from './apiClient';
 
 const venueBookingService = {
   // Check venue availability
@@ -35,67 +11,67 @@ const venueBookingService = {
     if (minCapacity) params.min_capacity = minCapacity;
     if (facultyId) params.faculty_id = facultyId;
 
-    const response = await api.get('/venue-bookings/availability', { params });
+    const response = await apiClient.get('/venue-bookings/availability', { params });
     return response.data;
   },
 
   // Get user's own bookings
   getMyBookings: async () => {
-    const response = await api.get('/venue-bookings/my-bookings');
+    const response = await apiClient.get('/venue-bookings/my-bookings');
     return response.data;
   },
 
   // Get all bookings (admin/faculty manager)
   getAllBookings: async () => {
-    const response = await api.get('/venue-bookings');
+    const response = await apiClient.get('/venue-bookings');
     return response.data;
   },
 
   // Get booking by ID
   getBookingById: async (id) => {
-    const response = await api.get(`/venue-bookings/${id}`);
+    const response = await apiClient.get(`/venue-bookings/${id}`);
     return response.data;
   },
 
   // Get bookings for specific event
   getBookingsByEvent: async (eventId) => {
-    const response = await api.get(`/venue-bookings/event/${eventId}`);
+    const response = await apiClient.get(`/venue-bookings/event/${eventId}`);
     return response.data;
   },
 
   // Create venue booking
   createBooking: async (bookingData) => {
-    const response = await api.post('/venue-bookings', bookingData);
+    const response = await apiClient.post('/venue-bookings', bookingData);
     return response.data;
   },
 
   // Create venue booking package (multiple venues)
   createPackage: async (packageData) => {
-    const response = await api.post('/venue-bookings/package', packageData);
+    const response = await apiClient.post('/venue-bookings/package', packageData);
     return response.data;
   },
 
   // Update venue booking
   updateBooking: async (id, bookingData) => {
-    const response = await api.put(`/venue-bookings/${id}`, bookingData);
+    const response = await apiClient.put(`/venue-bookings/${id}`, bookingData);
     return response.data;
   },
 
   // Cancel venue booking
   cancelBooking: async (id, cancellationReason = null) => {
-    const response = await api.post(`/venue-bookings/${id}/cancel`, { cancellation_reason: cancellationReason });
+    const response = await apiClient.post(`/venue-bookings/${id}/cancel`, { cancellation_reason: cancellationReason });
     return response.data;
   },
 
   // Approve booking (admin/faculty manager)
   approveBooking: async (id, approvalNotes = null) => {
-    const response = await api.post(`/venue-bookings/${id}/approve`, { approval_notes: approvalNotes });
+    const response = await apiClient.post(`/venue-bookings/${id}/approve`, { approval_notes: approvalNotes });
     return response.data;
   },
 
   // Reject booking (admin/faculty manager)
   rejectBooking: async (id, rejectionReason) => {
-    const response = await api.post(`/venue-bookings/${id}/reject`, { rejection_reason: rejectionReason });
+    const response = await apiClient.post(`/venue-bookings/${id}/reject`, { rejection_reason: rejectionReason });
     return response.data;
   }
 };

@@ -17,7 +17,7 @@ function EventsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filter] = useState(location.state?.filter || 'all');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('upcoming');
   const [eventTypeFilter, setEventTypeFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [visibilityFilter, setVisibilityFilter] = useState('all');
@@ -26,7 +26,7 @@ function EventsPage() {
   const [customEndDate, setCustomEndDate] = useState('');
   const [showMyRegistrations, setShowMyRegistrations] = useState(location.state?.filter === 'registered' || false);
   const [myEventsFilter, setMyEventsFilter] = useState('all'); // 'all', 'exclude', 'only'
-  const [registrationFilter, setRegistrationFilter] = useState('all'); // 'all', 'open', 'closed'
+  const [registrationFilter, setRegistrationFilter] = useState('open'); // 'all', 'open', 'closed'
 
   const userRole = currentUser?.role;
 

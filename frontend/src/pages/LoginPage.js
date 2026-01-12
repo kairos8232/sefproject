@@ -8,7 +8,6 @@ function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [sessionExpiredMsg, setSessionExpiredMsg] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
@@ -22,7 +21,6 @@ function LoginPage() {
     // Check for session expired flag in localStorage
     const sessionExpired = localStorage.getItem('sessionExpired');
     if (sessionExpired === 'true') {
-      setSessionExpiredMsg('Your session has expired. Please login again.');
       showError('Your session has expired. Please login again.');
       localStorage.removeItem('sessionExpired'); // Clear the flag
     }
@@ -30,7 +28,6 @@ function LoginPage() {
     // Check for session expired from URL (backup method)
     const params = new URLSearchParams(location.search);
     if (params.get('expired') === 'true') {
-      setSessionExpiredMsg('Your session has expired. Please login again.');
       showError('Your session has expired. Please sign in again.');
       // Clear URL params
       window.history.replaceState({}, '', '/login');
@@ -180,18 +177,6 @@ function LoginPage() {
               </div>
             </div>
 
-            {/* Session Expired Warning */}
-            {sessionExpiredMsg && (
-              <div className="error-message" style={{ backgroundColor: '#fff3cd', color: '#856404', borderColor: '#ffc107' }}>
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2"/>
-                  <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2"/>
-                  <circle cx="12" cy="12" r="3" fill="currentColor"/>
-                </svg>
-                {sessionExpiredMsg}
-              </div>
-            )}
-
             {/* Error message */}
             {error && (
               <div className="error-message">
@@ -234,7 +219,7 @@ function LoginPage() {
 
       {/* Footer */}
       <div className="page-footer">
-        <p>&copy; 2026 University. All rights reserved.</p>
+        <p>&copy; 2026 CESMS System. All rights reserved.</p>
       </div>
     </div>
   );

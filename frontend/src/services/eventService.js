@@ -1,33 +1,10 @@
-import axios from 'axios';
-
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
-
-const api = axios.create({
-  baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-// Add token to requests
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
+import apiClient from './apiClient';
 
 const eventService = {
   // Get all events (upcoming and ongoing)
   getAllEvents: async () => {
     try {
-      const response = await api.get('/events');
+      const response = await apiClient.get('/events');
       return response.data;
     } catch (error) {
       throw error.response?.data?.error || 'Failed to fetch events';
@@ -37,7 +14,7 @@ const eventService = {
   // Get event by ID
   getEventById: async (id) => {
     try {
-      const response = await api.get(`/events/${id}`);
+      const response = await apiClient.get(`/events/${id}`);
       return response.data;
     } catch (error) {
       throw error.response?.data?.error || 'Failed to fetch event details';
@@ -47,7 +24,7 @@ const eventService = {
   // Get events by status
   getEventsByStatus: async (status) => {
     try {
-      const response = await api.get(`/events?status=${status}`);
+      const response = await apiClient.get(`/events?status=${status}`);
       return response.data;
     } catch (error) {
       throw error.response?.data?.error || 'Failed to fetch events';
@@ -57,7 +34,7 @@ const eventService = {
   // Get events by visibility
   getEventsByVisibility: async (visibility) => {
     try {
-      const response = await api.get(`/events?visibility=${visibility}`);
+      const response = await apiClient.get(`/events?visibility=${visibility}`);
       return response.data;
     } catch (error) {
       throw error.response?.data?.error || 'Failed to fetch events';
@@ -67,7 +44,7 @@ const eventService = {
   // Create event
   createEvent: async (eventData) => {
     try {
-      const response = await api.post('/events', eventData);
+      const response = await apiClient.post('/events', eventData);
       return response.data;
     } catch (error) {
       throw error.response?.data?.error || 'Failed to create event';
@@ -77,7 +54,7 @@ const eventService = {
   // Cancel event (update status to cancelled)
   cancelEvent: async (id) => {
     try {
-      const response = await api.patch(`/events/${id}/cancel`);
+      const response = await apiClient.patch(`/events/${id}/cancel`);
       return response.data;
     } catch (error) {
       throw error.response?.data?.error || 'Failed to cancel event';
@@ -87,7 +64,7 @@ const eventService = {
   // Delete event
   deleteEvent: async (id) => {
     try {
-      const response = await api.delete(`/events/${id}`);
+      const response = await apiClient.delete(`/events/${id}`);
       return response.data;
     } catch (error) {
       throw error.response?.data?.error || 'Failed to delete event';
@@ -95,7 +72,7 @@ const eventService = {
   },
   updateEvent: async (eventId, eventData) => {
     try {
-      const response = await api.put(`/events/${eventId}`, eventData);
+      const response = await apiClient.put(`/events/${eventId}`, eventData);
       return response.data;
     } catch (error) {
       throw error.response?.data?.error || 'Failed to update event';
@@ -105,7 +82,7 @@ const eventService = {
   // Toggle registration status (open/close)
   toggleRegistrationStatus: async (eventId) => {
     try {
-      const response = await api.put(`/events/${eventId}/registration-status`);
+      const response = await apiClient.put(`/events/${eventId}/registration-status`);
       return response.data;
     } catch (error) {
       throw error.response?.data?.error || 'Failed to toggle registration status';

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { authFetch } from '../services/apiClient';
 import { toDateTimeLocalInput } from '../utils/dateUtils';
 import './FacultyBookingRequestDetailPage.css';
 
@@ -32,9 +33,8 @@ const FacultyBookingRequestDetailPage = () => {
         return;
       }
 
-      const response = await fetch(`http://localhost:5001/api/venue-bookings/${id}/details`, {
+      const response = await authFetch(`/venue-bookings/${id}/details`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
@@ -70,8 +70,6 @@ const FacultyBookingRequestDetailPage = () => {
     try {
       setProcessing(true);
       setError(null);
-      const token = localStorage.getItem('token');
-
       const requestBody = {
         approval_notes: approvalNotes || undefined
       };
@@ -81,10 +79,9 @@ const FacultyBookingRequestDetailPage = () => {
         requestBody.adjusted_end_datetime = adjustedEndTime;
       }
 
-      const response = await fetch(`http://localhost:5001/api/venue-bookings/${id}/approve-request`, {
+      const response = await authFetch(`/venue-bookings/${id}/approve-request`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(requestBody)
@@ -118,12 +115,9 @@ const FacultyBookingRequestDetailPage = () => {
     try {
       setProcessing(true);
       setError(null);
-      const token = localStorage.getItem('token');
-
-      const response = await fetch(`http://localhost:5001/api/venue-bookings/${id}/reject-request`, {
+      const response = await authFetch(`/venue-bookings/${id}/reject-request`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ rejection_reason: rejectionReason })

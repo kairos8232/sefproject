@@ -1,43 +1,27 @@
-import axios from 'axios';
-
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
-
-// Create axios instance with token interceptor
-const api = axios.create({
-  baseURL: API_URL,
-});
-
-// Add token to requests
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+import apiClient from './apiClient';
 
 const resourceRequestService = {
   // Get all resource requests (faculty managers only)
   getAll: async () => {
-    const response = await api.get('/resource-requests');
+    const response = await apiClient.get('/resource-requests');
     return response.data;
   },
 
   // Get user's own resource requests
   getMyRequests: async () => {
-    const response = await api.get('/resource-requests/my-requests');
+    const response = await apiClient.get('/resource-requests/my-requests');
     return response.data;
   },
 
   // Get resource requests by event
   getByEvent: async (eventId) => {
-    const response = await api.get(`/resource-requests/event/${eventId}`);
+    const response = await apiClient.get(`/resource-requests/event/${eventId}`);
     return response.data;
   },
 
   // Get resource request by ID
   getById: async (id) => {
-    const response = await api.get(`/resource-requests/${id}`);
+    const response = await apiClient.get(`/resource-requests/${id}`);
     return response.data;
   },
 
@@ -50,31 +34,31 @@ const resourceRequestService = {
     if (category) {
       params.category = category;
     }
-    const response = await api.get('/resource-requests/availability', { params });
+    const response = await apiClient.get('/resource-requests/availability', { params });
     return response.data;
   },
 
   // Create resource request
   create: async (requestData) => {
-    const response = await api.post('/resource-requests', requestData);
+    const response = await apiClient.post('/resource-requests', requestData);
     return response.data;
   },
 
   // Create resource request package (multiple resources)
   createPackage: async (packageData) => {
-    const response = await api.post('/resource-requests/package', packageData);
+    const response = await apiClient.post('/resource-requests/package', packageData);
     return response.data;
   },
 
   // Update resource request
   update: async (id, updateData) => {
-    const response = await api.put(`/resource-requests/${id}`, updateData);
+    const response = await apiClient.put(`/resource-requests/${id}`, updateData);
     return response.data;
   },
 
   // Approve resource request
   approve: async (id, approvalNotes = null) => {
-    const response = await api.post(`/resource-requests/${id}/approve`, {
+    const response = await apiClient.post(`/resource-requests/${id}/approve`, {
       approval_notes: approvalNotes,
     });
     return response.data;
@@ -82,7 +66,7 @@ const resourceRequestService = {
 
   // Reject resource request
   reject: async (id, rejectionReason) => {
-    const response = await api.post(`/resource-requests/${id}/reject`, {
+    const response = await apiClient.post(`/resource-requests/${id}/reject`, {
       rejection_reason: rejectionReason,
     });
     return response.data;
@@ -90,7 +74,7 @@ const resourceRequestService = {
 
   // Cancel resource request
   cancel: async (id, cancellationReason = null) => {
-    const response = await api.post(`/resource-requests/${id}/cancel`, {
+    const response = await apiClient.post(`/resource-requests/${id}/cancel`, {
       cancellation_reason: cancellationReason,
     });
     return response.data;
@@ -98,7 +82,7 @@ const resourceRequestService = {
 
   // Delete resource request
   delete: async (id) => {
-    const response = await api.delete(`/resource-requests/${id}`);
+    const response = await apiClient.delete(`/resource-requests/${id}`);
     return response.data;
   },
 };

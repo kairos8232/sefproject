@@ -2,11 +2,11 @@ const supabase = require('../config/supabase');
 
 class Session {
   // Create new session
-  static async createSession(userId, role, token) {
+  static async createSession(userId, role, token, expiresAt = null) {
     try {
-      const expiresAt = new Date();
-      // 15 minutes expiry for browser sessions
-      expiresAt.setMinutes(expiresAt.getMinutes() + 15);
+      const computedExpiry = expiresAt instanceof Date
+        ? expiresAt
+        : new Date(Date.now() + 15 * 60 * 1000);
 
       const { data, error } = await supabase
         .from('sessions')
@@ -14,7 +14,7 @@ class Session {
           user_id: userId,
           role: role,
           token: token,
-          expires_at: expiresAt.toISOString()
+          expires_at: computedExpiry.toISOString()
         }])
         .select()
         .single();

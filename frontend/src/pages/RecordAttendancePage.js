@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { authFetch } from '../services/apiClient';
 import './RecordAttendancePage.css';
 
 const RecordAttendancePage = () => {
@@ -30,9 +31,8 @@ const RecordAttendancePage = () => {
 
 
       // Load event details
-      const eventResponse = await fetch(`http://localhost:5001/api/events/${eventId}`, {
+      const eventResponse = await authFetch(`/events/${eventId}`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
@@ -47,14 +47,14 @@ const RecordAttendancePage = () => {
       setEvent(eventData.event);
 
       // Load participants
-      const participantsUrl = `http://localhost:5001/api/participation/event/${eventId}/participants`;
-      
-      const participantsResponse = await fetch(participantsUrl, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+      const participantsResponse = await authFetch(
+        `/participation/event/${eventId}/participants`,
+        {
+          headers: {
+            'Content-Type': 'application/json'
+          }
         }
-      });
+      );
 
 
       if (!participantsResponse.ok) {
@@ -114,20 +114,17 @@ const RecordAttendancePage = () => {
       setError('');
       setSuccess('');
       
-      const token = localStorage.getItem('token');
-
       // Prepare attendance updates
       const attendanceUpdates = Object.keys(attendanceMap).map(participationId => ({
         participationId,
         attended: attendanceMap[participationId]
       }));
 
-      const response = await fetch(
-        `http://localhost:5001/api/participation/event/${eventId}/record-attendance`,
+      const response = await authFetch(
+        `/participation/event/${eventId}/record-attendance`,
         {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({ attendanceUpdates })

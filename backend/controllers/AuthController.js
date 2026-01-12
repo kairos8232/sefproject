@@ -54,8 +54,11 @@ class AuthController {
         { expiresIn: process.env.JWT_EXPIRES_IN || '15m' }
       );
 
-      // Create session in database
-      await Session.createSession(user.id, user.role, token);
+      const decodedToken = jwt.decode(token);
+      const expiresAt = decodedToken?.exp ? new Date(decodedToken.exp * 1000) : null;
+
+      // Create session in database aligned with JWT expiry
+      await Session.createSession(user.id, user.role, token, expiresAt);
 
       // Return success response
       res.json({

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getBlockedSlots, createBlock, updateBlock, deleteBlock } from '../services/venueAvailabilityService';
 import { toDateTimeLocalInput, fromDateTimeLocalInput, formatDateTime } from '../utils/dateUtils';
-import axios from 'axios';
+import apiClient from '../services/apiClient';
 import './VenueAvailabilityPage.css';
 
 function VenueAvailabilityPage() {
@@ -28,10 +28,7 @@ function VenueAvailabilityPage() {
 
   const loadVenues = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:5001/api/venues', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await apiClient.get('/venues');
       if (response.data.success) {
         setVenues(response.data.venues);
       }
@@ -56,10 +53,7 @@ function VenueAvailabilityPage() {
 
   const loadBookings = useCallback(async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:5001/api/venue-bookings', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await apiClient.get('/venue-bookings');
       if (response.data.success) {
         const allBookings = response.data.bookings || [];
         const approvedBookings = allBookings.filter(
@@ -71,10 +65,7 @@ function VenueAvailabilityPage() {
       console.error('Error loading bookings:', err);
       // If endpoint doesn't exist, try alternative endpoint
       try {
-        const token = localStorage.getItem('token');
-        const altResponse = await axios.get('http://localhost:5001/api/faculty-events/bookings', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const altResponse = await apiClient.get('/faculty-events/bookings');
         if (altResponse.data.success) {
           const approvedBookings = altResponse.data.bookings.filter(
             booking => booking.status === 'approved' || booking.booking_status === 'approved'

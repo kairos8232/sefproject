@@ -1,53 +1,11 @@
-import axios from 'axios';
-
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
-
-// Create axios instance
-const api = axios.create({
-  baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-// Add token to requests
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
-
-// Handle session expiration
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    // UC-02 Alternate Flow: Session expired
-    // Only redirect if it's a 401 on authenticated endpoints (not login itself)
-    if (error.response?.status === 401 && !error.config.url.includes('/auth/login')) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      // Set a flag to show session expired message
-      localStorage.setItem('sessionExpired', 'true');
-      // Redirect to login
-      window.location.href = '/login';
-    }
-    return Promise.reject(error);
-  }
-);
+import apiClient from './apiClient';
 
 // Authentication service
 const authService = {
   // login(email, password) - corresponds to UI -> C: login(email, password)
   login: async (email, password) => {
     try {
-      const response = await api.post('/auth/login', { email, password });
+      const response = await apiClient.post('/auth/login', { email, password });
       
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);
@@ -63,7 +21,7 @@ const authService = {
   logout: async () => {
     try {
       // UC-02: Invalidate session and clear session data
-      await api.post('/auth/logout');
+      await apiClient.post('/auth/logout');
     } catch (error) {
       // Even if API call fails, clear local data
       console.error('Logout error:', error);
@@ -81,6 +39,29 @@ const authService = {
 
   isAuthenticated: () => {
     return !!localStorage.getItem('token');
+  },
+
+  isTokenExpired: () => {
+    const token = localStorage.getItem('token');
+    if (!token) return true;
+
+    try {
+      const payload = token.split('.')[1];
+      const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
+      const decoded = JSON.parse(atob(normalized));
+      if (!decoded?.exp) return true;
+      return Date.now() >= decoded.exp * 1000;
+    } catch (error) {
+      return true;
+    }
+  },
+
+  clearSession: (markExpired = false) => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    if (markExpired) {
+      localStorage.setItem('sessionExpired', 'true');
+    }
   }
 };
 

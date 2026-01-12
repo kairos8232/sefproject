@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { authFetch } from '../services/apiClient';
 import './FacultyBookingRequestsPage.css';
 
 const FacultyBookingRequestsPage = () => {
@@ -47,14 +48,14 @@ const FacultyBookingRequestsPage = () => {
       if (statusFilter && statusFilter !== '') params.append('status', statusFilter);
       if (venueFilter) params.append('venue_id', venueFilter);
 
-      const url = `http://localhost:5001/api/venue-bookings/faculty/requests?${params}`;
-
-      const response = await fetch(url, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+      const response = await authFetch(
+        `/venue-bookings/faculty/requests?${params}`,
+        {
+          headers: {
+            'Content-Type': 'application/json'
+          }
         }
-      });
+      );
 
       const data = await response.json();
 
@@ -161,9 +162,8 @@ const FacultyBookingRequestsPage = () => {
   const fetchVenues = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5001/api/venues', {
+      const response = await authFetch('/venues', {
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
@@ -191,8 +191,6 @@ const FacultyBookingRequestsPage = () => {
 
     try {
       setProcessing(true);
-      const token = localStorage.getItem('token');
-
       const requestBody = {
         approval_notes: approvalNotes || null
       };
@@ -203,10 +201,9 @@ const FacultyBookingRequestsPage = () => {
         requestBody.approved_end_datetime = adjustedEndTime;
       }
 
-      const response = await fetch(`http://localhost:5001/api/venue-bookings/${selectedBooking.id}/approve-request`, {
+      const response = await authFetch(`/venue-bookings/${selectedBooking.id}/approve-request`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(requestBody)
@@ -243,12 +240,9 @@ const FacultyBookingRequestsPage = () => {
 
     try {
       setProcessing(true);
-      const token = localStorage.getItem('token');
-
-      const response = await fetch(`http://localhost:5001/api/venue-bookings/${selectedBooking.id}/reject-request`, {
+      const response = await authFetch(`/venue-bookings/${selectedBooking.id}/reject-request`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ rejection_reason: rejectionReason })

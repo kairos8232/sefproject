@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import authService from '../services/authService';
+import { authFetch } from '../services/apiClient';
 import { useToast } from '../contexts/ToastContext';
 import './EditProfilePage.css';
 
@@ -61,12 +62,10 @@ function EditProfilePage() {
         return;
       }
 
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5001/api/auth/change-password`, {
+      const response = await authFetch('/auth/change-password', {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           currentPassword: passwordData.currentPassword,

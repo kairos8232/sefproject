@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { authFetch } from '../services/apiClient';
 import './ReportsAnalyticsPage.css';
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
@@ -45,10 +46,7 @@ function ReportsAnalyticsPage() {
   
   const loadFaculties = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5001/api/faculties', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const response = await authFetch('/faculties');
       const data = await response.json();
       console.log('Faculties response:', data);
       if (data.success) {
@@ -62,10 +60,7 @@ function ReportsAnalyticsPage() {
   
   const loadVenues = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5001/api/venues', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const response = await authFetch('/venues');
       const data = await response.json();
       console.log('Venues response:', data);
       if (data.success) {
@@ -79,10 +74,7 @@ function ReportsAnalyticsPage() {
   
   const loadResourceTypes = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5001/api/resource-types', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const response = await authFetch('/resource-types');
       const data = await response.json();
       console.log('Resource types response:', data);
       if (data.success) {
@@ -149,7 +141,6 @@ function ReportsAnalyticsPage() {
         return;
       }
       
-      const token = localStorage.getItem('token');
       const params = new URLSearchParams({
         startDate: dateValues.startDate,
         endDate: dateValues.endDate
@@ -197,7 +188,7 @@ function ReportsAnalyticsPage() {
           endpoint = 'event-summary';
       }
       
-      const apiUrl = `http://localhost:5001/api/reports/${endpoint}?${params.toString()}`;
+      const apiUrl = `/reports/${endpoint}?${params.toString()}`;
       
       console.log('Generating report with URL:', apiUrl);
       console.log('Parameters:', {
@@ -209,9 +200,7 @@ function ReportsAnalyticsPage() {
         dateRange
       });
       
-      const response = await fetch(apiUrl, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const response = await authFetch(apiUrl);
       
       const data = await response.json();
       

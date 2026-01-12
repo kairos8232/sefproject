@@ -31,6 +31,7 @@ import ResourceCataloguePage from './pages/ResourceCataloguePage';
 import SystemConfigurationPage from './pages/SystemConfigurationPage';
 import BookingRequestsManagementPage from './pages/BookingRequestsManagementPage';
 import ReportsAnalyticsPage from './pages/ReportsAnalyticsPage';
+import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
   return (
@@ -38,35 +39,35 @@ function App() {
       <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/home" element={<HomePage />} />
-        <Route path="/profile" element={<EditProfilePage />} />
-        <Route path="/my-calendar" element={<MyCalendarPage />} />
-        <Route path="/events" element={<EventsPage />} />
-        <Route path="/events/:id" element={<EventDetailsPage />} />
-        <Route path="/events/:id/edit" element={<EditEventPage />} />
-        <Route path="/my-events" element={<MyEventsPage />} />
-        <Route path="/my-events/:eventId/attendance" element={<RecordAttendancePage />} />
-        <Route path="/my-events/:eventId/customize-form" element={<CustomizeRegistrationFormPage />} />
-        <Route path="/events/:eventId/register-form" element={<CustomRegistrationFormPage />} />
-        <Route path="/my-venue-requests" element={<MyVenueRequestsPage />} />
-        <Route path="/my-resource-requests" element={<MyResourceRequestsPage />} />
-        <Route path="/resource-requests/:id" element={<ResourceRequestDetailsPage />} />
-        <Route path="/create-event" element={<CreateEventPage />} />
-        <Route path="/venue-booking" element={<VenueBookingPage />} />
-        <Route path="/venue-bookings/:id" element={<VenueBookingDetailsPage />} />
-        <Route path="/request-resources" element={<RequestResourcesPage />} />
-        <Route path="/faculty-events" element={<FacultyEventsPage />} />
-        <Route path="/faculty-events/:id" element={<FacultyEventDetailPage />} />
-        <Route path="/faculty-events/:eventId/feedback" element={<FacultyProvideFeedbackPage />} />
-        <Route path="/faculty/bookings" element={<FacultyBookingRequestsPage />} />
-        <Route path="/faculty/bookings/:id" element={<FacultyBookingRequestDetailPage />} />
-        <Route path="/venue-availability" element={<VenueAvailabilityPage />} />
-        <Route path="/admin/users" element={<UserManagementPage />} />
-        <Route path="/admin/faculties" element={<FacultyVenueManagementPage />} />
-        <Route path="/admin/resources" element={<ResourceCataloguePage />} />
-        <Route path="/admin/system-configuration" element={<SystemConfigurationPage />} />
-        <Route path="/admin/booking-requests" element={<BookingRequestsManagementPage />} />
-        <Route path="/admin/reports" element={<ReportsAnalyticsPage />} />
+        <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute><EditProfilePage /></ProtectedRoute>} />
+        <Route path="/my-calendar" element={<ProtectedRoute><MyCalendarPage /></ProtectedRoute>} />
+        <Route path="/events" element={<ProtectedRoute><EventsPage /></ProtectedRoute>} />
+        <Route path="/events/:id" element={<ProtectedRoute><EventDetailsPage /></ProtectedRoute>} />
+        <Route path="/events/:id/edit" element={<ProtectedRoute><EditEventPage /></ProtectedRoute>} />
+        <Route path="/my-events" element={<ProtectedRoute><MyEventsPage /></ProtectedRoute>} />
+        <Route path="/my-events/:eventId/attendance" element={<ProtectedRoute><RecordAttendancePage /></ProtectedRoute>} />
+        <Route path="/my-events/:eventId/customize-form" element={<ProtectedRoute><CustomizeRegistrationFormPage /></ProtectedRoute>} />
+        <Route path="/events/:eventId/register-form" element={<ProtectedRoute><CustomRegistrationFormPage /></ProtectedRoute>} />
+        <Route path="/my-venue-requests" element={<ProtectedRoute><MyVenueRequestsPage /></ProtectedRoute>} />
+        <Route path="/my-resource-requests" element={<ProtectedRoute><MyResourceRequestsPage /></ProtectedRoute>} />
+        <Route path="/resource-requests/:id" element={<ProtectedRoute><ResourceRequestDetailsPage /></ProtectedRoute>} />
+        <Route path="/create-event" element={<ProtectedRoute><CreateEventPage /></ProtectedRoute>} />
+        <Route path="/venue-booking" element={<ProtectedRoute><VenueBookingPage /></ProtectedRoute>} />
+        <Route path="/venue-bookings/:id" element={<ProtectedRoute><VenueBookingDetailsPage /></ProtectedRoute>} />
+        <Route path="/request-resources" element={<ProtectedRoute><RequestResourcesPage /></ProtectedRoute>} />
+        <Route path="/faculty-events" element={<ProtectedRoute><FacultyEventsPage /></ProtectedRoute>} />
+        <Route path="/faculty-events/:id" element={<ProtectedRoute><FacultyEventDetailPage /></ProtectedRoute>} />
+        <Route path="/faculty-events/:eventId/feedback" element={<ProtectedRoute><FacultyProvideFeedbackPage /></ProtectedRoute>} />
+        <Route path="/faculty/bookings" element={<ProtectedRoute><FacultyBookingRequestsPage /></ProtectedRoute>} />
+        <Route path="/faculty/bookings/:id" element={<ProtectedRoute><FacultyBookingRequestDetailPage /></ProtectedRoute>} />
+        <Route path="/venue-availability" element={<ProtectedRoute><VenueAvailabilityPage /></ProtectedRoute>} />
+        <Route path="/admin/users" element={<ProtectedRoute><UserManagementPage /></ProtectedRoute>} />
+        <Route path="/admin/faculties" element={<ProtectedRoute><FacultyVenueManagementPage /></ProtectedRoute>} />
+        <Route path="/admin/resources" element={<ProtectedRoute><ResourceCataloguePage /></ProtectedRoute>} />
+        <Route path="/admin/system-configuration" element={<ProtectedRoute><SystemConfigurationPage /></ProtectedRoute>} />
+        <Route path="/admin/booking-requests" element={<ProtectedRoute><BookingRequestsManagementPage /></ProtectedRoute>} />
+        <Route path="/admin/reports" element={<ProtectedRoute><ReportsAnalyticsPage /></ProtectedRoute>} />
         <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>
     </Router>

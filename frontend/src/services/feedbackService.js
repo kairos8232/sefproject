@@ -1,12 +1,9 @@
-// Event Feedback Service
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
+import { authFetch } from './apiClient';
 
 // Get all feedbacks for an event (for faculty viewing all feedbacks)
 export const getFeedbacksForEvent = async (eventId) => {
-  const token = localStorage.getItem('token');
-  const response = await fetch(`${API_URL}/event-feedbacks/event/${eventId}`, {
+  const response = await authFetch(`/event-feedbacks/event/${eventId}`, {
     headers: {
-      'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
     }
   });
@@ -21,10 +18,8 @@ export const getFeedbacksForEvent = async (eventId) => {
 
 // Get user's own feedback for a specific event
 export const getUserFeedbackForEvent = async (eventId) => {
-  const token = localStorage.getItem('token');
-  const response = await fetch(`${API_URL}/event-feedbacks/event/${eventId}/my-feedback`, {
+  const response = await authFetch(`/event-feedbacks/event/${eventId}/my-feedback`, {
     headers: {
-      'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
     }
   });
@@ -39,11 +34,9 @@ export const getUserFeedbackForEvent = async (eventId) => {
 
 // Create new feedback
 export const createFeedback = async (feedbackData) => {
-  const token = localStorage.getItem('token');
-  const response = await fetch(`${API_URL}/event-feedbacks`, {
+  const response = await authFetch('/event-feedbacks', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
     },
     body: JSON.stringify(feedbackData)
@@ -59,11 +52,9 @@ export const createFeedback = async (feedbackData) => {
 
 // Update existing feedback
 export const updateFeedback = async (feedbackId, feedbackData) => {
-  const token = localStorage.getItem('token');
-  const response = await fetch(`${API_URL}/event-feedbacks/${feedbackId}`, {
+  const response = await authFetch(`/event-feedbacks/${feedbackId}`, {
     method: 'PUT',
     headers: {
-      'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
     },
     body: JSON.stringify(feedbackData)
@@ -79,11 +70,9 @@ export const updateFeedback = async (feedbackId, feedbackData) => {
 
 // Delete feedback
 export const deleteFeedback = async (feedbackId) => {
-  const token = localStorage.getItem('token');
-  const response = await fetch(`${API_URL}/event-feedbacks/${feedbackId}`, {
+  const response = await authFetch(`/event-feedbacks/${feedbackId}`, {
     method: 'DELETE',
     headers: {
-      'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
     }
   });

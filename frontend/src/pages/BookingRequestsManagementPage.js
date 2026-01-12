@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import adminOverrideService from '../services/adminOverrideService';
+import { authFetch } from '../services/apiClient';
 import { formatDateTime, toDateTimeLocalInput, fromDateTimeLocalInput } from '../utils/dateUtils';
 import CalendarView from '../components/CalendarView';
 import { useToast } from '../contexts/ToastContext';
@@ -94,14 +95,8 @@ const BookingRequestsManagementPage = () => {
   useEffect(() => {
     const loadVenuesAndResources = async () => {
       try {
-        const token = localStorage.getItem('token');
-        
         // Load faculties first
-        const facultiesResponse = await fetch('http://localhost:5001/api/faculties', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        const facultiesResponse = await authFetch('/faculties');
         const facultiesData = await facultiesResponse.json();
         const facultiesArray = facultiesData.faculties || [];
         setFaculties(facultiesArray);
@@ -109,11 +104,7 @@ const BookingRequestsManagementPage = () => {
           setSelectedFaculty(facultiesArray[0].id);
         }
         
-        const venuesResponse = await fetch('http://localhost:5001/api/venues', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        const venuesResponse = await authFetch('/venues');
         const venuesData = await venuesResponse.json();
         setVenues(venuesData.venues || []);
         if (venuesData.venues && venuesData.venues.length > 0 && !selectedVenue) {
@@ -127,11 +118,7 @@ const BookingRequestsManagementPage = () => {
           }
         }
 
-        const resourcesResponse = await fetch('http://localhost:5001/api/resource-types', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        const resourcesResponse = await authFetch('/resource-types');
         const resourcesData = await resourcesResponse.json();
         setResources(resourcesData.resourceTypes || []);
         if (resourcesData.resourceTypes && resourcesData.resourceTypes.length > 0 && !selectedResource) {
@@ -150,10 +137,7 @@ const BookingRequestsManagementPage = () => {
         // Load venue availability blocks
         const loadVenueBlocks = async () => {
           try {
-            const token = localStorage.getItem('token');
-            const response = await fetch('http://localhost:5001/api/venue-availability/blocks', {
-              headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const response = await authFetch('/venue-availability/blocks');
             const data = await response.json();
             if (data.success) {
               setVenueBlocks(data.blocks || []);
