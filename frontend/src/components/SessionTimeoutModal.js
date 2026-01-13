@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import './SessionTimeoutModal.css';
 
 const SessionTimeoutModal = ({ onExtendSession, onLogout }) => {
   const [showModal, setShowModal] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(0);
-  const [warningTimeoutId, setWarningTimeoutId] = useState(null);
-  const [logoutTimeoutId, setLogoutTimeoutId] = useState(null);
+  const warningTimeoutRef = useRef(null);
+  const logoutTimeoutRef = useRef(null);
 
   const getTokenExpiry = useCallback(() => {
     const token = localStorage.getItem('token');
@@ -21,9 +21,20 @@ const SessionTimeoutModal = ({ onExtendSession, onLogout }) => {
   }, []);
 
   const clearTimeouts = useCallback(() => {
-    if (warningTimeoutId) clearTimeout(warningTimeoutId);
-    if (logoutTimeoutId) clearTimeout(logoutTimeoutId);
-  }, [warningTimeoutId, logoutTimeoutId]);
+    if (warningTimeoutRef.current) {
+      clearTimeout(warningTimeoutRef.current);
+      warningTimeoutRef.current = null;
+    }
+    if (logoutTimeoutRef.current) {
+      clearTimeout(logoutTimeoutRef.current);
+      logoutTimeoutRef.current = null;
+    }
+  }, []);
+
+  const handleAutoLogout = useCallback(() => {
+    setShowModal(false);
+    onLogout();
+  }, [onLogout]);
 
   const setupTimeouts = useCallback(() => {
     clearTimeouts();
@@ -39,36 +50,28 @@ const SessionTimeoutModal = ({ onExtendSession, onLogout }) => {
     const timeUntilWarning = timeUntilExpiry - WARNING_TIME;
 
     if (timeUntilWarning > 0) {
-      const warnId = setTimeout(() => {
+      warningTimeoutRef.current = setTimeout(() => {
         setShowModal(true);
         setTimeRemaining(120); // 2 minutes in seconds
       }, timeUntilWarning);
-      setWarningTimeoutId(warnId);
 
       // Auto-logout when token expires
-      const logId = setTimeout(() => {
+      logoutTimeoutRef.current = setTimeout(() => {
         handleAutoLogout();
       }, timeUntilExpiry);
-      setLogoutTimeoutId(logId);
     } else if (timeUntilExpiry > 0) {
       // Token expires soon, show warning immediately
       setShowModal(true);
       setTimeRemaining(Math.floor(timeUntilExpiry / 1000));
       
-      const logId = setTimeout(() => {
+      logoutTimeoutRef.current = setTimeout(() => {
         handleAutoLogout();
       }, timeUntilExpiry);
-      setLogoutTimeoutId(logId);
     } else {
       // Token already expired
       handleAutoLogout();
     }
-  }, [clearTimeouts, getTokenExpiry]);
-
-  const handleAutoLogout = () => {
-    setShowModal(false);
-    onLogout();
-  };
+  }, [clearTimeouts, getTokenExpiry, handleAutoLogout]);
 
   const handleExtendSession = async () => {
     try {

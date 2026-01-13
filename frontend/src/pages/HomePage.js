@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import authService from '../services/authService';
 import participationService from '../services/participationService';
 import eventService from '../services/eventService';
+import { authFetch } from '../services/apiClient';
 import './HomePage.css';
 
 function HomePage() {
@@ -30,11 +31,33 @@ function HomePage() {
       return;
     }
 
-    // Get current user info
-    const currentUser = authService.getCurrentUser();
-    setUser(currentUser);
-    loadDashboardData(currentUser);
+    // Load user data and dashboard
+    loadUserAndDashboard();
   }, [navigate, location.state]);
+
+  const loadUserAndDashboard = async () => {
+    try {
+      // Fetch user data from API to get fresh data including faculty
+      const response = await authFetch('/auth/me');
+      
+      if (response.ok) {
+        const data = await response.json();
+        setUser(data.user);
+        loadDashboardData(data.user);
+      } else {
+        // Fallback to localStorage if API fails
+        const currentUser = authService.getCurrentUser();
+        setUser(currentUser);
+        loadDashboardData(currentUser);
+      }
+    } catch (error) {
+      console.error('Failed to load user data:', error);
+      // Fallback to localStorage
+      const currentUser = authService.getCurrentUser();
+      setUser(currentUser);
+      loadDashboardData(currentUser);
+    }
+  };
 
   const loadDashboardData = async (currentUser) => {
     try {
@@ -276,8 +299,10 @@ function HomePage() {
             </div>
             <div className="user-info">
               <h2>{user.name}</h2>
-              <p className="user-role">{user.role.replace('_', ' ').toUpperCase()}</p>
-              <p className="user-email">{user.email}</p>
+              <p className="user-role">
+                {user.faculty ? `${user.faculty.code} ${user.role.replace('_', ' ').toUpperCase()}` : user.role.replace('_', ' ').toUpperCase()}
+              </p>
+              <p className="user-email">{user.staff_id || 'N/A'}</p>
             </div>
           </div>
 

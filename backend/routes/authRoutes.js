@@ -26,9 +26,7 @@ router.put('/profile', AuthController.verifyToken, AuthController.updateProfile)
 // Change password (protected route)
 router.put('/change-password', AuthController.verifyToken, AuthController.changePassword);
 
-// Protected route example (verify token)
-router.get('/me', AuthController.verifyToken, async (req, res) => {
-  res.json({ user: req.user });
-});
+// Get current user profile with full details including faculty
+router.get('/me', AuthController.verifyToken, AuthController.getCurrentUserProfile);
 
 module.exports = router;

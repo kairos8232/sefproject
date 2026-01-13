@@ -107,6 +107,25 @@ class AuthController {
         path: '/api/auth'
       });
 
+      // Get faculty details if user has faculty_id (for students and faculty managers)
+      let facultyDetails = null;
+      if (user.faculty_id && (user.role === 'student' || user.role === 'faculty_manager')) {
+        try {
+          const { data: faculty } = await supabase
+            .from('faculties')
+            .select('id, code, name')
+            .eq('id', user.faculty_id)
+            .single();
+          
+          if (faculty) {
+            facultyDetails = faculty;
+          }
+        } catch (facultyError) {
+          console.error('Error fetching faculty details:', facultyError);
+          // Don't fail login if faculty fetch fails
+        }
+      }
+
       // Return success response
       res.json({
         success: true,
@@ -116,7 +135,8 @@ class AuthController {
           email: user.email,
           name: user.name,
           role: user.role,
-          facultyId: user.faculty_id
+          facultyId: user.faculty_id,
+          faculty: facultyDetails
         }
       });
 
@@ -324,6 +344,52 @@ class AuthController {
     } catch (error) {
       console.error('Change password error:', error);
       res.status(500).json({ message: 'Failed to change password' });
+    }
+  }
+
+  // Get current user profile with full details
+  async getCurrentUserProfile(req, res) {
+    try {
+      const userId = req.user.userId;
+
+      // Get user details
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      // Remove password from response
+      const { password, ...userWithoutPassword } = user;
+
+      // Get faculty details if user has faculty_id
+      let facultyDetails = null;
+      if (user.faculty_id && (user.role === 'student' || user.role === 'faculty_manager')) {
+        try {
+          const { data: faculty } = await supabase
+            .from('faculties')
+            .select('id, code, name')
+            .eq('id', user.faculty_id)
+            .single();
+          
+          if (faculty) {
+            facultyDetails = faculty;
+          }
+        } catch (facultyError) {
+          console.error('Error fetching faculty details:', facultyError);
+          // Don't fail request if faculty fetch fails
+        }
+      }
+
+      res.json({
+        success: true,
+        user: {
+          ...userWithoutPassword,
+          faculty: facultyDetails
+        }
+      });
+    } catch (error) {
+      console.error('Get current user profile error:', error);
+      res.status(500).json({ message: 'Failed to get user profile' });
     }
   }
 }

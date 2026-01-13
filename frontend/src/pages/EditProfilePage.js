@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import authService from '../services/authService';
 import { authFetch } from '../services/apiClient';
 import { useToast } from '../contexts/ToastContext';
 import './EditProfilePage.css';
@@ -20,8 +19,16 @@ function EditProfilePage() {
   const loadUserData = useCallback(async () => {
     try {
       setLoading(true);
-      const currentUser = await authService.getCurrentUser();
-      setUser(currentUser);
+      
+      // Fetch user data from API to get fresh data including faculty
+      const response = await authFetch('/auth/me');
+      
+      if (!response.ok) {
+        throw new Error('Failed to load user data');
+      }
+      
+      const data = await response.json();
+      setUser(data.user);
     } catch (err) {
       showError('Failed to load user data');
       console.error('Load user error:', err);
@@ -119,17 +126,11 @@ function EditProfilePage() {
             </div>
             <div className="epp-user-info">
               <h2>{user?.name}</h2>
-              <div className="epp-user-role">{getRoleDisplayName(user?.role).toUpperCase()}</div>
-              <div className="epp-user-email">{user?.email}</div>
-            </div>
-
-            {user?.faculty && (
-              <div className="epp-faculty-info">
-                <div className="epp-faculty-label">Faculty</div>
-                <div className="epp-faculty-name">{user.faculty.name}</div>
-                <div className="epp-faculty-code">({user.faculty.code})</div>
+              <div className="epp-user-role">
+                {user?.faculty ? `${user.faculty.code} ${getRoleDisplayName(user?.role).toUpperCase()}` : getRoleDisplayName(user?.role).toUpperCase()}
               </div>
-            )}
+              <div className="epp-user-email">{user?.staff_id || 'N/A'}</div>
+            </div> 
           </div>
         </div>
 
