@@ -194,15 +194,27 @@ class VenueBookingController {
         });
       }
 
-      // Check venue availability
+      // Calculate actual time range including setup and teardown
+      const setupMinutes = parseInt(bookingData.setup_time) || 0;
+      const teardownMinutes = parseInt(bookingData.teardown_time) || 0;
+      
+      const requestedStart = new Date(bookingData.requested_start_datetime);
+      const requestedEnd = new Date(bookingData.requested_end_datetime);
+      
+      const actualStartWithSetup = new Date(requestedStart.getTime() - setupMinutes * 60 * 1000);
+      const actualEndWithTeardown = new Date(requestedEnd.getTime() + teardownMinutes * 60 * 1000);
+
+      // Check venue availability with setup/teardown included
       const isAvailable = await Venue.checkAvailability(
         bookingData.venue_id,
-        bookingData.requested_start_datetime,
-        bookingData.requested_end_datetime
+        actualStartWithSetup.toISOString(),
+        actualEndWithTeardown.toISOString()
       );
 
       if (!isAvailable) {
-        return res.status(409).json({ error: 'Venue is not available for the requested time' });
+        return res.status(409).json({ 
+          error: 'Venue is not available for the requested time (including setup/teardown)' 
+        });
       }
 
       // Validate capacity if provided
@@ -264,6 +276,10 @@ class VenueBookingController {
         const venueId = updateData.venue_id || booking.venue_id;
         const startTime = updateData.requested_start_datetime || booking.requested_start_datetime;
         const endTime = updateData.requested_end_datetime || booking.requested_end_datetime;
+        
+        // Get setup/teardown time (use updated values or existing)
+        const setupMinutes = parseInt(updateData.setup_time ?? booking.setup_time) || 0;
+        const teardownMinutes = parseInt(updateData.teardown_time ?? booking.teardown_time) || 0;
 
         // Check advance booking restrictions (UC-17)
         const settings = await SystemSetting.getSettingsObject();
@@ -286,10 +302,24 @@ class VenueBookingController {
           });
         }
 
-        const isAvailable = await Venue.checkAvailability(venueId, startTime, endTime, bookingId);
+        // Calculate actual time range including setup and teardown
+        const requestedStart = new Date(startTime);
+        const requestedEnd = new Date(endTime);
+        
+        const actualStartWithSetup = new Date(requestedStart.getTime() - setupMinutes * 60 * 1000);
+        const actualEndWithTeardown = new Date(requestedEnd.getTime() + teardownMinutes * 60 * 1000);
+
+        const isAvailable = await Venue.checkAvailability(
+          venueId, 
+          actualStartWithSetup.toISOString(), 
+          actualEndWithTeardown.toISOString(), 
+          bookingId
+        );
 
         if (!isAvailable) {
-          return res.status(409).json({ error: 'Venue is not available for the requested time' });
+          return res.status(409).json({ 
+            error: 'Venue is not available for the requested time (including setup/teardown)' 
+          });
         }
       }
 
@@ -906,9 +936,19 @@ class VenueBookingController {
         });
       }
 
-      // Generate package ID
-      const { v4: uuidv4 } = require('uuid');
-      const packageId = uuidv4();
+      // Generate package ID using Node.js built-in crypto
+      const crypto = require('crypto');
+      const packageId = crypto.randomUUID();
+
+      // Calculate actual time range including setup and teardown
+      const setupMinutes = parseInt(packageData.setup_time) || 0;
+      const teardownMinutes = parseInt(packageData.teardown_time) || 0;
+      
+      const requestedStart = new Date(packageData.requested_start_datetime);
+      const requestedEnd = new Date(packageData.requested_end_datetime);
+      
+      const actualStartWithSetup = new Date(requestedStart.getTime() - setupMinutes * 60 * 1000);
+      const actualEndWithTeardown = new Date(requestedEnd.getTime() + teardownMinutes * 60 * 1000);
 
       // Validate all venues exist, are active, and available
       const unavailableVenues = [];
@@ -924,11 +964,11 @@ class VenueBookingController {
         
         venueDetails.push(venue);
 
-        // Check venue availability
+        // Check venue availability with setup/teardown included
         const isAvailable = await Venue.checkAvailability(
           venueId,
-          packageData.requested_start_datetime,
-          packageData.requested_end_datetime
+          actualStartWithSetup.toISOString(),
+          actualEndWithTeardown.toISOString()
         );
 
         if (!isAvailable) {
