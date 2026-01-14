@@ -83,7 +83,10 @@ apiClient.interceptors.response.use(
       } catch (refreshError) {
         refreshPromise = null;
         handleSessionExpired();
-        return Promise.reject(refreshError);
+        // Return a rejected promise with a proper error message
+        const expiredError = new Error('Session expired. Please log in again.');
+        expiredError.response = { data: { error: 'Session expired' } };
+        return Promise.reject(expiredError);
       }
     }
 

@@ -13,12 +13,22 @@ export function useToast() {
 
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
+  const [counter, setCounter] = useState(0);
 
   const showToast = useCallback((message, type = 'success', options = {}) => {
-    const id = Date.now();
+    // Filter out empty or invalid messages
+    if (!message || typeof message !== 'string' || message.trim() === '') {
+      console.warn('Toast called with empty or invalid message:', message);
+      return null;
+    }
+    
+    // Use combination of timestamp and counter to ensure uniqueness
+    const id = `${Date.now()}-${counter}`;
+    setCounter(prev => prev + 1);
+    
     const toast = {
       id,
-      message,
+      message: message.trim(),
       type,
       duration: options.duration !== undefined ? options.duration : 3000,
       onUndo: options.onUndo,
@@ -27,7 +37,7 @@ export function ToastProvider({ children }) {
     setToasts((prev) => [...prev, toast]);
 
     return id;
-  }, []);
+  }, [counter]);
 
   const hideToast = useCallback((id) => {
     setToasts((prev) => prev.filter((toast) => toast.id !== id));

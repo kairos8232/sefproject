@@ -151,8 +151,6 @@ const FacultyVenueManagementPage = () => {
   const handleCreateFaculty = async (e) => {
     e.preventDefault();
     try {
-      showError('');
-      showSuccess('');
       await facultyService.createFaculty(facultyFormData);
       showSuccess('Faculty created successfully!');
       setShowCreateFacultyModal(false);
@@ -177,8 +175,6 @@ const FacultyVenueManagementPage = () => {
   const handleEditFaculty = async (e) => {
     e.preventDefault();
     try {
-      showError('');
-      showSuccess('');
       await facultyService.updateFaculty(selectedFaculty.id, facultyFormData);
       showSuccess('Faculty updated successfully!');
       setShowEditFacultyModal(false);
@@ -193,8 +189,6 @@ const FacultyVenueManagementPage = () => {
 
   const handleFacultyStatusToggle = async (faculty) => {
     try {
-      showError('');
-      showSuccess('');
       const newStatus = faculty.status === 'active' ? 'inactive' : 'active';
       await facultyService.updateFacultyStatus(faculty.id, newStatus);
       showSuccess(`Faculty ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully!`);
@@ -209,8 +203,6 @@ const FacultyVenueManagementPage = () => {
   const handleCreateVenue = async (e) => {
     e.preventDefault();
     try {
-      showError('');
-      showSuccess('');
       await venueService.createVenue(venueFormData);
       showSuccess('Venue created successfully!');
       setShowCreateVenueModal(false);
@@ -237,8 +229,6 @@ const FacultyVenueManagementPage = () => {
   const handleEditVenue = async (e) => {
     e.preventDefault();
     try {
-      showError('');
-      showSuccess('');
       await venueService.updateVenue(selectedVenue.id, venueFormData);
       showSuccess('Venue updated successfully!');
       setShowEditVenueModal(false);
@@ -253,8 +243,6 @@ const FacultyVenueManagementPage = () => {
 
   const handleVenueStatusToggle = async (venue) => {
     try {
-      showError('');
-      showSuccess('');
       const newStatus = venue.status === 'active' ? 'inactive' : 'active';
       await venueService.updateVenueStatus(venue.id, newStatus);
       showSuccess(`Venue ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully!`);
@@ -267,9 +255,6 @@ const FacultyVenueManagementPage = () => {
 
   const handleToggleAllVenues = async (newStatus) => {
     try {
-      showError('');
-      showSuccess('');
-
       if (selectedVenueIds.length === 0) {
         showError('Please select venues to update');
         return;
@@ -723,7 +708,7 @@ const FacultyVenueManagementPage = () => {
               </div>
 
               <div className="form-group">
-                <label>Capacity</label>
+                <label>Capacity *</label>
                 <input
                   type="number"
                   value={venueFormData.capacity}

@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import facultyService from '../services/facultyService';
+import { useToast } from '../contexts/ToastContext';
 import './FacultiesPage.css';
 
 const FacultiesPage = () => {
   const navigate = useNavigate();
+  const { showSuccess, showError } = useToast();
   const [faculties, setFaculties] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
 
   const [filters, setFilters] = useState({
     status: 'active',
@@ -33,7 +33,6 @@ const FacultiesPage = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      setError('');
 
       // Get current user from token
       const token = localStorage.getItem('token');
@@ -45,7 +44,7 @@ const FacultiesPage = () => {
       // Decode token to check role
       const payload = JSON.parse(atob(token.split('.')[1]));
       if (payload.role !== 'administrator') {
-        setError('Access denied. Only administrators can manage faculties.');
+        showError('Access denied. Only administrators can manage faculties.');
         setLoading(false);
         return;
       }
@@ -55,7 +54,7 @@ const FacultiesPage = () => {
       setLoading(false);
     } catch (err) {
       console.error('Error loading faculties:', err);
-      setError(err.response?.data?.message || 'Failed to load faculties');
+      showError(err.response?.data?.message || 'Failed to load faculties');
       setLoading(false);
     }
   };
@@ -63,17 +62,14 @@ const FacultiesPage = () => {
   const handleCreateFaculty = async (e) => {
     e.preventDefault();
     try {
-      setError('');
-      setSuccess('');
-
       await facultyService.createFaculty(formData);
-      setSuccess('Faculty created successfully!');
+      showSuccess('Faculty created successfully!');
       setShowCreateModal(false);
       setFormData({ code: '', name: '', description: '' });
       loadData();
     } catch (err) {
       console.error('Error creating faculty:', err);
-      setError(err.response?.data?.message || 'Failed to create faculty');
+      showError(err.response?.data?.message || 'Failed to create faculty');
     }
   };
 
@@ -90,33 +86,27 @@ const FacultiesPage = () => {
   const handleEditFaculty = async (e) => {
     e.preventDefault();
     try {
-      setError('');
-      setSuccess('');
-
       await facultyService.updateFaculty(selectedFaculty.id, formData);
-      setSuccess('Faculty updated successfully!');
+      showSuccess('Faculty updated successfully!');
       setShowEditModal(false);
       setSelectedFaculty(null);
       setFormData({ code: '', name: '', description: '' });
       loadData();
     } catch (err) {
       console.error('Error updating faculty:', err);
-      setError(err.response?.data?.message || 'Failed to update faculty');
+      showError(err.response?.data?.message || 'Failed to update faculty');
     }
   };
 
   const handleStatusToggle = async (faculty) => {
     try {
-      setError('');
-      setSuccess('');
-
       const newStatus = faculty.status === 'active' ? 'inactive' : 'active';
       await facultyService.updateFacultyStatus(faculty.id, newStatus);
-      setSuccess(`Faculty ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully!`);
+      showSuccess(`Faculty ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully!`);
       loadData();
     } catch (err) {
       console.error('Error updating status:', err);
-      setError(err.response?.data?.message || 'Failed to update faculty status');
+      showError(err.response?.data?.message || 'Failed to update faculty status');
     }
   };
 
@@ -140,9 +130,6 @@ const FacultiesPage = () => {
           </button>
         </div>
       </div>
-
-      {error && <div className="fp-message fp-error-message">{error}</div>}
-      {success && <div className="fp-message fp-success-message">{success}</div>}
 
       <div className="fp-faculties-filters">
         <div className="fp-filter-group">
