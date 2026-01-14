@@ -115,10 +115,8 @@ class ResourceType {
         name,
         description,
         total_quantity = 0,
-        available_quantity = 0,
         unit,
         status = 'active',
-        managed_by,
         notes
       } = typeData;
 
@@ -130,10 +128,8 @@ class ResourceType {
           name,
           description,
           total_quantity,
-          available_quantity,
           unit,
           status,
-          managed_by,
           notes
         }])
         .select()
@@ -158,9 +154,7 @@ class ResourceType {
         name,
         description,
         total_quantity,
-        available_quantity,
         unit,
-        managed_by,
         notes
       } = updateData;
 
@@ -172,9 +166,7 @@ class ResourceType {
           name,
           description,
           total_quantity,
-          available_quantity,
           unit,
-          managed_by,
           notes,
           updated_at: new Date()
         })

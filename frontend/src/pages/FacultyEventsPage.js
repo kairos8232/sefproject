@@ -149,7 +149,7 @@ function FacultyEventsPage() {
     switch (role.toLowerCase()) {
       case 'student':
         return 'fep-role-student';
-      case 'faculty_manager':
+      case 'faculty_staff':
         return 'fep-role-faculty';
       case 'event_organizer':
         return 'fep-role-organizer';
@@ -229,7 +229,7 @@ function FacultyEventsPage() {
           <select value={filters.role} onChange={(e) => handleFilterChange('role', e.target.value)}>
             <option value="">All Roles</option>
             <option value="student">Student</option>
-            <option value="faculty_manager">Faculty Manager</option>
+            <option value="faculty_staff">Faculty Staff</option>
             <option value="event_organizer">Event Organizer</option>
           </select>
         </div>

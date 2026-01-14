@@ -114,9 +114,9 @@ class AuthController {
         path: '/api/auth'
       });
 
-      // Get faculty details if user has faculty_id (for students and faculty managers)
+      // Get faculty details if user has faculty_id (for students and faculty staff)
       let facultyDetails = null;
-      if (user.faculty_id && (user.role === 'student' || user.role === 'faculty_manager')) {
+      if (user.faculty_id && (user.role === 'student' || user.role === 'faculty_staff')) {
         try {
           const { data: faculty } = await supabase
             .from('faculties')
@@ -379,7 +379,7 @@ class AuthController {
 
       // Get faculty details if user has faculty_id
       let facultyDetails = null;
-      if (user.faculty_id && (user.role === 'student' || user.role === 'faculty_manager')) {
+      if (user.faculty_id && (user.role === 'student' || user.role === 'faculty_staff')) {
         try {
           const { data: faculty } = await supabase
             .from('faculties')

@@ -5,13 +5,13 @@ const Event = require('../models/Event');
 const SystemSetting = require('../models/SystemSetting');
 
 class ResourceRequestController {
-  // Get all resource requests (faculty managers only)
+  // Get all resource requests (faculty staff only)
   getResourceRequests = async (req, res) => {
     try {
       const userRole = req.user.role;
 
-      if (userRole !== 'faculty_manager') {
-        return res.status(403).json({ error: 'Only faculty managers can view all resource requests' });
+      if (userRole !== 'faculty_staff') {
+        return res.status(403).json({ error: 'Only faculty staff can view all resource requests' });
       }
 
       const requests = await ResourceRequest.getAll();
@@ -41,7 +41,7 @@ class ResourceRequestController {
 
       // Check if user has permission to view this request
       if (
-        userRole !== 'faculty_manager' &&
+        userRole !== 'faculty_staff' &&
         request.requester_user_id !== userId &&
         request.event.organizer_id !== userId
       ) {
@@ -74,7 +74,7 @@ class ResourceRequestController {
 
       // Check if user can view these requests
       if (
-        userRole !== 'faculty_manager' &&
+        userRole !== 'faculty_staff' &&
         event.organizer_id !== userId
       ) {
         return res.status(403).json({ error: 'Not authorized to view requests for this event' });
@@ -313,8 +313,8 @@ class ResourceRequestController {
       const userRole = req.user.role;
       const { approval_notes } = req.body;
 
-      if (userRole !== 'faculty_manager') {
-        return res.status(403).json({ error: 'Only faculty managers can approve resource requests' });
+      if (userRole !== 'faculty_staff') {
+        return res.status(403).json({ error: 'Only faculty staff can approve resource requests' });
       }
 
       const request = await ResourceRequest.getById(requestId);
@@ -378,8 +378,8 @@ class ResourceRequestController {
       const userRole = req.user.role;
       const { rejection_reason } = req.body;
 
-      if (userRole !== 'faculty_manager') {
-        return res.status(403).json({ error: 'Only faculty managers can reject resource requests' });
+      if (userRole !== 'faculty_staff') {
+        return res.status(403).json({ error: 'Only faculty staff can reject resource requests' });
       }
 
       if (!rejection_reason) {

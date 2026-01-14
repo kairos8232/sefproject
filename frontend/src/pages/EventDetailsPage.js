@@ -209,8 +209,8 @@ function EventDetailsPage() {
   };
 
   const formatRole = (role, faculty) => {
-    if (role === 'faculty_manager' && faculty) {
-      return `${faculty.code} Faculty Manager`;
+    if (role === 'faculty_staff' && faculty) {
+      return `${faculty.code} Faculty Staff`;
     }
     if (role === 'event_organizer') {
       return 'Event Organizer';

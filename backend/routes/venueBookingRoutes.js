@@ -46,7 +46,7 @@ router.get('/faculty/requests', AuthController.verifyToken, VenueBookingControll
 // GET /api/venue-bookings/event/:eventId
 router.get('/event/:eventId', AuthController.verifyToken, VenueBookingController.getBookingsByEvent);
 
-// UC-07: Submit Venue Booking - Get all bookings (admin/faculty manager)
+// UC-07: Submit Venue Booking - Get all bookings (admin/faculty staff)
 // GET /api/venue-bookings
 router.get('/', AuthController.verifyToken, VenueBookingController.getVenueBookings);
 
@@ -74,7 +74,7 @@ router.put('/:id', AuthController.verifyToken, VenueBookingController.updateVenu
 // POST /api/venue-bookings/:id/cancel
 router.post('/:id/cancel', AuthController.verifyToken, VenueBookingController.cancelVenueBooking);
 
-// UC-07: Submit Venue Booking - Approve booking (admin/faculty manager)
+// UC-07: Submit Venue Booking - Approve booking (admin/faculty staff)
 // POST /api/venue-bookings/:id/approve
 router.post('/:id/approve', AuthController.verifyToken, VenueBookingController.approveVenueBooking);
 
@@ -82,7 +82,7 @@ router.post('/:id/approve', AuthController.verifyToken, VenueBookingController.a
 // POST /api/venue-bookings/:id/approve-request
 router.post('/:id/approve-request', AuthController.verifyToken, VenueBookingController.approveBookingRequest);
 
-// UC-07: Submit Venue Booking - Reject booking (admin/faculty manager)
+// UC-07: Submit Venue Booking - Reject booking (admin/faculty staff)
 // POST /api/venue-bookings/:id/reject
 router.post('/:id/reject', AuthController.verifyToken, VenueBookingController.rejectVenueBooking);
 

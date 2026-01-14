@@ -4,13 +4,13 @@ const Event = require('../models/Event');
 const SystemSetting = require('../models/SystemSetting');
 
 class VenueBookingController {
-  // Get all venue bookings (admin/faculty manager)
+  // Get all venue bookings (admin/faculty staff)
   getVenueBookings = async (req, res) => {
     try {
       const userRole = req.user.role;
 
-      // Only administrators and faculty managers can view all bookings
-      if (userRole !== 'administrator' && userRole !== 'faculty_manager') {
+      // Only administrators and faculty staff can view all bookings
+      if (userRole !== 'administrator' && userRole !== 'faculty_staff') {
         return res.status(403).json({ error: 'Not authorized to view all bookings' });
       }
 
@@ -42,7 +42,7 @@ class VenueBookingController {
       // Check if user has permission to view this booking
       if (
         userRole !== 'administrator' &&
-        userRole !== 'faculty_manager' &&
+        userRole !== 'faculty_staff' &&
         booking.requester_user_id !== userId &&
         booking.event.organizer_id !== userId
       ) {
@@ -76,7 +76,7 @@ class VenueBookingController {
       // Check if user can view these bookings
       if (
         userRole !== 'administrator' &&
-        userRole !== 'faculty_manager' &&
+        userRole !== 'faculty_staff' &&
         event.organizer_id !== userId
       ) {
         return res.status(403).json({ error: 'Not authorized to view bookings for this event' });
@@ -383,8 +383,8 @@ class VenueBookingController {
       const userRole = req.user.role;
       const { approval_notes } = req.body;
 
-      // Only administrators and faculty managers can approve
-      if (userRole !== 'administrator' && userRole !== 'faculty_manager') {
+      // Only administrators and faculty staff can approve
+      if (userRole !== 'administrator' && userRole !== 'faculty_staff') {
         return res.status(403).json({ error: 'Not authorized to approve bookings' });
       }
 
@@ -432,8 +432,8 @@ class VenueBookingController {
       const userRole = req.user.role;
       const { rejection_reason } = req.body;
 
-      // Only administrators and faculty managers can reject
-      if (userRole !== 'administrator' && userRole !== 'faculty_manager') {
+      // Only administrators and faculty staff can reject
+      if (userRole !== 'administrator' && userRole !== 'faculty_staff') {
         return res.status(403).json({ error: 'Not authorized to reject bookings' });
       }
 
@@ -471,9 +471,9 @@ class VenueBookingController {
       const userRole = req.user.role;
       const facultyId = req.user.facultyId;
 
-      // Only faculty managers can access this
-      if (userRole !== 'faculty_manager') {
-        return res.status(403).json({ error: 'Only faculty managers can access booking requests' });
+      // Only faculty staff can access this
+      if (userRole !== 'faculty_staff') {
+        return res.status(403).json({ error: 'Only faculty staff can access booking requests' });
       }
 
       if (!facultyId) {
@@ -508,9 +508,9 @@ class VenueBookingController {
       const userRole = req.user.role;
       const facultyId = req.user.facultyId;
 
-      // Only faculty managers can access this
-      if (userRole !== 'faculty_manager') {
-        return res.status(403).json({ error: 'Only faculty managers can access booking details' });
+      // Only faculty staff can access this
+      if (userRole !== 'faculty_staff') {
+        return res.status(403).json({ error: 'Only faculty staff can access booking details' });
       }
 
       const booking = await VenueBooking.getByIdWithDetails(bookingId);
@@ -519,7 +519,7 @@ class VenueBookingController {
         return res.status(404).json({ error: 'Booking request not found' });
       }
 
-      // Verify the booking is for a venue in the faculty manager's faculty
+      // Verify the booking is for a venue in the faculty staff's faculty
       if (booking.venue.faculty_id !== facultyId) {
         return res.status(403).json({ error: 'This booking is not for a venue in your faculty' });
       }
@@ -542,9 +542,9 @@ class VenueBookingController {
       const userRole = req.user.role;
       const facultyId = req.user.facultyId;
 
-      // Only faculty managers can approve
-      if (userRole !== 'faculty_manager') {
-        return res.status(403).json({ error: 'Only faculty managers can approve bookings' });
+      // Only faculty staff can approve
+      if (userRole !== 'faculty_staff') {
+        return res.status(403).json({ error: 'Only faculty staff can approve bookings' });
       }
 
       // Get booking details to verify
@@ -615,9 +615,9 @@ class VenueBookingController {
       const facultyId = req.user.facultyId;
       const { rejection_reason } = req.body;
 
-      // Only faculty managers can reject
-      if (userRole !== 'faculty_manager') {
-        return res.status(403).json({ error: 'Only faculty managers can reject bookings' });
+      // Only faculty staff can reject
+      if (userRole !== 'faculty_staff') {
+        return res.status(403).json({ error: 'Only faculty staff can reject bookings' });
       }
 
       if (!rejection_reason || rejection_reason.trim().length < 10) {

@@ -42,6 +42,7 @@ DROP TABLE IF EXISTS faculties CASCADE;
 DROP TABLE IF EXISTS sessions CASCADE;
 DROP TABLE IF EXISTS users CASCADE;
 DROP TABLE IF EXISTS system_settings CASCADE;
+DROP TABLE IF EXISTS refresh_tokens CASCADE;
 
 -- ========================================
 -- Table: users
@@ -52,9 +53,9 @@ CREATE TABLE users (
   email VARCHAR(255) UNIQUE NOT NULL,
   name VARCHAR(255) NOT NULL,
   password TEXT NOT NULL, -- Hashed with bcrypt
-  role VARCHAR(50) NOT NULL DEFAULT 'student', -- 'student', 'event_organizer', 'administrator', 'faculty_manager'
-  faculty_id UUID, -- Foreign key to faculties (only for faculty_manager and students)
-  staff_id VARCHAR(50) UNIQUE, -- Student ID (matric number), Staff ID for organizers/admins/faculty managers
+  role VARCHAR(50) NOT NULL DEFAULT 'student', -- 'student', 'event_organizer', 'administrator', 'faculty_staff'
+  faculty_id UUID, -- Foreign key to faculties (only for faculty_staff and students)
+  staff_id VARCHAR(50) UNIQUE, -- Student ID (matric number), Staff ID for organizers/admins/faculty staff
   status VARCHAR(50) NOT NULL DEFAULT 'active', -- 'active', 'inactive', 'blocked'
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
@@ -346,10 +347,8 @@ CREATE TABLE resource_types (
   name VARCHAR(255) NOT NULL,
   description TEXT,
   total_quantity INTEGER NOT NULL DEFAULT 0, -- Total number available
-  available_quantity INTEGER NOT NULL DEFAULT 0, -- Currently available
   unit VARCHAR(50), -- 'pieces', 'sets', 'units'
   status VARCHAR(50) NOT NULL DEFAULT 'active', -- 'active', 'inactive'
-  managed_by UUID REFERENCES users(id) ON DELETE SET NULL, -- Faculty manager or admin
   notes TEXT, -- Usage restrictions, special instructions
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
@@ -654,8 +653,8 @@ CREATE POLICY "Backend can delete resource_requests" ON resource_requests
 -- Sample Data for Testing
 -- Password for all sample users: "password123"
 -- Hashed using bcrypt with salt rounds = 10
--- Roles: student, event_organizer, administrator, faculty_manager
--- NOTE: Students, Faculty Managers, and Event Organizers CAN create and manage events
+-- Roles: student, event_organizer, administrator, faculty_staff
+-- NOTE: Students, Faculty Staff, and Event Organizers CAN create and manage events
 --       Only Administrators CANNOT create/manage events (admin functions only)
 -- ========================================
 
@@ -669,11 +668,11 @@ INSERT INTO users (id, email, name, password, role, status, staff_id) VALUES
   ('33333333-3333-3333-3333-333333333333', 'sarah.organizer@university.edu', 'Sarah Organizer', '$2a$10$g2ALFzfYf4jpTmp7bCIzd.5cael8S5xBTGOn8FEyda1Bnt/.ebzV2', 'event_organizer', 'active', 'EO001'),
   ('44444444-4444-4444-4444-444444444444', 'blocked.user@student.edu', 'Blocked User', '$2a$10$g2ALFzfYf4jpTmp7bCIzd.5cael8S5xBTGOn8FEyda1Bnt/.ebzV2', 'student', 'blocked', 'S002'),
   ('55555555-5555-5555-5555-555555555555', 'inactive.user@student.edu', 'Inactive User', '$2a$10$g2ALFzfYf4jpTmp7bCIzd.5cael8S5xBTGOn8FEyda1Bnt/.ebzV2', 'student', 'inactive', 'S003'),
-  ('66666666-6666-6666-6666-666666666666', 'alice.wong@fci.edu', 'Dr. Alice Wong', '$2a$10$g2ALFzfYf4jpTmp7bCIzd.5cael8S5xBTGOn8FEyda1Bnt/.ebzV2', 'faculty_manager', 'active', 'FM001'),
-  ('77777777-7777-7777-7777-777777777777', 'david.tan@fci.edu', 'Dr. David Tan', '$2a$10$g2ALFzfYf4jpTmp7bCIzd.5cael8S5xBTGOn8FEyda1Bnt/.ebzV2', 'faculty_manager', 'active', 'FM002'),
-  ('88888888-8888-8888-8888-888888888888', 'robert.chen@fom.edu', 'Dr. Robert Chen', '$2a$10$g2ALFzfYf4jpTmp7bCIzd.5cael8S5xBTGOn8FEyda1Bnt/.ebzV2', 'faculty_manager', 'active', 'FM003'),
-  ('99999999-9999-9999-9999-999999999999', 'maria.garcia@fob.edu', 'Dr. Maria Garcia', '$2a$10$g2ALFzfYf4jpTmp7bCIzd.5cael8S5xBTGOn8FEyda1Bnt/.ebzV2', 'faculty_manager', 'active', 'FM004'),
-  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'james.lee@fac.edu', 'Dr. James Lee', '$2a$10$g2ALFzfYf4jpTmp7bCIzd.5cael8S5xBTGOn8FEyda1Bnt/.ebzV2', 'faculty_manager', 'active', 'FM005'),
+  ('66666666-6666-6666-6666-666666666666', 'alice.wong@fci.edu', 'Dr. Alice Wong', '$2a$10$g2ALFzfYf4jpTmp7bCIzd.5cael8S5xBTGOn8FEyda1Bnt/.ebzV2', 'faculty_staff', 'active', 'FM001'),
+  ('77777777-7777-7777-7777-777777777777', 'david.tan@fci.edu', 'Dr. David Tan', '$2a$10$g2ALFzfYf4jpTmp7bCIzd.5cael8S5xBTGOn8FEyda1Bnt/.ebzV2', 'faculty_staff', 'active', 'FM002'),
+  ('88888888-8888-8888-8888-888888888888', 'robert.chen@fom.edu', 'Dr. Robert Chen', '$2a$10$g2ALFzfYf4jpTmp7bCIzd.5cael8S5xBTGOn8FEyda1Bnt/.ebzV2', 'faculty_staff', 'active', 'FM003'),
+  ('99999999-9999-9999-9999-999999999999', 'maria.garcia@fob.edu', 'Dr. Maria Garcia', '$2a$10$g2ALFzfYf4jpTmp7bCIzd.5cael8S5xBTGOn8FEyda1Bnt/.ebzV2', 'faculty_staff', 'active', 'FM004'),
+  ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'james.lee@fac.edu', 'Dr. James Lee', '$2a$10$g2ALFzfYf4jpTmp7bCIzd.5cael8S5xBTGOn8FEyda1Bnt/.ebzV2', 'faculty_staff', 'active', 'FM005'),
   ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'emily.tan@student.edu', 'Emily Tan', '$2a$10$g2ALFzfYf4jpTmp7bCIzd.5cael8S5xBTGOn8FEyda1Bnt/.ebzV2', 'student', 'active', 'S004'),
   ('cccccccc-cccc-cccc-cccc-cccccccccccc', 'michael.kumar@student.edu', 'Michael Kumar', '$2a$10$g2ALFzfYf4jpTmp7bCIzd.5cael8S5xBTGOn8FEyda1Bnt/.ebzV2', 'student', 'active', 'S005'),
   ('dddddddd-dddd-dddd-dddd-dddddddddddd', 'lisa.chong@student.edu', 'Lisa Chong', '$2a$10$g2ALFzfYf4jpTmp7bCIzd.5cael8S5xBTGOn8FEyda1Bnt/.ebzV2', 'student', 'active', 'S006'),
@@ -708,16 +707,16 @@ UPDATE users SET faculty_id = 'f4f4f4f4-f4f4-f4f4-f4f4-f4f4f4f4f4f4' WHERE id IN
 
 -- Sample Venues Data (using explicit IDs and references)
 INSERT INTO venues (id, faculty_id, code, name, location, capacity, status) VALUES
-  ('v1v1v1v1-v1v1-v1v1-v1v1-v1v1v1v1v1v1', 'f1f1f1f1-f1f1-f1f1-f1f1-f1f1f1f1f1f1', 'LT-FCI-01', 'Lecture Theatre 1', 'Level 2', 150, 'active'),
-  ('v2v2v2v2-v2v2-v2v2-v2v2-v2v2v2v2v2v2', 'f1f1f1f1-f1f1-f1f1-f1f1-f1f1f1f1f1f1', 'LAB-CS-01', 'Computer Lab 1', 'Level 3', 40, 'active'),
-  ('v3v3v3v3-v3v3-v3v3-v3v3-v3v3v3v3v3v3', 'f2f2f2f2-f2f2-f2f2-f2f2-f2f2f2f2f2f2', 'SR-FOM-01', 'Seminar Room 1', 'Level 1', 30, 'active'),
-  ('v4v4v4v4-v4v4-v4v4-v4v4-v4v4v4v4v4v4', 'f3f3f3f3-f3f3-f3f3-f3f3-f3f3f3f3f3f3', 'CR-FOB-01', 'Business Case Room', 'Level 2', 25, 'active'),
-  ('v5v5v5v5-v5v5-v5v5-v5v5-v5v5v5v5v5v5', 'f4f4f4f4-f4f4-f4f4-f4f4-f4f4f4f4f4f4', 'STUDIO-FAC-01', 'Media Production Studio', 'Ground Floor', 20, 'active'),
-  ('v6v6v6v6-v6v6-v6v6-v6v6-v6v6v6v6v6v6', 'f1f1f1f1-f1f1-f1f1-f1f1-f1f1f1f1f1f1', 'LAB-CS-02', 'Computer Lab 2', 'Level 3', 40, 'maintenance'),
-  ('v7v7v7v7-v7v7-v7v7-v7v7-v7v7v7v7v7v7', 'f1f1f1f1-f1f1-f1f1-f1f1-f1f1f1f1f1f1', 'AUD-FCI-01', 'FCI Auditorium', 'Ground Floor', 300, 'active'),
-  ('v8v8v8v8-v8v8-v8v8-v8v8-v8v8v8v8v8v8', 'f2f2f2f2-f2f2-f2f2-f2f2-f2f2f2f2f2f2', 'CR-FOM-01', 'Conference Room', 'Level 3', 50, 'active'),
-  ('v9v9v9v9-v9v9-v9v9-v9v9-v9v9v9v9v9v9', 'f3f3f3f3-f3f3-f3f3-f3f3-f3f3f3f3f3f3', 'TR-FOB-01', 'Trading Room', 'Level 4', 35, 'active'),
-  ('vavavava-vava-vava-vava-vavavavavava', 'f4f4f4f4-f4f4-f4f4-f4f4-f4f4f4f4f4f4', 'EDIT-FAC-01', 'Editing Suite', 'Level 2', 15, 'active');
+  ('b1a5e8f1-1111-1111-1111-111111111111', 'f1f1f1f1-f1f1-f1f1-f1f1-f1f1f1f1f1f1', 'LT-FCI-01', 'Lecture Theatre 1', 'Level 2', 150, 'active'),
+  ('b2a5e8f2-2222-2222-2222-222222222222', 'f1f1f1f1-f1f1-f1f1-f1f1-f1f1f1f1f1f1', 'LAB-CS-01', 'Computer Lab 1', 'Level 3', 40, 'active'),
+  ('b3a5e8f3-3333-3333-3333-333333333333', 'f2f2f2f2-f2f2-f2f2-f2f2-f2f2f2f2f2f2', 'SR-FOM-01', 'Seminar Room 1', 'Level 1', 30, 'active'),
+  ('b4a5e8f4-4444-4444-4444-444444444444', 'f3f3f3f3-f3f3-f3f3-f3f3-f3f3f3f3f3f3', 'CR-FOB-01', 'Business Case Room', 'Level 2', 25, 'active'),
+  ('b5a5e8f5-5555-5555-5555-555555555555', 'f4f4f4f4-f4f4-f4f4-f4f4-f4f4f4f4f4f4', 'STUDIO-FAC-01', 'Media Production Studio', 'Ground Floor', 20, 'active'),
+  ('b6a5e8f6-6666-6666-6666-666666666666', 'f1f1f1f1-f1f1-f1f1-f1f1-f1f1f1f1f1f1', 'LAB-CS-02', 'Computer Lab 2', 'Level 3', 40, 'maintenance'),
+  ('b7a5e8f7-7777-7777-7777-777777777777', 'f1f1f1f1-f1f1-f1f1-f1f1-f1f1f1f1f1f1', 'AUD-FCI-01', 'FCI Auditorium', 'Ground Floor', 300, 'active'),
+  ('b8a5e8f8-8888-8888-8888-888888888888', 'f2f2f2f2-f2f2-f2f2-f2f2-f2f2f2f2f2f2', 'CR-FOM-01', 'Conference Room', 'Level 3', 50, 'active'),
+  ('b9a5e8f9-9999-9999-9999-999999999999', 'f3f3f3f3-f3f3-f3f3-f3f3-f3f3f3f3f3f3', 'TR-FOB-01', 'Trading Room', 'Level 4', 35, 'active'),
+  ('baa5e8fa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'f4f4f4f4-f4f4-f4f4-f4f4-f4f4f4f4f4f4', 'EDIT-FAC-01', 'Editing Suite', 'Level 2', 15, 'active');
 
 -- Sample Events Data (20 events with various statuses)
 -- Reference: 2026-01-15 00:00:00+08 as base time
@@ -747,25 +746,25 @@ INSERT INTO events (id, organizer_id, event_name, description, visibility, event
 -- Sample Venue Bookings Data
 -- ========================================
 INSERT INTO venue_bookings (id, event_id, venue_id, requester_user_id, requested_start_datetime, requested_end_datetime, approved_start_datetime, approved_end_datetime, setup_time, teardown_time, status, approved_user_id, approved_at, remarks, expected_attendees) VALUES
-  ('b1b1b1b1-b1b1-b1b1-b1b1-b1b1b1b1b1b1', 'e1e1e1e1-e1e1-e1e1-e1e1-e1e1e1e1e1e1', 'v1v1v1v1-v1v1-v1v1-v1v1-v1v1v1v1v1v1', '33333333-3333-3333-3333-333333333333', '2026-01-22 09:00:00+08', '2026-01-22 17:00:00+08', '2026-01-22 09:00:00+08', '2026-01-22 17:00:00+08', 30, 30, 'approved', '66666666-6666-6666-6666-666666666666', '2026-01-10 10:00:00+08', 'AI workshop in lecture theatre', 100),
-  ('b2b2b2b2-b2b2-b2b2-b2b2-b2b2b2b2b2b2', 'e2e2e2e2-e2e2-e2e2-e2e2-e2e2e2e2e2e2', 'v7v7v7v7-v7v7-v7v7-v7v7-v7v7v7v7v7v7', '33333333-3333-3333-3333-333333333333', '2026-01-29 08:00:00+08', '2026-01-29 18:00:00+08', NULL, NULL, 120, 60, 'pending', NULL, NULL, 'Sports day ceremony venue', 250),
-  ('b3b3b3b3-b3b3-b3b3-b3b3-b3b3b3b3b3b3', 'e3e3e3e3-e3e3-e3e3-e3e3-e3e3e3e3e3e3', 'v2v2v2v2-v2v2-v2v2-v2v2-v2v2v2v2v2v2', '66666666-6666-6666-6666-666666666666', '2026-01-20 14:00:00+08', '2026-01-20 17:00:00+08', '2026-01-20 14:00:00+08', '2026-01-20 17:00:00+08', 15, 15, 'approved', '77777777-7777-7777-7777-777777777777', '2026-01-12 15:00:00+08', 'FCI research symposium', 40),
-  ('b4b4b4b4-b4b4-b4b4-b4b4-b4b4b4b4b4b4', 'e4e4e4e4-e4e4-e4e4-e4e4-e4e4e4e4e4e4', 'v2v2v2v2-v2v2-v2v2-v2v2-v2v2v2v2v2v2', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', '2026-01-14 18:00:00+08', '2026-01-15 18:00:00+08', '2026-01-14 18:00:00+08', '2026-01-15 18:00:00+08', 120, 60, 'approved', '66666666-6666-6666-6666-666666666666', '2026-01-08 11:00:00+08', '24-hour hackathon', 35),
-  ('b5b5b5b5-b5b5-b5b5-b5b5-b5b5b5b5b5b5', 'e5e5e5e5-e5e5-e5e5-e5e5-e5e5e5e5e5e5', 'v7v7v7v7-v7v7-v7v7-v7v7-v7v7v7v7v7v7', '33333333-3333-3333-3333-333333333333', '2026-01-25 10:00:00+08', '2026-01-25 17:00:00+08', NULL, NULL, 60, 30, 'pending', NULL, NULL, 'Career fair venue', 300),
-  ('b6b6b6b6-b6b6-b6b6-b6b6-b6b6b6b6b6b6', 'e6e6e6e6-e6e6-e6e6-e6e6-e6e6e6e6e6e6', 'v4v4v4v4-v4v4-v4v4-v4v4-v4v4v4v4v4v4', '33333333-3333-3333-3333-333333333333', '2026-02-14 19:00:00+08', '2026-02-14 22:00:00+08', '2026-02-14 19:00:00+08', '2026-02-14 22:00:00+08', 30, 20, 'approved', '99999999-9999-9999-9999-999999999999', '2026-01-11 09:30:00+08', 'Alumni networking in business room', 20),
-  ('b7b7b7b7-b7b7-b7b7-b7b7-b7b7b7b7b7b7', 'e8e8e8e8-e8e8-e8e8-e8e8-e8e8e8e8e8e8', 'v8v8v8v8-v8v8-v8v8-v8v8-v8v8v8v8v8v8', 'cccccccc-cccc-cccc-cccc-cccccccccccc', '2026-02-05 13:00:00+08', '2026-02-05 18:00:00+08', '2026-02-05 13:00:00+08', '2026-02-05 18:00:00+08', 30, 20, 'approved', '88888888-8888-8888-8888-888888888888', '2026-01-13 14:00:00+08', 'Business plan competition', 60),
-  ('b8b8b8b8-b8b8-b8b8-b8b8-b8b8b8b8b8b8', 'e9e9e9e9-e9e9-e9e9-e9e9-e9e9e9e9e9e9', 'v3v3v3v3-v3v3-v3v3-v3v3-v3v3v3v3v3v3', '88888888-8888-8888-8888-888888888888', '2026-01-28 09:00:00+08', '2026-01-28 16:00:00+08', '2026-01-28 09:00:00+08', '2026-01-28 16:00:00+08', 20, 15, 'approved', '88888888-8888-8888-8888-888888888888', '2026-01-10 12:00:00+08', 'Leadership workshop for FOM', 30),
-  ('b9b9b9b9-b9b9-b9b9-b9b9-b9b9b9b9b9b9', 'eaeaeaea-eaea-eaea-eaea-eaeaeaeaeaea', 'v1v1v1v1-v1v1-v1v1-v1v1-v1v1v1v1v1v1', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', '2026-02-08 18:00:00+08', '2026-02-08 22:00:00+08', '2026-02-08 18:00:00+08', '2026-02-08 22:00:00+08', 120, 45, 'approved', '66666666-6666-6666-6666-666666666666', '2026-01-09 16:00:00+08', 'Cultural night performances', 200),
-  ('babababa-baba-baba-baba-babababababa', 'ebebebeb-ebeb-ebeb-ebeb-ebebebebebeb', 'v1v1v1v1-v1v1-v1v1-v1v1-v1v1v1v1v1v1', '66666666-6666-6666-6666-666666666666', '2026-01-27 14:00:00+08', '2026-01-27 16:30:00+08', '2026-01-27 14:00:00+08', '2026-01-27 16:30:00+08', 20, 15, 'approved', '77777777-7777-7777-7777-777777777777', '2026-01-12 10:00:00+08', 'Blockchain seminar', 80),
-  ('bbbbbbbb-1111-1111-1111-111111111111', 'ecececec-ecec-ecec-ecec-ecececececec', 'v2v2v2v2-v2v2-v2v2-v2v2-v2v2v2v2v2v2', 'ffffffff-ffff-ffff-ffff-ffffffffffff', '2026-02-10 09:00:00+08', '2026-02-12 17:00:00+08', '2026-02-10 09:00:00+08', '2026-02-12 17:00:00+08', 60, 30, 'approved', '66666666-6666-6666-6666-666666666666', '2026-01-11 13:00:00+08', '3-day mobile dev bootcamp', 40),
-  ('bbbbbbbb-2222-2222-2222-222222222222', 'edededed-eded-eded-eded-edededededed', 'v4v4v4v4-v4v4-v4v4-v4v4-v4v4v4v4v4v4', '99999999-9999-9999-9999-999999999999', '2026-01-23 15:00:00+08', '2026-01-23 17:00:00+08', '2026-01-23 15:00:00+08', '2026-01-23 17:00:00+08', 15, 10, 'approved', '99999999-9999-9999-9999-999999999999', '2026-01-14 11:00:00+08', 'FOB industry panel', 25),
-  ('bbbbbbbb-3333-3333-3333-333333333333', 'eeeeeeee-1111-1111-1111-111111111111', 'v5v5v5v5-v5v5-v5v5-v5v5-v5v5v5v5v5v5', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '2026-02-01 10:00:00+08', '2026-02-01 18:00:00+08', '2026-02-01 10:00:00+08', '2026-02-01 18:00:00+08', 90, 30, 'approved', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '2026-01-13 09:00:00+08', 'Digital media showcase', 100),
-  ('bbbbbbbb-4444-4444-4444-444444444444', 'eeeeeeee-2222-2222-2222-222222222222', 'v3v3v3v3-v3v3-v3v3-v3v3-v3v3v3v3v3v3', '33333333-3333-3333-3333-333333333333', '2026-01-30 07:00:00+08', '2026-01-30 08:30:00+08', '2026-01-30 07:00:00+08', '2026-01-30 08:30:00+08', 15, 10, 'approved', '88888888-8888-8888-8888-888888888888', '2026-01-14 15:00:00+08', 'Morning yoga session', 50),
-  ('bbbbbbbb-5555-5555-5555-555555555555', 'eeeeeeee-3333-3333-3333-333333333333', 'v2v2v2v2-v2v2-v2v2-v2v2-v2v2v2v2v2v2', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', '2026-02-07 18:00:00+08', '2026-02-09 18:00:00+08', '2026-02-07 18:00:00+08', '2026-02-09 18:00:00+08', 120, 60, 'approved', '66666666-6666-6666-6666-666666666666', '2026-01-10 14:00:00+08', '48-hour game jam', 45),
-  ('bbbbbbbb-6666-6666-6666-666666666666', 'eeeeeeee-4444-4444-4444-444444444444', 'v9v9v9v9-v9v9-v9v9-v9v9-v9v9v9v9v9v9', '10101010-1010-1010-1010-101010101010', '2026-01-26 14:00:00+08', '2026-01-26 17:00:00+08', '2026-01-26 14:00:00+08', '2026-01-26 17:00:00+08', 20, 15, 'approved', '99999999-9999-9999-9999-999999999999', '2026-01-12 16:00:00+08', 'Investment workshop in trading room', 55),
-  ('bbbbbbbb-7777-7777-7777-777777777777', 'eeeeeeee-5555-5555-5555-555555555555', 'v7v7v7v7-v7v7-v7v7-v7v7-v7v7v7v7v7v7', '33333333-3333-3333-3333-333333333333', '2026-02-03 09:00:00+08', '2026-02-03 12:00:00+08', NULL, NULL, 30, 20, 'pending', NULL, NULL, 'Environment campaign gathering point', 120),
-  ('bbbbbbbb-8888-8888-8888-888888888888', 'eeeeeeee-6666-6666-6666-666666666666', 'vavavava-vava-vava-vava-vavavavavava', '20202020-2020-2020-2020-202020202020', '2026-02-06 13:00:00+08', '2026-02-06 17:00:00+08', '2026-02-06 13:00:00+08', '2026-02-06 17:00:00+08', 30, 15, 'approved', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '2026-01-11 10:00:00+08', 'Public speaking competition', 30),
-  ('bbbbbbbb-9999-9999-9999-999999999999', 'eeeeeeee-7777-7777-7777-777777777777', 'v7v7v7v7-v7v7-v7v7-v7v7-v7v7v7v7v7v7', '33333333-3333-3333-3333-333333333333', '2026-01-31 17:00:00+08', '2026-01-31 22:00:00+08', NULL, NULL, 120, 45, 'cancelled', NULL, NULL, 'Music festival - event cancelled', 280);
+  ('b1b1b1b1-b1b1-b1b1-b1b1-b1b1b1b1b1b1', 'e1e1e1e1-e1e1-e1e1-e1e1-e1e1e1e1e1e1', 'b1a5e8f1-1111-1111-1111-111111111111', '33333333-3333-3333-3333-333333333333', '2026-01-22 09:00:00+08', '2026-01-22 17:00:00+08', '2026-01-22 09:00:00+08', '2026-01-22 17:00:00+08', 30, 30, 'approved', '66666666-6666-6666-6666-666666666666', '2026-01-10 10:00:00+08', 'AI workshop in lecture theatre', 100),
+  ('b2b2b2b2-b2b2-b2b2-b2b2-b2b2b2b2b2b2', 'e2e2e2e2-e2e2-e2e2-e2e2-e2e2e2e2e2e2', 'b7a5e8f7-7777-7777-7777-777777777777', '33333333-3333-3333-3333-333333333333', '2026-01-29 08:00:00+08', '2026-01-29 18:00:00+08', NULL, NULL, 120, 60, 'pending', NULL, NULL, 'Sports day ceremony venue', 250),
+  ('b3b3b3b3-b3b3-b3b3-b3b3-b3b3b3b3b3b3', 'e3e3e3e3-e3e3-e3e3-e3e3-e3e3e3e3e3e3', 'b2a5e8f2-2222-2222-2222-222222222222', '66666666-6666-6666-6666-666666666666', '2026-01-20 14:00:00+08', '2026-01-20 17:00:00+08', '2026-01-20 14:00:00+08', '2026-01-20 17:00:00+08', 15, 15, 'approved', '77777777-7777-7777-7777-777777777777', '2026-01-12 15:00:00+08', 'FCI research symposium', 40),
+  ('b4b4b4b4-b4b4-b4b4-b4b4-b4b4b4b4b4b4', 'e4e4e4e4-e4e4-e4e4-e4e4-e4e4e4e4e4e4', 'b2a5e8f2-2222-2222-2222-222222222222', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', '2026-01-14 18:00:00+08', '2026-01-15 18:00:00+08', '2026-01-14 18:00:00+08', '2026-01-15 18:00:00+08', 120, 60, 'approved', '66666666-6666-6666-6666-666666666666', '2026-01-08 11:00:00+08', '24-hour hackathon', 35),
+  ('b5b5b5b5-b5b5-b5b5-b5b5-b5b5b5b5b5b5', 'e5e5e5e5-e5e5-e5e5-e5e5-e5e5e5e5e5e5', 'b7a5e8f7-7777-7777-7777-777777777777', '33333333-3333-3333-3333-333333333333', '2026-01-25 10:00:00+08', '2026-01-25 17:00:00+08', NULL, NULL, 60, 30, 'pending', NULL, NULL, 'Career fair venue', 300),
+  ('b6b6b6b6-b6b6-b6b6-b6b6-b6b6b6b6b6b6', 'e6e6e6e6-e6e6-e6e6-e6e6-e6e6e6e6e6e6', 'b4a5e8f4-4444-4444-4444-444444444444', '33333333-3333-3333-3333-333333333333', '2026-02-14 19:00:00+08', '2026-02-14 22:00:00+08', '2026-02-14 19:00:00+08', '2026-02-14 22:00:00+08', 30, 20, 'approved', '99999999-9999-9999-9999-999999999999', '2026-01-11 09:30:00+08', 'Alumni networking in business room', 20),
+  ('b7b7b7b7-b7b7-b7b7-b7b7-b7b7b7b7b7b7', 'e8e8e8e8-e8e8-e8e8-e8e8-e8e8e8e8e8e8', 'b8a5e8f8-8888-8888-8888-888888888888', 'cccccccc-cccc-cccc-cccc-cccccccccccc', '2026-02-05 13:00:00+08', '2026-02-05 18:00:00+08', '2026-02-05 13:00:00+08', '2026-02-05 18:00:00+08', 30, 20, 'approved', '88888888-8888-8888-8888-888888888888', '2026-01-13 14:00:00+08', 'Business plan competition', 60),
+  ('b8b8b8b8-b8b8-b8b8-b8b8-b8b8b8b8b8b8', 'e9e9e9e9-e9e9-e9e9-e9e9-e9e9e9e9e9e9', 'b3a5e8f3-3333-3333-3333-333333333333', '88888888-8888-8888-8888-888888888888', '2026-01-28 09:00:00+08', '2026-01-28 16:00:00+08', '2026-01-28 09:00:00+08', '2026-01-28 16:00:00+08', 20, 15, 'approved', '88888888-8888-8888-8888-888888888888', '2026-01-10 12:00:00+08', 'Leadership workshop for FOM', 30),
+  ('b9b9b9b9-b9b9-b9b9-b9b9-b9b9b9b9b9b9', 'eaeaeaea-eaea-eaea-eaea-eaeaeaeaeaea', 'b1a5e8f1-1111-1111-1111-111111111111', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', '2026-02-08 18:00:00+08', '2026-02-08 22:00:00+08', '2026-02-08 18:00:00+08', '2026-02-08 22:00:00+08', 120, 45, 'approved', '66666666-6666-6666-6666-666666666666', '2026-01-09 16:00:00+08', 'Cultural night performances', 200),
+  ('babababa-baba-baba-baba-babababababa', 'ebebebeb-ebeb-ebeb-ebeb-ebebebebebeb', 'b1a5e8f1-1111-1111-1111-111111111111', '66666666-6666-6666-6666-666666666666', '2026-01-27 14:00:00+08', '2026-01-27 16:30:00+08', '2026-01-27 14:00:00+08', '2026-01-27 16:30:00+08', 20, 15, 'approved', '77777777-7777-7777-7777-777777777777', '2026-01-12 10:00:00+08', 'Blockchain seminar', 80),
+  ('bbbbbbbb-1111-1111-1111-111111111111', 'ecececec-ecec-ecec-ecec-ecececececec', 'b2a5e8f2-2222-2222-2222-222222222222', 'ffffffff-ffff-ffff-ffff-ffffffffffff', '2026-02-10 09:00:00+08', '2026-02-12 17:00:00+08', '2026-02-10 09:00:00+08', '2026-02-12 17:00:00+08', 60, 30, 'approved', '66666666-6666-6666-6666-666666666666', '2026-01-11 13:00:00+08', '3-day mobile dev bootcamp', 40),
+  ('bbbbbbbb-2222-2222-2222-222222222222', 'edededed-eded-eded-eded-edededededed', 'b4a5e8f4-4444-4444-4444-444444444444', '99999999-9999-9999-9999-999999999999', '2026-01-23 15:00:00+08', '2026-01-23 17:00:00+08', '2026-01-23 15:00:00+08', '2026-01-23 17:00:00+08', 15, 10, 'approved', '99999999-9999-9999-9999-999999999999', '2026-01-14 11:00:00+08', 'FOB industry panel', 25),
+  ('bbbbbbbb-3333-3333-3333-333333333333', 'eeeeeeee-1111-1111-1111-111111111111', 'b5a5e8f5-5555-5555-5555-555555555555', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '2026-02-01 10:00:00+08', '2026-02-01 18:00:00+08', '2026-02-01 10:00:00+08', '2026-02-01 18:00:00+08', 90, 30, 'approved', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '2026-01-13 09:00:00+08', 'Digital media showcase', 100),
+  ('bbbbbbbb-4444-4444-4444-444444444444', 'eeeeeeee-2222-2222-2222-222222222222', 'b3a5e8f3-3333-3333-3333-333333333333', '33333333-3333-3333-3333-333333333333', '2026-01-30 07:00:00+08', '2026-01-30 08:30:00+08', '2026-01-30 07:00:00+08', '2026-01-30 08:30:00+08', 15, 10, 'approved', '88888888-8888-8888-8888-888888888888', '2026-01-14 15:00:00+08', 'Morning yoga session', 50),
+  ('bbbbbbbb-5555-5555-5555-555555555555', 'eeeeeeee-3333-3333-3333-333333333333', 'b2a5e8f2-2222-2222-2222-222222222222', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', '2026-02-07 18:00:00+08', '2026-02-09 18:00:00+08', '2026-02-07 18:00:00+08', '2026-02-09 18:00:00+08', 120, 60, 'approved', '66666666-6666-6666-6666-666666666666', '2026-01-10 14:00:00+08', '48-hour game jam', 45),
+  ('bbbbbbbb-6666-6666-6666-666666666666', 'eeeeeeee-4444-4444-4444-444444444444', 'b9a5e8f9-9999-9999-9999-999999999999', '10101010-1010-1010-1010-101010101010', '2026-01-26 14:00:00+08', '2026-01-26 17:00:00+08', '2026-01-26 14:00:00+08', '2026-01-26 17:00:00+08', 20, 15, 'approved', '99999999-9999-9999-9999-999999999999', '2026-01-12 16:00:00+08', 'Investment workshop in trading room', 55),
+  ('bbbbbbbb-7777-7777-7777-777777777777', 'eeeeeeee-5555-5555-5555-555555555555', 'b7a5e8f7-7777-7777-7777-777777777777', '33333333-3333-3333-3333-333333333333', '2026-02-03 09:00:00+08', '2026-02-03 12:00:00+08', NULL, NULL, 30, 20, 'pending', NULL, NULL, 'Environment campaign gathering point', 120),
+  ('bbbbbbbb-8888-8888-8888-888888888888', 'eeeeeeee-6666-6666-6666-666666666666', 'baa5e8fa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '20202020-2020-2020-2020-202020202020', '2026-02-06 13:00:00+08', '2026-02-06 17:00:00+08', '2026-02-06 13:00:00+08', '2026-02-06 17:00:00+08', 30, 15, 'approved', 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '2026-01-11 10:00:00+08', 'Public speaking competition', 30),
+  ('bbbbbbbb-9999-9999-9999-999999999999', 'eeeeeeee-7777-7777-7777-777777777777', 'b7a5e8f7-7777-7777-7777-777777777777', '33333333-3333-3333-3333-333333333333', '2026-01-31 17:00:00+08', '2026-01-31 22:00:00+08', NULL, NULL, 120, 45, 'cancelled', NULL, NULL, 'Music festival - event cancelled', 280);
 
 -- ========================================
 -- Sample Event Participation Data (with explicit IDs and varied statuses)
@@ -876,135 +875,115 @@ INSERT INTO resource_categories (code, name, description, status) VALUES
 -- ========================================
 -- Sample Resource Types Data
 -- ========================================
-INSERT INTO resource_types (category_id, code, name, description, total_quantity, available_quantity, unit, status, managed_by)
+INSERT INTO resource_types (category_id, code, name, description, total_quantity, unit, status)
 SELECT 
   (SELECT id FROM resource_categories WHERE code = 'AV' LIMIT 1),
   'PROJ-LCD',
   'LCD Projector',
   'Full HD projector with HDMI and VGA inputs',
   10,
-  10,
   'units',
-  'active',
-  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1)
+  'active'
 WHERE EXISTS (SELECT 1 FROM resource_categories WHERE code = 'AV');
 
-INSERT INTO resource_types (category_id, code, name, description, total_quantity, available_quantity, unit, status, managed_by)
+INSERT INTO resource_types (category_id, code, name, description, total_quantity, unit, status)
 SELECT 
   (SELECT id FROM resource_categories WHERE code = 'AV' LIMIT 1),
   'MIC-WL',
   'Wireless Microphone Set',
   'Wireless microphone with receiver and batteries',
   8,
-  8,
   'sets',
-  'active',
-  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1)
+  'active'
 WHERE EXISTS (SELECT 1 FROM resource_categories WHERE code = 'AV');
 
-INSERT INTO resource_types (category_id, code, name, description, total_quantity, available_quantity, unit, status, managed_by)
+INSERT INTO resource_types (category_id, code, name, description, total_quantity, unit, status)
 SELECT 
   (SELECT id FROM resource_categories WHERE code = 'AV' LIMIT 1),
   'SOUND-PA',
   'PA Sound System',
   'Complete sound system with speakers and mixer',
   4,
-  4,
   'sets',
-  'active',
-  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1)
+  'active'
 WHERE EXISTS (SELECT 1 FROM resource_categories WHERE code = 'AV');
 
-INSERT INTO resource_types (category_id, code, name, description, total_quantity, available_quantity, unit, status, managed_by)
+INSERT INTO resource_types (category_id, code, name, description, total_quantity, unit, status)
 SELECT 
   (SELECT id FROM resource_categories WHERE code = 'AV' LIMIT 1),
   'LED-SCREEN',
   'Portable LED Screen',
   'Large LED display screen for outdoor events',
   2,
-  2,
   'units',
-  'active',
-  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1)
+  'active'
 WHERE EXISTS (SELECT 1 FROM resource_categories WHERE code = 'AV');
 
-INSERT INTO resource_types (category_id, code, name, description, total_quantity, available_quantity, unit, status, managed_by, notes)
+INSERT INTO resource_types (category_id, code, name, description, total_quantity, unit, status, notes)
 SELECT 
   (SELECT id FROM resource_categories WHERE code = 'AV' LIMIT 1),
   'CAM-VIDEO',
   'Video Camera Kit',
   'Professional video camera with tripod',
   3,
-  3,
   'kits',
   'active',
-  (SELECT id FROM users WHERE email = 'james.lee@fac.edu' LIMIT 1),
   'FAC students only - requires training certification'
 WHERE EXISTS (SELECT 1 FROM resource_categories WHERE code = 'AV');
 
-INSERT INTO resource_types (category_id, code, name, description, total_quantity, available_quantity, unit, status, managed_by)
+INSERT INTO resource_types (category_id, code, name, description, total_quantity, unit, status)
 SELECT 
   (SELECT id FROM resource_categories WHERE code = 'FURN' LIMIT 1),
   'CHAIR-FOLD',
   'Folding Chairs',
   'Portable folding chairs for events',
   200,
-  200,
   'pieces',
-  'active',
-  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1)
+  'active'
 WHERE EXISTS (SELECT 1 FROM resource_categories WHERE code = 'FURN');
 
-INSERT INTO resource_types (category_id, code, name, description, total_quantity, available_quantity, unit, status, managed_by)
+INSERT INTO resource_types (category_id, code, name, description, total_quantity, unit, status)
 SELECT 
   (SELECT id FROM resource_categories WHERE code = 'FURN' LIMIT 1),
   'TABLE-6FT',
   'Folding Tables (6ft)',
   '6-foot folding tables',
   50,
-  50,
   'pieces',
-  'active',
-  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1)
+  'active'
 WHERE EXISTS (SELECT 1 FROM resource_categories WHERE code = 'FURN');
 
-INSERT INTO resource_types (category_id, code, name, description, total_quantity, available_quantity, unit, status, managed_by)
+INSERT INTO resource_types (category_id, code, name, description, total_quantity, unit, status)
 SELECT 
   (SELECT id FROM resource_categories WHERE code = 'FURN' LIMIT 1),
   'WB-MOBILE',
   'Whiteboard (Mobile)',
   'Large mobile whiteboard with markers',
   15,
-  15,
   'units',
-  'active',
-  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1)
+  'active'
 WHERE EXISTS (SELECT 1 FROM resource_categories WHERE code = 'FURN');
 
-INSERT INTO resource_types (category_id, code, name, description, total_quantity, available_quantity, unit, status, managed_by)
+INSERT INTO resource_types (category_id, code, name, description, total_quantity, unit, status)
 SELECT 
   (SELECT id FROM resource_categories WHERE code = 'IT' LIMIT 1),
   'LAPTOP-PRES',
   'Laptop (Presentation)',
   'Laptop pre-loaded with presentation software',
   5,
-  5,
   'units',
-  'active',
-  (SELECT id FROM users WHERE email = 'alice.wong@fci.edu' LIMIT 1)
+  'active'
 WHERE EXISTS (SELECT 1 FROM resource_categories WHERE code = 'IT');
 
-INSERT INTO resource_types (category_id, code, name, description, total_quantity, available_quantity, unit, status, managed_by, notes)
+INSERT INTO resource_types (category_id, code, name, description, total_quantity, unit, status, notes)
 SELECT 
   (SELECT id FROM resource_categories WHERE code = 'CATER' LIMIT 1),
   'SNACK-PKG',
   'Catering Package (Snacks)',
   'Light refreshments package for events',
   20,
-  20,
   'packages',
   'active',
-  (SELECT id FROM users WHERE email = 'admin@university.edu' LIMIT 1),
   'Requires 48 hours advance notice'
 WHERE EXISTS (SELECT 1 FROM resource_categories WHERE code = 'CATER');
 
@@ -1094,7 +1073,7 @@ COMMENT ON TABLE event_invitations IS 'Stores user invitations for invite-only e
 COMMENT ON TABLE event_participation IS 'Stores user participation/registration for events';
 COMMENT ON TABLE resource_requests IS 'Stores resource requests for events';
 
-COMMENT ON COLUMN users.role IS 'User role: student (can create events), event_organizer (can create events with custom visibility), administrator (admin functions only, cannot create events), faculty_manager (can create events and manage venues)';
+COMMENT ON COLUMN users.role IS 'User role: student (can create events), event_organizer (can create events with custom visibility), administrator (admin functions only, cannot create events), faculty_staff (can create events and manage venues)';
 COMMENT ON COLUMN users.status IS 'User account status: active, inactive, or blocked';
 COMMENT ON COLUMN sessions.token IS 'JWT token for authentication';
 COMMENT ON COLUMN sessions.expires_at IS 'Session expiration timestamp';
@@ -1122,7 +1101,7 @@ COMMENT ON COLUMN event_participation.check_in_datetime IS 'When user checked in
 
 -- ========================================
 -- Table: venue_availability_blocks
--- Stores blocked time slots for venues (faculty manager maintenance)
+-- Stores blocked time slots for venues (faculty staff maintenance)
 -- ========================================
 CREATE TABLE venue_availability_blocks (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -1407,7 +1386,7 @@ VALUES (
   '2025-11-15 08:30:00+08',
   '2025-11-15 17:30:00+08',
   'approved',
-  (SELECT id FROM users WHERE role = 'faculty_manager' LIMIT 1),
+  (SELECT id FROM users WHERE role = 'faculty_staff' LIMIT 1),
   '2025-11-05 14:00:00+08',
   'Approved with extra setup/teardown time',
   50
@@ -1431,7 +1410,7 @@ VALUES (
   '2025-12-10 14:00:00+08',
   '2025-12-10 16:30:00+08',
   'approved',
-  (SELECT id FROM users WHERE role = 'faculty_manager' LIMIT 1),
+  (SELECT id FROM users WHERE role = 'faculty_staff' LIMIT 1),
   '2025-11-25 09:00:00+08',
   30
 );
@@ -1454,7 +1433,7 @@ VALUES (
   '2025-12-20 08:00:00+08',
   '2025-12-22 08:00:00+08',
   'approved',
-  (SELECT id FROM users WHERE role = 'faculty_manager' LIMIT 1),
+  (SELECT id FROM users WHERE role = 'faculty_staff' LIMIT 1),
   '2025-12-05 16:00:00+08',
   'Approved for full 48-hour access',
   100
@@ -1478,7 +1457,7 @@ VALUES (
   '2026-01-03 10:00:00+08',
   '2026-01-03 12:00:00+08',
   'approved',
-  (SELECT id FROM users WHERE role = 'faculty_manager' LIMIT 1),
+  (SELECT id FROM users WHERE role = 'faculty_staff' LIMIT 1),
   '2025-12-18 11:00:00+08',
   40
 );
@@ -1501,7 +1480,7 @@ VALUES (
   '2026-01-06 09:00:00+08',
   '2026-01-10 18:00:00+08',
   'approved',
-  (SELECT id FROM users WHERE role = 'faculty_manager' LIMIT 1),
+  (SELECT id FROM users WHERE role = 'faculty_staff' LIMIT 1),
   '2025-12-22 15:00:00+08',
   25
 );
@@ -1524,7 +1503,7 @@ VALUES (
   '2026-01-20 13:00:00+08',
   '2026-01-20 17:00:00+08',
   'approved',
-  (SELECT id FROM users WHERE role = 'faculty_manager' LIMIT 1),
+  (SELECT id FROM users WHERE role = 'faculty_staff' LIMIT 1),
   '2026-01-04 10:00:00+08',
   30
 );
@@ -1633,7 +1612,7 @@ VALUES (
   20,
   10,
   'approved',
-  (SELECT id FROM users WHERE role = 'faculty_manager' AND faculty_id = (SELECT id FROM faculties WHERE code = 'FCI' LIMIT 1) LIMIT 1),
+  (SELECT id FROM users WHERE role = 'faculty_staff' AND faculty_id = (SELECT id FROM faculties WHERE code = 'FCI' LIMIT 1) LIMIT 1),
   '2026-01-05 09:30:00+08',
   'Approved. Please ensure lab safety protocols are followed.',
   'Coding competition for students',
@@ -1657,7 +1636,7 @@ VALUES (
   '2026-01-11 16:00:00+08',
   15,
   'rejected',
-  (SELECT id FROM users WHERE role = 'faculty_manager' AND faculty_id = (SELECT id FROM faculties WHERE code = 'FCI' LIMIT 1) LIMIT 1),
+  (SELECT id FROM users WHERE role = 'faculty_staff' AND faculty_id = (SELECT id FROM faculties WHERE code = 'FCI' LIMIT 1) LIMIT 1),
   '2026-01-04 14:20:00+08',
   'The requested time slot conflicts with a scheduled faculty meeting. Please choose an alternative time or venue.',
   'Study group session',
@@ -1725,7 +1704,7 @@ INSERT INTO event_feedbacks (
 )
 VALUES (
   'a1111111-1111-1111-1111-111111111111',
-  (SELECT id FROM users WHERE role = 'faculty_manager' LIMIT 1),
+  (SELECT id FROM users WHERE role = 'faculty_staff' LIMIT 1),
   5, 4, 5, 5,
   'Excellent workshop! The venue was in perfect condition and the event was well-organized. Students were very engaged throughout the session.',
   'Consider providing more power outlets for students to charge their laptops.',
@@ -1741,7 +1720,7 @@ INSERT INTO event_feedbacks (
 )
 VALUES (
   'a2222222-2222-2222-2222-222222222222',
-  (SELECT id FROM users WHERE role = 'faculty_manager' OFFSET 1 LIMIT 1),
+  (SELECT id FROM users WHERE role = 'faculty_staff' OFFSET 1 LIMIT 1),
   4, 5, 4, 4,
   'Great seminar with excellent speakers. The venue audio system worked perfectly. A few minor issues with temperature control but overall very good.',
   'Would recommend scheduling similar events in the afternoon - better attendance.',
@@ -1757,7 +1736,7 @@ INSERT INTO event_feedbacks (
 )
 VALUES (
   'a3333333-3333-3333-3333-333333333333',
-  (SELECT id FROM users WHERE role = 'faculty_manager' LIMIT 1),
+  (SELECT id FROM users WHERE role = 'faculty_staff' LIMIT 1),
   3, 4, 3, 4,
   'The 48-hour event was challenging to manage. Venue held up well but cleanliness became an issue by day 2. Organizers did a good job managing the large crowd.',
   'For future multi-day events, schedule cleaning breaks. Also need better waste management.',
@@ -1773,7 +1752,7 @@ INSERT INTO event_feedbacks (
 )
 VALUES (
   'a4444444-4444-4444-4444-444444444444',
-  (SELECT id FROM users WHERE role = 'faculty_manager' OFFSET 1 LIMIT 1),
+  (SELECT id FROM users WHERE role = 'faculty_staff' OFFSET 1 LIMIT 1),
   5, 5, 5, 5,
   'Perfect way to start the new year! Everything was excellent - venue was spotless, AV equipment worked flawlessly, and the event ran right on schedule.',
   'No suggestions - this was a model event!',
@@ -1794,7 +1773,7 @@ VALUES (
   '2026-01-25 00:00:00+08',
   '2026-01-27 23:59:00+08',
   'Annual maintenance and equipment upgrade',
-  (SELECT id FROM users WHERE role = 'faculty_manager' LIMIT 1)
+  (SELECT id FROM users WHERE role = 'faculty_staff' LIMIT 1)
 );
 
 -- ========================================
@@ -1817,7 +1796,7 @@ VALUES (
   '2026-02-10 08:00:00+08',
   '2026-02-12 18:00:00+08',
   'Faculty retreat and planning session',
-  (SELECT id FROM users WHERE role = 'faculty_manager' LIMIT 1)
+  (SELECT id FROM users WHERE role = 'faculty_staff' LIMIT 1)
 );
 -- ========================================
 -- Sample Custom Registration Fields for Testing
@@ -1827,7 +1806,7 @@ VALUES (
 INSERT INTO event_registration_fields (event_id, field_type, label, help_text, is_required, options, order_index)
 VALUES 
   (
-    (SELECT id FROM events WHERE event_name = 'Annual Sports Day' LIMIT 1),
+    (SELECT id FROM events WHERE event_name = 'Annual Sports Day 2026' LIMIT 1),
     'dropdown',
     'T-Shirt Size',
     'Select your preferred T-shirt size for the event',
@@ -1836,7 +1815,7 @@ VALUES
     0
   ),
   (
-    (SELECT id FROM events WHERE event_name = 'Annual Sports Day' LIMIT 1),
+    (SELECT id FROM events WHERE event_name = 'Annual Sports Day 2026' LIMIT 1),
     'checkbox',
     'Sports Interested In',
     'Select all sports you would like to participate in',
@@ -1845,7 +1824,7 @@ VALUES
     1
   ),
   (
-    (SELECT id FROM events WHERE event_name = 'Annual Sports Day' LIMIT 1),
+    (SELECT id FROM events WHERE event_name = 'Annual Sports Day 2026' LIMIT 1),
     'text',
     'Emergency Contact Name',
     'Full name of emergency contact person',
@@ -1854,7 +1833,7 @@ VALUES
     2
   ),
   (
-    (SELECT id FROM events WHERE event_name = 'Annual Sports Day' LIMIT 1),
+    (SELECT id FROM events WHERE event_name = 'Annual Sports Day 2026' LIMIT 1),
     'phone',
     'Emergency Contact Number',
     'Phone number of emergency contact person',
@@ -1863,7 +1842,7 @@ VALUES
     3
   ),
   (
-    (SELECT id FROM events WHERE event_name = 'Annual Sports Day' LIMIT 1),
+    (SELECT id FROM events WHERE event_name = 'Annual Sports Day 2026' LIMIT 1),
     'textarea',
     'Medical Conditions',
     'Please list any medical conditions we should be aware of (or write "None")',
@@ -2628,226 +2607,301 @@ VALUES (
 );
 
 -- ========================================
--- APPENDED TEST DATA: package booking sample (from test_data/complete_package_test_data.sql)
--- Note: verification queries omitted to keep schema file focused on data
+-- Package Venue and Resource Booking Test Data
 -- ========================================
 
--- STEP 1: Create Test Users
-INSERT INTO users (id, email, name, password, role, staff_id, status, created_at, updated_at)
+-- Create a package event that requires multiple venues and resources
+INSERT INTO events (id, organizer_id, event_name, description, visibility, event_type, status, registration_status, expected_attendees, registration_limit, start_datetime, end_datetime) 
 VALUES (
-  '11111111-1111-1111-1111-111111111111',
-  'organizer@university.edu',
-  'John Organizer',
-  '$2b$10$abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOP',
-  'event_organizer',
-  'ORG001',
-  'active',
-  CURRENT_TIMESTAMP,
-  CURRENT_TIMESTAMP
-);
-
-INSERT INTO users (id, email, name, password, role, faculty_id, staff_id, status, created_at, updated_at)
-VALUES (
-  '22222222-2222-2222-2222-222222222222',
-  'fmanager@university.edu',
-  'Sarah Faculty Manager',
-  '$2b$10$abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOP',
-  'faculty_manager',
+  'ffffffff-eeee-dddd-cccc-bbbbbbbbbb01',
   '33333333-3333-3333-3333-333333333333',
-  'FM001',
-  'active',
-  CURRENT_TIMESTAMP,
-  CURRENT_TIMESTAMP
-);
-
--- STEP 2: Create Test Faculty
-INSERT INTO faculties (id, code, name, description, status, created_at, updated_at)
-VALUES (
-  '33333333-3333-3333-3333-333333333333',
-  'FCI',
-  'Faculty of Computing and Informatics',
-  'Faculty managing computing and IT programs',
-  'active',
-  CURRENT_TIMESTAMP,
-  CURRENT_TIMESTAMP
-);
-
--- STEP 3: Create Test Venues
-INSERT INTO venues (id, faculty_id, code, name, location, capacity, status, created_at, updated_at)
-VALUES (
-  '44444444-4444-4444-4444-444444444444',
-  '33333333-3333-3333-3333-333333333333',
-  'AUD-FCI-01',
-  'Main Auditorium',
-  'Ground Floor, Block A',
-  300,
-  'active',
-  CURRENT_TIMESTAMP,
-  CURRENT_TIMESTAMP
-);
-
-INSERT INTO venues (id, faculty_id, code, name, location, capacity, status, created_at, updated_at)
-VALUES (
-  '55555555-5555-5555-5555-555555555555',
-  '33333333-3333-3333-3333-333333333333',
-  'LH-FCI-01',
-  'Lecture Hall 1',
-  'Level 2, Block A',
-  100,
-  'active',
-  CURRENT_TIMESTAMP,
-  CURRENT_TIMESTAMP
-);
-
-INSERT INTO venues (id, faculty_id, code, name, location, capacity, status, created_at, updated_at)
-VALUES (
-  '66666666-6666-6666-6666-666666666666',
-  '33333333-3333-3333-3333-333333333333',
-  'LH-FCI-02',
-  'Lecture Hall 2',
-  'Level 2, Block A',
-  100,
-  'active',
-  CURRENT_TIMESTAMP,
-  CURRENT_TIMESTAMP
-);
-
--- STEP 4: Create Resource Categories
-INSERT INTO resource_categories (id, code, name, description, status, created_at, updated_at)
-VALUES 
-  ('77777777-7777-7777-7777-777777777777', 'AV', 'Audio/Visual', 'Audio visual equipment', 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-  ('88888888-8888-8888-8888-888888888888', 'FURN', 'Furniture', 'Tables, chairs, etc.', 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-  ('99999999-9999-9999-9999-999999999999', 'IT', 'IT Equipment', 'Computers, routers, etc.', 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
-
--- STEP 5: Create Resource Types
-INSERT INTO resource_types (id, category_id, code, name, description, total_quantity, available_quantity, unit, status, managed_by, created_at, updated_at)
-VALUES (
-  'aaaaaaaa-1111-1111-1111-111111111111',
-  '77777777-7777-7777-7777-777777777777',
-  'PROJ-HD',
-  'HD Projector',
-  'High definition projector with HDMI',
-  10,
-  10,
-  'units',
-  'active',
-  '22222222-2222-2222-2222-222222222222',
-  CURRENT_TIMESTAMP,
-  CURRENT_TIMESTAMP
-);
-
-INSERT INTO resource_types (id, category_id, code, name, description, total_quantity, available_quantity, unit, status, managed_by, created_at, updated_at)
-VALUES (
-  'bbbbbbbb-2222-2222-2222-222222222222',
-  '77777777-7777-7777-7777-777777777777',
-  'MIC-WL',
-  'Wireless Microphone',
-  'Professional wireless microphone system',
-  20,
-  20,
-  'units',
-  'active',
-  '22222222-2222-2222-2222-222222222222',
-  CURRENT_TIMESTAMP,
-  CURRENT_TIMESTAMP
-);
-
-INSERT INTO resource_types (id, category_id, code, name, description, total_quantity, available_quantity, unit, status, managed_by, created_at, updated_at)
-VALUES (
-  'cccccccc-3333-3333-3333-333333333333',
-  '88888888-8888-8888-8888-888888888888',
-  'CHR-STD',
-  'Standard Chair',
-  'Stackable event chairs',
-  500,
-  500,
-  'units',
-  'active',
-  '22222222-2222-2222-2222-222222222222',
-  CURRENT_TIMESTAMP,
-  CURRENT_TIMESTAMP
-);
-
-INSERT INTO resource_types (id, category_id, code, name, description, total_quantity, available_quantity, unit, status, managed_by, created_at, updated_at)
-VALUES (
-  'dddddddd-4444-4444-4444-444444444444',
-  '88888888-8888-8888-8888-888888888888',
-  'WB-MOB',
-  'Mobile Whiteboard',
-  'Portable whiteboard with stand',
-  15,
-  15,
-  'units',
-  'active',
-  '22222222-2222-2222-2222-222222222222',
-  CURRENT_TIMESTAMP,
-  CURRENT_TIMESTAMP
-);
-
--- STEP 6: Create Test Event
-INSERT INTO events (
-  id,
-  organizer_id,
-  event_name,
-  description,
-  visibility,
-  event_type,
-  status,
-  registration_status,
-  expected_attendees,
-  registration_limit,
-  start_datetime,
-  end_datetime,
-  created_at,
-  updated_at
-) VALUES (
-  'eeeeeeee-5555-5555-5555-555555555555',
-  '11111111-1111-1111-1111-111111111111',
-  'Annual Tech Conference 2026',
-  'A large-scale technology conference requiring multiple venues and resources. This event demonstrates the package booking feature with 3 venue bookings and 4 resource requests.',
+  'Annual Tech Summit 2026',
+  'Multi-day technology conference with keynotes, workshops, and networking sessions requiring coordination across multiple venues and resources',
   'public',
   'conference',
   'upcoming',
   'open',
-  250,
-  300,
-  '2026-02-15 09:00:00+08',
-  '2026-02-15 17:00:00+08',
-  CURRENT_TIMESTAMP,
-  CURRENT_TIMESTAMP
+  500,
+  600,
+  '2026-03-10 08:00:00+08',
+  '2026-03-12 18:00:00+08'
+);
+
+-- Main auditorium booking for keynote
+INSERT INTO venue_bookings (id, event_id, venue_id, requester_user_id, requested_start_datetime, requested_end_datetime, approved_start_datetime, approved_end_datetime, setup_time, teardown_time, status, approved_user_id, approved_at, expected_attendees)
+VALUES (
+  'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeee01',
+  'ffffffff-eeee-dddd-cccc-bbbbbbbbbb01',
+  'b1a5e8f1-1111-1111-1111-111111111111',
+  '33333333-3333-3333-3333-333333333333',
+  '2026-03-10 08:00:00+08',
+  '2026-03-10 12:00:00+08',
+  '2026-03-10 08:00:00+08',
+  '2026-03-10 12:00:00+08',
+  60,
+  30,
+  'approved',
+  '66666666-6666-6666-6666-666666666666',
+  CURRENT_TIMESTAMP - INTERVAL '5 days',
+  400
+);
+
+-- Workshop venue 1 booking
+INSERT INTO venue_bookings (id, event_id, venue_id, requester_user_id, requested_start_datetime, requested_end_datetime, approved_start_datetime, approved_end_datetime, setup_time, teardown_time, status, approved_user_id, approved_at, expected_attendees)
+VALUES (
+  'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeee02',
+  'ffffffff-eeee-dddd-cccc-bbbbbbbbbb01',
+  'b2a5e8f2-2222-2222-2222-222222222222',
+  '33333333-3333-3333-3333-333333333333',
+  '2026-03-10 14:00:00+08',
+  '2026-03-10 17:00:00+08',
+  '2026-03-10 14:00:00+08',
+  '2026-03-10 17:00:00+08',
+  30,
+  15,
+  'approved',
+  '66666666-6666-6666-6666-666666666666',
+  CURRENT_TIMESTAMP - INTERVAL '5 days',
+  150
+);
+
+-- Workshop venue 2 booking
+INSERT INTO venue_bookings (id, event_id, venue_id, requester_user_id, requested_start_datetime, requested_end_datetime, setup_time, teardown_time, status, expected_attendees)
+VALUES (
+  'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeee03',
+  'ffffffff-eeee-dddd-cccc-bbbbbbbbbb01',
+  'b3a5e8f3-3333-3333-3333-333333333333',
+  '33333333-3333-3333-3333-333333333333',
+  '2026-03-11 09:00:00+08',
+  '2026-03-11 12:00:00+08',
+  30,
+  15,
+  'pending',
+  120
+);
+
+-- Networking venue booking
+INSERT INTO venue_bookings (id, event_id, venue_id, requester_user_id, requested_start_datetime, requested_end_datetime, setup_time, teardown_time, status, remarks, expected_attendees)
+VALUES (
+  'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeee04',
+  'ffffffff-eeee-dddd-cccc-bbbbbbbbbb01',
+  'b5a5e8f5-5555-5555-5555-555555555555',
+  '33333333-3333-3333-3333-333333333333',
+  '2026-03-11 18:00:00+08',
+  '2026-03-11 21:00:00+08',
+  45,
+  30,
+  'pending',
+  'Cocktail reception and networking - requires catering setup',
+  250
+);
+
+-- Resource Requests for the event
+-- LCD Projectors (approved)
+INSERT INTO resource_requests (id, event_id, venue_booking_id, resource_id, requester_user_id, requested_quantity, usage_start_datetime, usage_end_datetime, status, approved_by, approved_at, created_at)
+VALUES (
+  'bbbbbbbb-cccc-dddd-eeee-ffffffffff01',
+  'ffffffff-eeee-dddd-cccc-bbbbbbbbbb01',
+  'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeee01',
+  (SELECT id FROM resource_types WHERE code = 'PROJ-LCD' LIMIT 1),
+  '33333333-3333-3333-3333-333333333333',
+  3,
+  '2026-03-10 08:00:00+08',
+  '2026-03-10 12:00:00+08',
+  'approved',
+  '88888888-8888-8888-8888-888888888888',
+  CURRENT_TIMESTAMP - INTERVAL '6 days',
+  CURRENT_TIMESTAMP - INTERVAL '7 days'
+);
+
+-- Wireless Microphones (approved)
+INSERT INTO resource_requests (id, event_id, venue_booking_id, resource_id, requester_user_id, requested_quantity, usage_start_datetime, usage_end_datetime, status, approved_by, approved_at, created_at)
+VALUES (
+  'bbbbbbbb-cccc-dddd-eeee-ffffffffff02',
+  'ffffffff-eeee-dddd-cccc-bbbbbbbbbb01',
+  'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeee01',
+  (SELECT id FROM resource_types WHERE code = 'MIC-WL' LIMIT 1),
+  '33333333-3333-3333-3333-333333333333',
+  5,
+  '2026-03-10 08:00:00+08',
+  '2026-03-10 12:00:00+08',
+  'approved',
+  '88888888-8888-8888-8888-888888888888',
+  CURRENT_TIMESTAMP - INTERVAL '6 days',
+  CURRENT_TIMESTAMP - INTERVAL '7 days'
+);
+
+-- Folding Chairs (approved)
+INSERT INTO resource_requests (id, event_id, venue_booking_id, resource_id, requester_user_id, requested_quantity, usage_start_datetime, usage_end_datetime, status, approved_by, approved_at, approval_notes, created_at)
+VALUES (
+  'bbbbbbbb-cccc-dddd-eeee-ffffffffff03',
+  'ffffffff-eeee-dddd-cccc-bbbbbbbbbb01',
+  'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeee02',
+  (SELECT id FROM resource_types WHERE code = 'CHAIR-FOLD' LIMIT 1),
+  '33333333-3333-3333-3333-333333333333',
+  400,
+  '2026-03-10 14:00:00+08',
+  '2026-03-10 17:00:00+08',
+  'approved',
+  '88888888-8888-8888-8888-888888888888',
+  CURRENT_TIMESTAMP - INTERVAL '6 days',
+  'Approved 400 chairs for workshop venue',
+  CURRENT_TIMESTAMP - INTERVAL '7 days'
+);
+
+-- Whiteboards (pending)
+INSERT INTO resource_requests (id, event_id, venue_booking_id, resource_id, requester_user_id, requested_quantity, usage_start_datetime, usage_end_datetime, status, setup_instructions, created_at)
+VALUES (
+  'bbbbbbbb-cccc-dddd-eeee-ffffffffff04',
+  'ffffffff-eeee-dddd-cccc-bbbbbbbbbb01',
+  'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeee03',
+  (SELECT id FROM resource_types WHERE code = 'WB-MOBILE' LIMIT 1),
+  '33333333-3333-3333-3333-333333333333',
+  8,
+  '2026-03-11 09:00:00+08',
+  '2026-03-11 12:00:00+08',
+  'pending',
+  'For workshop sessions - awaiting confirmation of availability',
+  CURRENT_TIMESTAMP - INTERVAL '4 days'
 );
 
 -- ========================================
--- MIGRATIONS MERGED: 2026-01-09 .. 2026-01-10
--- 1) Add `staff_id` to users
--- 2) Add `registration_limit` to events
--- 3) Ensure `package_id` support for venue_bookings and resource_requests (idempotent)
+-- Event Invitations Test Data
 -- ========================================
 
--- Migration: Add staff_id column to users table
--- Description: Student ID (matric number) and Staff ID for organizers/managers/admins
-ALTER TABLE users ADD COLUMN IF NOT EXISTS staff_id VARCHAR(50) UNIQUE;
+-- Invitations for Annual Tech Summit 2026 (package event)
+INSERT INTO event_invitations (id, event_id, user_id, invited_by, status, invited_at, responded_at)
+VALUES (
+  'cccccccc-dddd-eeee-ffff-aaaaaaaaaa01',
+  'ffffffff-eeee-dddd-cccc-bbbbbbbbbb01',
+  'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+  '33333333-3333-3333-3333-333333333333',
+  'accepted',
+  CURRENT_TIMESTAMP - INTERVAL '10 days',
+  CURRENT_TIMESTAMP - INTERVAL '9 days'
+);
 
--- Add index for staff_id lookups
-CREATE INDEX IF NOT EXISTS idx_users_staff_id ON users(staff_id);
+INSERT INTO event_invitations (id, event_id, user_id, invited_by, status, invited_at, responded_at)
+VALUES (
+  'cccccccc-dddd-eeee-ffff-aaaaaaaaaa02',
+  'ffffffff-eeee-dddd-cccc-bbbbbbbbbb01',
+  'cccccccc-cccc-cccc-cccc-cccccccccccc',
+  '33333333-3333-3333-3333-333333333333',
+  'accepted',
+  CURRENT_TIMESTAMP - INTERVAL '10 days',
+  CURRENT_TIMESTAMP - INTERVAL '8 days'
+);
 
--- Add comment to explain the field
-COMMENT ON COLUMN users.staff_id IS 'Student ID (matric number) for students, Staff ID for event organizers/administrators/faculty managers';
+INSERT INTO event_invitations (id, event_id, user_id, invited_by, status, invited_at, responded_at)
+VALUES (
+  'cccccccc-dddd-eeee-ffff-aaaaaaaaaa03',
+  'ffffffff-eeee-dddd-cccc-bbbbbbbbbb01',
+  'dddddddd-dddd-dddd-dddd-dddddddddddd',
+  '33333333-3333-3333-3333-333333333333',
+  'declined',
+  CURRENT_TIMESTAMP - INTERVAL '10 days',
+  CURRENT_TIMESTAMP - INTERVAL '7 days'
+);
 
--- Migration: Add registration_limit column to events table
--- Purpose: Allow event organizers to set optional registration limits
-ALTER TABLE events ADD COLUMN IF NOT EXISTS registration_limit INTEGER;
-COMMENT ON COLUMN events.registration_limit IS 'Optional limit for event registrations. If NULL, uses venue capacity from approved booking.';
+INSERT INTO event_invitations (id, event_id, user_id, invited_by, status, invited_at)
+VALUES (
+  'cccccccc-dddd-eeee-ffff-aaaaaaaaaa04',
+  'ffffffff-eeee-dddd-cccc-bbbbbbbbbb01',
+  'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee',
+  '33333333-3333-3333-3333-333333333333',
+  'pending',
+  CURRENT_TIMESTAMP - INTERVAL '5 days'
+);
 
--- Migration: Add package support for venue bookings and resource requests
--- Purpose: Allow multiple venues and resources to be requested as a single package
-ALTER TABLE venue_bookings ADD COLUMN IF NOT EXISTS package_id UUID;
-ALTER TABLE resource_requests ADD COLUMN IF NOT EXISTS package_id UUID;
+-- Invitations for Alumni Networking Night (invite-only event)
+INSERT INTO event_invitations (id, event_id, user_id, invited_by, status, invited_at, responded_at)
+VALUES (
+  'cccccccc-dddd-eeee-ffff-aaaaaaaaaa05',
+  'e6e6e6e6-e6e6-e6e6-e6e6-e6e6e6e6e6e6',
+  'ffffffff-ffff-ffff-ffff-ffffffffffff',
+  '33333333-3333-3333-3333-333333333333',
+  'accepted',
+  CURRENT_TIMESTAMP - INTERVAL '20 days',
+  CURRENT_TIMESTAMP - INTERVAL '18 days'
+);
 
--- Create indexes for package queries (idempotent)
-CREATE INDEX IF NOT EXISTS idx_venue_bookings_package_id ON venue_bookings(package_id);
-CREATE INDEX IF NOT EXISTS idx_resource_requests_package_id ON resource_requests(package_id);
+INSERT INTO event_invitations (id, event_id, user_id, invited_by, status, invited_at, responded_at)
+VALUES (
+  'cccccccc-dddd-eeee-ffff-aaaaaaaaaa06',
+  'e6e6e6e6-e6e6-e6e6-e6e6-e6e6e6e6e6e6',
+  '10101010-1010-1010-1010-101010101010',
+  '33333333-3333-3333-3333-333333333333',
+  'accepted',
+  CURRENT_TIMESTAMP - INTERVAL '20 days',
+  CURRENT_TIMESTAMP - INTERVAL '19 days'
+);
 
--- Add comments
-COMMENT ON COLUMN venue_bookings.package_id IS 'Groups multiple venue bookings into one package request. NULL for legacy single bookings.';
-COMMENT ON COLUMN resource_requests.package_id IS 'Groups multiple resource requests into one package request. NULL for legacy single requests.';
+INSERT INTO event_invitations (id, event_id, user_id, invited_by, status, invited_at)
+VALUES (
+  'cccccccc-dddd-eeee-ffff-aaaaaaaaaa07',
+  'e6e6e6e6-e6e6-e6e6-e6e6-e6e6e6e6e6e6',
+  '20202020-2020-2020-2020-202020202020',
+  '33333333-3333-3333-3333-333333333333',
+  'pending',
+  CURRENT_TIMESTAMP - INTERVAL '15 days'
+);
+
+-- Invitations for Leadership Development Workshop (faculty only)
+INSERT INTO event_invitations (id, event_id, user_id, invited_by, status, invited_at, responded_at)
+VALUES (
+  'cccccccc-dddd-eeee-ffff-aaaaaaaaaa08',
+  'e9e9e9e9-e9e9-e9e9-e9e9-e9e9e9e9e9e9',
+  '66666666-6666-6666-6666-666666666666',
+  '88888888-8888-8888-8888-888888888888',
+  'accepted',
+  CURRENT_TIMESTAMP - INTERVAL '25 days',
+  CURRENT_TIMESTAMP - INTERVAL '24 days'
+);
+
+INSERT INTO event_invitations (id, event_id, user_id, invited_by, status, invited_at, responded_at)
+VALUES (
+  'cccccccc-dddd-eeee-ffff-aaaaaaaaaa09',
+  'e9e9e9e9-e9e9-e9e9-e9e9-e9e9e9e9e9e9',
+  '77777777-7777-7777-7777-777777777777',
+  '88888888-8888-8888-8888-888888888888',
+  'accepted',
+  CURRENT_TIMESTAMP - INTERVAL '25 days',
+  CURRENT_TIMESTAMP - INTERVAL '23 days'
+);
+
+INSERT INTO event_invitations (id, event_id, user_id, invited_by, status, invited_at, responded_at)
+VALUES (
+  'cccccccc-dddd-eeee-ffff-aaaaaaaaaa0a',
+  'e9e9e9e9-e9e9-e9e9-e9e9-e9e9e9e9e9e9',
+  '99999999-9999-9999-9999-999999999999',
+  '88888888-8888-8888-8888-888888888888',
+  'declined',
+  CURRENT_TIMESTAMP - INTERVAL '25 days',
+  CURRENT_TIMESTAMP - INTERVAL '22 days'
+);
+
+-- Invitations for FCI Research Symposium (faculty only)
+INSERT INTO event_invitations (id, event_id, user_id, invited_by, status, invited_at, responded_at)
+VALUES (
+  'cccccccc-dddd-eeee-ffff-aaaaaaaaaa0b',
+  'e3e3e3e3-e3e3-e3e3-e3e3-e3e3e3e3e3e3',
+  'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+  '66666666-6666-6666-6666-666666666666',
+  'accepted',
+  CURRENT_TIMESTAMP - INTERVAL '30 days',
+  CURRENT_TIMESTAMP - INTERVAL '28 days'
+);
+
+INSERT INTO event_invitations (id, event_id, user_id, invited_by, status, invited_at)
+VALUES (
+  'cccccccc-dddd-eeee-ffff-aaaaaaaaaa0c',
+  'e3e3e3e3-e3e3-e3e3-e3e3-e3e3e3e3e3e3',
+  '88888888-8888-8888-8888-888888888888',
+  '66666666-6666-6666-6666-666666666666',
+  'pending',
+  CURRENT_TIMESTAMP - INTERVAL '5 days'
+);
+
+-- ========================================
+-- End of Sample Data
+-- ========================================

@@ -210,7 +210,7 @@ This document enumerates all business rules and validation conditions for the Ev
 ## 5) Role / Permission Rules
 
 - **Rule Name:** Only organizers can book venue for their event
-  - Description: Only the event `organizer_id` may create bookings for that event (administrators/faculty managers manage approvals but should not create event-level bookings for other organizers).
+  - Description: Only the event `organizer_id` may create bookings for that event (administrators/faculty staff manage approvals but should not create event-level bookings for other organizers).
   - Trigger: Create booking
   - Message: "Only the event organizer can book venues"
   - Severity: BLOCK
@@ -225,8 +225,8 @@ This document enumerates all business rules and validation conditions for the Ev
   - Enforcement: API (controller), UI (hide create actions for admins)
   - Implemented: Controller blocks administrators from creating bookings.
 
-- **Rule Name:** Only faculty managers & admins can approve/reject
-  - Description: Only `faculty_manager` (for their faculty) or `administrator` may approve/reject booking requests.
+- **Rule Name:** Only faculty staff & admins can approve/reject
+  - Description: Only `faculty_staff` (for their faculty) or `administrator` may approve/reject booking requests.
   - Trigger: Approve/reject actions
   - Message: "Not authorized to approve bookings"
   - Severity: BLOCK

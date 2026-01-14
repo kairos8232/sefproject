@@ -162,8 +162,8 @@ function UserManagementPage() {
     e.preventDefault();
     try {
       // Validate faculty requirement
-      if ((formData.role === 'student' || formData.role === 'faculty_manager') && !formData.faculty_id) {
-        showError('Faculty is required for students and faculty managers.');
+      if ((formData.role === 'student' || formData.role === 'faculty_staff') && !formData.faculty_id) {
+        showError('Faculty is required for students and faculty staff.');
         return;
       }
 
@@ -191,8 +191,8 @@ function UserManagementPage() {
     e.preventDefault();
     try {
       // Validate faculty requirement for current role
-      if ((formData.role === 'student' || formData.role === 'faculty_manager') && !formData.faculty_id) {
-        showError('Faculty is required for students and faculty managers.');
+      if ((formData.role === 'student' || formData.role === 'faculty_staff') && !formData.faculty_id) {
+        showError('Faculty is required for students and faculty staff.');
         return;
       }
 
@@ -293,7 +293,7 @@ function UserManagementPage() {
     switch (role) {
       case 'administrator': return 'role-badge admin';
       case 'event_organizer': return 'role-badge organizer';
-      case 'faculty_manager': return 'role-badge faculty';
+      case 'faculty_staff': return 'role-badge faculty';
       case 'student': return 'role-badge student';
       default: return 'role-badge';
     }
@@ -307,7 +307,7 @@ function UserManagementPage() {
     switch (role) {
       case 'administrator': return 'Administrator';
       case 'event_organizer': return 'Event Organizer';
-      case 'faculty_manager': return 'Faculty Manager';
+      case 'faculty_staff': return 'Faculty Staff';
       case 'student': return 'Student';
       default: return role;
     }
@@ -362,7 +362,7 @@ function UserManagementPage() {
           <option value="">All Roles</option>
           <option value="administrator">Administrator</option>
           <option value="event_organizer">Event Organizer</option>
-          <option value="faculty_manager">Faculty Manager</option>
+          <option value="faculty_staff">Faculty Staff</option>
           <option value="student">Student</option>
         </select>
 
@@ -554,11 +554,11 @@ function UserManagementPage() {
                   <option value="student">Student</option>
                   <option value="event_organizer">Event Organizer</option>
                   <option value="administrator">Administrator</option>
-                  <option value="faculty_manager">Faculty Manager</option>
+                  <option value="faculty_staff">Faculty Staff</option>
                 </select>
               </div>
 
-              {(formData.role === 'student' || formData.role === 'faculty_manager') && (
+              {(formData.role === 'student' || formData.role === 'faculty_staff') && (
                 <div className="form-group">
                   <label>Faculty *</label>
                   <select
@@ -636,14 +636,14 @@ function UserManagementPage() {
                   <option value="student">Student</option>
                   <option value="event_organizer">Event Organizer</option>
                   <option value="administrator">Administrator</option>
-                  <option value="faculty_manager">Faculty Manager</option>
+                  <option value="faculty_staff">Faculty Staff</option>
                 </select>
                 {selectedUser.id === currentUser.id && (
                   <small className="form-hint">You cannot change your own role</small>
                 )}
               </div>
 
-              {(formData.role === 'student' || formData.role === 'faculty_manager') && (
+              {(formData.role === 'student' || formData.role === 'faculty_staff') && (
                 <div className="form-group">
                   <label>Faculty *</label>
                   <select

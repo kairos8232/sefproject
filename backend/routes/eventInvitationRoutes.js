@@ -8,7 +8,7 @@ const invitationController = new EventInvitationController();
 // All routes require authentication
 router.use(verifyToken);
 
-// Get all invitations for an event (organizer/admin/faculty manager)
+// Get all invitations for an event (organizer/admin/faculty staff)
 router.get('/events/:eventId/invitations', invitationController.getEventInvitations);
 
 // Get statistics for event invitations

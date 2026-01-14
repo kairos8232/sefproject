@@ -34,9 +34,7 @@ class ResourceTypeController {
         name,
         description,
         total_quantity,
-        available_quantity,
         unit,
-        managed_by,
         notes
       } = req.body;
 
@@ -56,13 +54,6 @@ class ResourceTypeController {
       // Validate quantities
       if (total_quantity !== undefined && total_quantity < 0) {
         return res.status(400).json({ error: 'Total quantity cannot be negative' });
-      }
-      if (available_quantity !== undefined && available_quantity < 0) {
-        return res.status(400).json({ error: 'Available quantity cannot be negative' });
-      }
-      if (available_quantity !== undefined && total_quantity !== undefined && 
-          available_quantity > total_quantity) {
-        return res.status(400).json({ error: 'Available quantity cannot exceed total quantity' });
       }
 
       // Check if category exists and is active
@@ -87,9 +78,7 @@ class ResourceTypeController {
         name: name.trim(),
         description: description?.trim() || null,
         total_quantity: total_quantity || 0,
-        available_quantity: available_quantity || 0,
         unit: unit?.trim() || null,
-        managed_by: managed_by || null,
         notes: notes?.trim() || null
       });
 
@@ -112,9 +101,7 @@ class ResourceTypeController {
         name,
         description,
         total_quantity,
-        available_quantity,
         unit,
-        managed_by,
         notes
       } = req.body;
 
@@ -134,12 +121,6 @@ class ResourceTypeController {
       // Validate quantities
       if (total_quantity < 0) {
         return res.status(400).json({ error: 'Total quantity cannot be negative' });
-      }
-      if (available_quantity < 0) {
-        return res.status(400).json({ error: 'Available quantity cannot be negative' });
-      }
-      if (available_quantity > total_quantity) {
-        return res.status(400).json({ error: 'Available quantity cannot exceed total quantity' });
       }
 
       // Check if resource type exists
@@ -170,9 +151,7 @@ class ResourceTypeController {
         name: name.trim(),
         description: description?.trim() || null,
         total_quantity,
-        available_quantity,
         unit: unit?.trim() || null,
-        managed_by: managed_by || null,
         notes: notes?.trim() || null
       });
 

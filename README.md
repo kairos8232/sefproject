@@ -137,7 +137,7 @@ All accounts use password: **password123**
 **🎪 Event Organizers:**
 - `sarah.organizer@university.edu`
 
-**👔 Faculty Managers:**
+**👔 Faculty Staff:**
 - `alice.wong@fci.edu` (Faculty of Computing and Informatics)
 - `robert.chen@fom.edu` (Faculty of Management)
 - `maria.garcia@fob.edu` (Faculty of Business)
@@ -200,7 +200,7 @@ The system has three visibility levels that control who can see and access event
 **Who can see:** All logged-in users regardless of role or faculty
 - Students from any faculty
 - Event organizers
-- Faculty managers
+- Faculty staff
 - Administrators
 
 **Use cases:** General campus events, sports day, orientation, career fairs
@@ -211,7 +211,7 @@ The system has three visibility levels that control who can see and access event
 **Who can see:** Only users belonging to the **same faculty** as the event organizer
 - If event organizer is from Faculty of Computing and Informatics (FCI):
   - ✅ Students with `faculty_id = FCI`
-  - ✅ Faculty manager with `faculty_id = FCI`
+  - ✅ Faculty staff with `faculty_id = FCI`
   - ❌ Students/managers from other faculties
 
 **Access rule:** `user.faculty_id === event_organizer.faculty_id`
@@ -237,7 +237,7 @@ The system has three visibility levels that control who can see and access event
 
 ### 📋 Summary Table
 
-| Visibility | Students | Event Organizers | Faculty Managers | Administrators |
+| Visibility | Students | Event Organizers | Faculty Staff | Administrators |
 |------------|----------|------------------|------------------|----------------|
 | Campus-wide | ✅ All | ✅ All | ✅ All | ✅ All |
 | Faculty Only | ✅ Same faculty only | ✅ Same faculty + view all | ✅ Same faculty only | ✅ All |

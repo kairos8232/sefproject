@@ -1,54 +1,65 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import authService from '../services/authService';
 
 function ProtectedRoute({ children }) {
   const location = useLocation();
-  const hasToken = authService.isAuthenticated();
-  const isExpired = hasToken && authService.isTokenExpired();
-  const [isChecking, setIsChecking] = useState(isExpired);
-  const [isAllowed, setIsAllowed] = useState(hasToken && !isExpired);
+  const [isAllowed, setIsAllowed] = useState(null);
+  const navigationAttemptRef = useRef(false);
 
   useEffect(() => {
     let isMounted = true;
-    const refreshIfNeeded = async () => {
+    
+    const checkAuth = async () => {
+      // Check authentication status
+      const hasToken = authService.isAuthenticated();
+      
       if (!hasToken) {
         if (isMounted) {
           setIsAllowed(false);
-          setIsChecking(false);
         }
         return;
       }
 
+      // Check if token is expired
+      const isExpired = authService.isTokenExpired();
+      
       if (!isExpired) {
         if (isMounted) {
           setIsAllowed(true);
-          setIsChecking(false);
         }
         return;
       }
 
+      // Token is expired, try to refresh
       const refreshed = await authService.refreshAccessToken();
-      if (!isMounted) return;
-      setIsAllowed(refreshed);
-      setIsChecking(false);
+      if (isMounted) {
+        setIsAllowed(refreshed);
+      }
     };
 
-    refreshIfNeeded();
+    checkAuth();
     return () => {
       isMounted = false;
     };
-  }, [hasToken, isExpired]);
+  }, []); // Empty dependency array - only run once on mount
 
-  if (isChecking) {
+  // Show nothing while checking authentication
+  if (isAllowed === null) {
     return null;
   }
 
+  // If not allowed, navigate to login (only once)
   if (!isAllowed) {
-    authService.clearSession(true);
-    return <Navigate to="/login" replace state={{ from: location }} />;
+    if (!navigationAttemptRef.current) {
+      navigationAttemptRef.current = true;
+      authService.clearSession(true);
+      return <Navigate to="/login" replace state={{ from: location }} />;
+    }
+    return null;
   }
 
+  // User is authenticated
   return children;
 }
 

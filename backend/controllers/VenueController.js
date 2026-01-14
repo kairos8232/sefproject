@@ -249,8 +249,8 @@ class VenueController {
 
       let venues;
 
-      // If faculty manager, only show their faculty's venues
-      if (role === 'faculty_manager' && facultyId) {
+      // If faculty staff, only show their faculty's venues
+      if (role === 'faculty_staff' && facultyId) {
         const allVenues = await Venue.getAll({ status: 'active' });
         venues = allVenues.filter(venue => venue.faculty_id === facultyId);
       } else {

@@ -101,7 +101,7 @@ function EditProfilePage() {
     const roleMap = {
       administrator: 'Administrator',
       event_organizer: 'Event Organizer',
-      faculty_manager: 'Faculty Manager',
+      faculty_staff: 'Faculty Staff',
       student: 'Student'
     };
     return roleMap[role] || role;

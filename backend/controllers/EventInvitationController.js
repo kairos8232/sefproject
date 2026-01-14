@@ -16,11 +16,11 @@ class EventInvitationController {
         return res.status(404).json({ error: 'Event not found' });
       }
 
-      // Only event organizer, admins, and faculty managers can view invitations
+      // Only event organizer, admins, and faculty staff can view invitations
       if (
         event.organizer_id !== userId &&
         userRole !== 'administrator' &&
-        userRole !== 'faculty_manager'
+        userRole !== 'faculty_staff'
       ) {
         return res.status(403).json({ error: 'Not authorized to view invitations' });
       }
@@ -206,11 +206,11 @@ class EventInvitationController {
         return res.status(404).json({ error: 'Event not found' });
       }
 
-      // Only event organizer, admins, and faculty managers can view stats
+      // Only event organizer, admins, and faculty staff can view stats
       if (
         event.organizer_id !== userId &&
         userRole !== 'administrator' &&
-        userRole !== 'faculty_manager'
+        userRole !== 'faculty_staff'
       ) {
         return res.status(403).json({ error: 'Not authorized' });
       }

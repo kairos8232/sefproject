@@ -291,7 +291,7 @@ const FacultyBookingRequestsPage = () => {
     switch (role.toLowerCase()) {
       case 'student':
         return 'fbrp-role-student';
-      case 'faculty_manager':
+      case 'faculty_staff':
         return 'fbrp-role-faculty';
       case 'event_organizer':
         return 'fbrp-role-organizer';
@@ -390,7 +390,7 @@ const FacultyBookingRequestsPage = () => {
           <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
             <option value="">All Roles</option>
             <option value="student">Student</option>
-            <option value="faculty_manager">Faculty Manager</option>
+            <option value="faculty_staff">Faculty Staff</option>
             <option value="event_organizer">Event Organizer</option>
           </select>
         </div>

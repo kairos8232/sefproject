@@ -18,7 +18,7 @@ function CreateEventPage() {
   }, []);
 
   // Check if user can change visibility
-  const canChangeVisibility = user.role === 'event_organizer' || user.role === 'faculty_manager' || user.role === 'administrator';
+  const canChangeVisibility = user.role === 'event_organizer' || user.role === 'faculty_staff' || user.role === 'administrator';
 
   // Get visibility options based on user role
   const getAllVisibilityOptions = () => {
@@ -27,8 +27,8 @@ function CreateEventPage() {
       { value: 'inviteonly', label: 'Invite Only - Only invited users' }
     ];
     
-    // Only faculty_manager and administrator can set faculty_only
-    if (user.role === 'faculty_manager' || user.role === 'administrator') {
+    // Only faculty_staff and administrator can set faculty_only
+    if (user.role === 'faculty_staff' || user.role === 'administrator') {
       baseOptions.splice(1, 0, { value: 'facultyonly', label: 'Faculty Only - Only your faculty members' });
     }
     

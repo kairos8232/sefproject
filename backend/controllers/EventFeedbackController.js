@@ -11,7 +11,7 @@ class EventFeedbackController {
       const facultyId = req.user.facultyId;
 
       // Only faculty staff can provide feedback
-      if (userRole !== 'faculty_manager') {
+      if (userRole !== 'faculty_staff') {
         return res.status(403).json({ error: 'Only faculty staff can provide feedback' });
       }
 
@@ -82,8 +82,8 @@ class EventFeedbackController {
       console.log('User facultyId:', facultyId);
 
       // Validate user is faculty staff
-      if (userRole !== 'faculty_manager') {
-        console.log('❌ Not a faculty manager');
+      if (userRole !== 'faculty_staff') {
+        console.log('❌ Not a faculty staff');
         return res.status(403).json({ error: 'Only faculty staff can provide feedback' });
       }
 
@@ -273,11 +273,11 @@ class EventFeedbackController {
         return res.status(404).json({ error: 'Event not found' });
       }
 
-      // Check permission: only event organizer, admins, or faculty managers can view feedbacks
+      // Check permission: only event organizer, admins, or faculty staff can view feedbacks
       if (
         userRole !== 'administrator' &&
         event.organizer_id !== userId &&
-        userRole !== 'faculty_manager'
+        userRole !== 'faculty_staff'
       ) {
         return res.status(403).json({ error: 'Not authorized to view feedbacks for this event' });
       }

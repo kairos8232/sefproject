@@ -9,7 +9,7 @@ router.post('/admin', AuthController.verifyToken, VenueController.createVenue);
 router.put('/admin/:id', AuthController.verifyToken, VenueController.updateVenue);
 router.put('/admin/:id/status', AuthController.verifyToken, VenueController.updateVenueStatus);
 
-// Public/general routes (filtered by faculty if faculty_manager)
+// Public/general routes (filtered by faculty if faculty_staff)
 router.get('/', AuthController.verifyToken, VenueController.getVenues);
 router.get('/:id', AuthController.verifyToken, VenueController.getVenueById);
 

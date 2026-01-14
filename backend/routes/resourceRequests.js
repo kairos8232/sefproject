@@ -9,7 +9,7 @@ router.use(AuthController.verifyToken);
 // Check resource availability
 router.get('/availability', resourceRequestController.checkAvailability);
 
-// Get all resource requests (faculty managers only)
+// Get all resource requests (faculty staff only)
 router.get('/', resourceRequestController.getResourceRequests);
 
 // Get user's own resource requests
@@ -30,10 +30,10 @@ router.post('/package', resourceRequestController.createResourceRequestPackage);
 // Update resource request
 router.put('/:id', resourceRequestController.updateResourceRequest);
 
-// Approve resource request (faculty managers only)
+// Approve resource request (faculty staff only)
 router.post('/:id/approve', resourceRequestController.approveResourceRequest);
 
-// Reject resource request (faculty managers only)
+// Reject resource request (faculty staff only)
 router.post('/:id/reject', resourceRequestController.rejectResourceRequest);
 
 // Cancel resource request

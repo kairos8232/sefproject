@@ -54,15 +54,15 @@ class UserController {
       }
 
       // Validate role
-      const validRoles = ['student', 'event_organizer', 'administrator', 'faculty_manager'];
+      const validRoles = ['student', 'event_organizer', 'administrator', 'faculty_staff'];
       if (!validRoles.includes(role)) {
         return res.status(400).json({ 
-          message: 'Invalid role. Must be one of: student, event_organizer, administrator, faculty_manager' 
+          message: 'Invalid role. Must be one of: student, event_organizer, administrator, faculty_staff' 
         });
       }
 
-      // Validate faculty_id requirement for students and faculty_managers
-      if ((role === 'student' || role === 'faculty_manager') && !faculty_id) {
+      // Validate faculty_id requirement for students and faculty_staff
+      if ((role === 'student' || role === 'faculty_staff') && !faculty_id) {
         return res.status(400).json({ 
           message: `Faculty is required for ${role}s.` 
         });
@@ -135,7 +135,7 @@ class UserController {
 
       // Validate faculty_id requirement
       const role = existingUser.role;
-      if ((role === 'student' || role === 'faculty_manager') && !faculty_id) {
+      if ((role === 'student' || role === 'faculty_staff') && !faculty_id) {
         return res.status(400).json({ 
           message: `Faculty is required for ${role}s.` 
         });
@@ -243,10 +243,10 @@ class UserController {
       const { role, faculty_id } = req.body;
 
       // Validate role
-      const validRoles = ['student', 'event_organizer', 'administrator', 'faculty_manager'];
+      const validRoles = ['student', 'event_organizer', 'administrator', 'faculty_staff'];
       if (!validRoles.includes(role)) {
         return res.status(400).json({ 
-          message: 'Invalid role. Must be one of: student, event_organizer, administrator, faculty_manager' 
+          message: 'Invalid role. Must be one of: student, event_organizer, administrator, faculty_staff' 
         });
       }
 
@@ -290,7 +290,7 @@ class UserController {
       }
 
       // Validate faculty_id requirement for new role
-      if ((role === 'student' || role === 'faculty_manager') && !faculty_id && !user.faculty_id) {
+      if ((role === 'student' || role === 'faculty_staff') && !faculty_id && !user.faculty_id) {
         return res.status(400).json({ 
           message: `Faculty is required for ${role}s. Please provide a faculty_id.` 
         });

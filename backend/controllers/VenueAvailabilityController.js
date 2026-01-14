@@ -2,22 +2,22 @@ const VenueAvailability = require('../models/VenueAvailability');
 const Venue = require('../models/Venue');
 
 class VenueAvailabilityController {
-  // Get all blocked slots for venues in faculty manager's faculty
+  // Get all blocked slots for venues in faculty staff's faculty
   getBlockedSlots = async (req, res) => {
     try {
       const { role, facultyId } = req.user;
       const { venue_id } = req.query;
 
-      // Only faculty managers can access this
-      if (role !== 'faculty_manager') {
+      // Only faculty staff can access this
+      if (role !== 'faculty_staff') {
         return res.status(403).json({
-          error: 'Only faculty managers can manage venue availability'
+          error: 'Only faculty staff can manage venue availability'
         });
       }
 
       if (!facultyId) {
         return res.status(400).json({
-          error: 'Faculty manager must have an assigned faculty'
+          error: 'Faculty staff must have an assigned faculty'
         });
       }
 
@@ -79,16 +79,16 @@ class VenueAvailabilityController {
       const { role, facultyId, userId } = req.user;
       const { venue_id, blocked_start_datetime, blocked_end_datetime, reason } = req.body;
 
-      // Only faculty managers can access this
-      if (role !== 'faculty_manager') {
+      // Only faculty staff can access this
+      if (role !== 'faculty_staff') {
         return res.status(403).json({
-          error: 'Only faculty managers can manage venue availability'
+          error: 'Only faculty staff can manage venue availability'
         });
       }
 
       if (!facultyId) {
         return res.status(400).json({
-          error: 'Faculty manager must have an assigned faculty'
+          error: 'Faculty staff must have an assigned faculty'
         });
       }
 
@@ -171,16 +171,16 @@ class VenueAvailabilityController {
       const { id } = req.params;
       const { blocked_start_datetime, blocked_end_datetime, reason } = req.body;
 
-      // Only faculty managers can access this
-      if (role !== 'faculty_manager') {
+      // Only faculty staff can access this
+      if (role !== 'faculty_staff') {
         return res.status(403).json({
-          error: 'Only faculty managers can manage venue availability'
+          error: 'Only faculty staff can manage venue availability'
         });
       }
 
       if (!facultyId) {
         return res.status(400).json({
-          error: 'Faculty manager must have an assigned faculty'
+          error: 'Faculty staff must have an assigned faculty'
         });
       }
 
@@ -264,16 +264,16 @@ class VenueAvailabilityController {
       const { role, facultyId } = req.user;
       const { id } = req.params;
 
-      // Only faculty managers can access this
-      if (role !== 'faculty_manager') {
+      // Only faculty staff can access this
+      if (role !== 'faculty_staff') {
         return res.status(403).json({
-          error: 'Only faculty managers can manage venue availability'
+          error: 'Only faculty staff can manage venue availability'
         });
       }
 
       if (!facultyId) {
         return res.status(400).json({
-          error: 'Faculty manager must have an assigned faculty'
+          error: 'Faculty staff must have an assigned faculty'
         });
       }
 

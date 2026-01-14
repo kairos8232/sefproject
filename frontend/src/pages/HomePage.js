@@ -40,7 +40,7 @@ function HomePage() {
         .slice(0, 3); // Get next 3 upcoming events
       
       let myEventsCount = 0;
-      if (currentUser.role === 'student' || currentUser.role === 'faculty_manager' || currentUser.role === 'event_organizer') {
+      if (currentUser.role === 'student' || currentUser.role === 'faculty_staff' || currentUser.role === 'event_organizer') {
         const myEvents = await eventService.getAllEvents();
         myEventsCount = myEvents.events?.filter(e => e.organizer_id === currentUser.id).length || 0;
       }
@@ -217,7 +217,7 @@ function HomePage() {
       }
     ];
 
-    // Event creation features (for student, faculty_manager, event_organizer)
+    // Event creation features (for student, faculty_staff, event_organizer)
     const eventCreationFeatures = [
       {
         title: 'My Events',
@@ -253,7 +253,7 @@ function HomePage() {
       return adminFeatures;
     } else if (role === 'event_organizer') {
       return [...commonFeatures, ...eventCreationFeatures];
-    } else if (role === 'faculty_manager') {
+    } else if (role === 'faculty_staff') {
       return [...commonFeatures, ...eventCreationFeatures, ...facultyManagerFeatures];
     } else if (role === 'student') {
       return [...commonFeatures, ...eventCreationFeatures];
@@ -373,7 +373,7 @@ function HomePage() {
                     <div className="stat-label">Registered Events</div>
                   </div>
                 </div>
-                {(user.role === 'student' || user.role === 'faculty_manager' || user.role === 'event_organizer') && (
+                {(user.role === 'student' || user.role === 'faculty_staff' || user.role === 'event_organizer') && (
                   <div className="stat-item" onClick={() => navigate('/my-events')}>
                     <div className="stat-icon">🎪</div>
                     <div className="stat-details">

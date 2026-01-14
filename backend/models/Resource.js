@@ -8,8 +8,7 @@ class Resource {
         .from('resource_types')
         .select(`
           *,
-          category:resource_categories!inner(id, code, name),
-          manager:users!managed_by(id, name, email)
+          category:resource_categories!inner(id, code, name)
         `)
         .eq('status', 'active')
         .order('name', { ascending: true });
@@ -36,8 +35,7 @@ class Resource {
         .from('resource_types')
         .select(`
           *,
-          category:resource_categories!inner(id, code, name),
-          manager:users!managed_by(id, name, email)
+          category:resource_categories!inner(id, code, name)
         `)
         .eq('id', id)
         .single();
@@ -65,8 +63,7 @@ class Resource {
         .from('resource_types')
         .select(`
           *,
-          category:resource_categories!inner(id, code, name),
-          manager:users!managed_by(id, name, email)
+          category:resource_categories!inner(id, code, name)
         `)
         .eq('status', 'active')
         .eq('category_id', categoryId)
@@ -146,8 +143,7 @@ class Resource {
         .from('resource_types')
         .select(`
           *,
-          category:resource_categories!inner(id, code, name),
-          manager:users!managed_by(id, name, email)
+          category:resource_categories!inner(id, code, name)
         `)
         .eq('status', 'active');
 

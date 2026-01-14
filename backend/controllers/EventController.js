@@ -132,7 +132,7 @@ class EventController {
       }
 
       // For browse events: Only show events with approved venue bookings
-      // Faculty managers, students, and other event organizers should only see public events with venues
+      // Faculty staff, students, and other event organizers should only see public events with venues
       if (!approvedEventIds.has(event.id)) {
         return false;
       }
@@ -242,8 +242,8 @@ class EventController {
         eventData.visibility = 'campuswide';
       }
 
-      // Only event_organizer, faculty_manager, and administrator can set custom visibility
-      if (userRole !== 'event_organizer' && userRole !== 'faculty_manager' && userRole !== 'administrator') {
+      // Only event_organizer, faculty_staff, and administrator can set custom visibility
+      if (userRole !== 'event_organizer' && userRole !== 'faculty_staff' && userRole !== 'administrator') {
         eventData.visibility = 'campuswide';
       }
 
@@ -496,16 +496,16 @@ class EventController {
     try {
       const { role, facultyId } = req.user;
 
-      // Only faculty managers can access this
-      if (role !== 'faculty_manager') {
+      // Only faculty staff can access this
+      if (role !== 'faculty_staff') {
         return res.status(403).json({ 
-          error: 'Only faculty managers can access faculty events' 
+          error: 'Only faculty staff can access faculty events' 
         });
       }
 
       if (!facultyId) {
         return res.status(400).json({ 
-          error: 'Faculty manager must have an assigned faculty' 
+          error: 'Faculty staff must have an assigned faculty' 
         });
       }
 
@@ -570,16 +570,16 @@ class EventController {
         });
       }
 
-      // Only faculty managers can access this
-      if (role !== 'faculty_manager') {
+      // Only faculty staff can access this
+      if (role !== 'faculty_staff') {
         return res.status(403).json({ 
-          error: 'Only faculty managers can access faculty events' 
+          error: 'Only faculty staff can access faculty events' 
         });
       }
 
       if (!facultyId) {
         return res.status(400).json({ 
-          error: 'Faculty manager must have an assigned faculty' 
+          error: 'Faculty staff must have an assigned faculty' 
         });
       }
 
