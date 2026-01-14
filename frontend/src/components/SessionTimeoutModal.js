@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { refreshAccessToken } from '../services/authService';
+import authService from '../services/authService';
 import './SessionTimeoutModal.css';
+
+// Constants - defined outside component to avoid recreating on each render
+const IDLE_WARNING_TIME = 13 * 60 * 1000; // 13 minutes of idle time before warning
+const IDLE_LOGOUT_TIME = 15 * 60 * 1000; // 15 minutes of idle time before logout
+const AUTO_REFRESH_THRESHOLD = 10 * 60 * 1000; // Auto-refresh if JWT expires in < 10 minutes
+const ACTIVITY_CHECK_INTERVAL = 30 * 1000; // Check every 30 seconds
 
 const SessionTimeoutModal = ({ onExtendSession, onLogout }) => {
   const [showModal, setShowModal] = useState(false);
@@ -9,12 +15,6 @@ const SessionTimeoutModal = ({ onExtendSession, onLogout }) => {
   const logoutTimeoutRef = useRef(null);
   const lastActivityRef = useRef(Date.now());
   const activityCheckIntervalRef = useRef(null);
-
-  // Constants
-  const IDLE_WARNING_TIME = 13 * 60 * 1000; // 13 minutes of idle time before warning
-  const IDLE_LOGOUT_TIME = 15 * 60 * 1000; // 15 minutes of idle time before logout
-  const AUTO_REFRESH_THRESHOLD = 10 * 60 * 1000; // Auto-refresh if JWT expires in < 10 minutes
-  const ACTIVITY_CHECK_INTERVAL = 30 * 1000; // Check every 30 seconds
 
   const getTokenExpiry = useCallback(() => {
     const token = localStorage.getItem('token');
@@ -61,7 +61,7 @@ const SessionTimeoutModal = ({ onExtendSession, onLogout }) => {
       // Only refresh if token expires soon
       if (timeUntilExpiry < AUTO_REFRESH_THRESHOLD && timeUntilExpiry > 0) {
         console.log('Auto-refreshing token due to user activity...');
-        await refreshAccessToken();
+        await authService.refreshAccessToken();
       }
     } catch (err) {
       console.error('Silent token refresh failed:', err);
