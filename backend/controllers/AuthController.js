@@ -59,12 +59,13 @@ class AuthController {
         });
       }
 
-      // Generate JWT token
+      // Generate JWT token with unique nonce to prevent duplicates
       const token = jwt.sign(
         { 
           userId: user.id, 
           role: user.role,
-          facultyId: user.faculty_id || null
+          facultyId: user.faculty_id || null,
+          nonce: crypto.randomBytes(16).toString('hex') // Ensures token uniqueness
         },
         process.env.JWT_SECRET,
         // Default JWT lifetime: 15 minutes for browser sessions
@@ -75,7 +76,13 @@ class AuthController {
       const expiresAt = decodedToken?.exp ? new Date(decodedToken.exp * 1000) : null;
 
       // Create session in database aligned with JWT expiry
-      await Session.createSession(user.id, user.role, token, expiresAt);
+      // The createSession method in Session model already handles cleanup of old sessions
+      try {
+        await Session.createSession(user.id, user.role, token, expiresAt);
+      } catch (sessionError) {
+        console.error('Error creating session:', sessionError);
+        // If session creation fails, still continue but log the error
+      }
 
       const refreshToken = crypto.randomBytes(64).toString('hex');
       const refreshExpiresAt = getRefreshTokenExpiry();
@@ -201,7 +208,8 @@ class AuthController {
         { 
           userId: user.id, 
           role: user.role,
-          facultyId: user.faculty_id || null
+          facultyId: user.faculty_id || null,
+          nonce: crypto.randomBytes(16).toString('hex') // Ensures token uniqueness
         },
         process.env.JWT_SECRET,
         { expiresIn: process.env.JWT_EXPIRES_IN || '15m' }
@@ -209,7 +217,15 @@ class AuthController {
 
       const decodedToken = jwt.decode(token);
       const expiresAt = decodedToken?.exp ? new Date(decodedToken.exp * 1000) : null;
-      await Session.createSession(user.id, user.role, token, expiresAt);
+      
+      // Try to create session, but continue if it fails (graceful degradation)
+      try {
+        await Session.createSession(user.id, user.role, token, expiresAt);
+      } catch (sessionError) {
+        console.error('Error creating session in refresh:', sessionError);
+        // Session creation failed but we can still return the token
+        // The JWT itself is valid and can be used for authentication
+      }
 
       const newRefreshToken = crypto.randomBytes(64).toString('hex');
       const refreshExpiresAt = getRefreshTokenExpiry();

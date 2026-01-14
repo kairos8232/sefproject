@@ -393,6 +393,14 @@
   background-color: #bbdefb;
 }
 
+.my-events-container .manage-invitations-button {
+  background-color: #ede7f6;
+}
+
+.my-events-container .manage-invitations-button:hover:not(:disabled) {
+  background-color: #d1c4e9;
+}
+
 .my-events-container .open-reg-button {
   background-color: #d4edda;
 }

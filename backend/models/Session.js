@@ -1,29 +1,51 @@
 const supabase = require('../config/supabase');
 
 class Session {
-  // Create new session
-  static async createSession(userId, role, token, expiresAt = null) {
-    try {
-      const computedExpiry = expiresAt instanceof Date
-        ? expiresAt
-        : new Date(Date.now() + 15 * 60 * 1000);
+  // Create new session with retry logic
+  static async createSession(userId, role, token, expiresAt = null, retries = 3) {
+    const computedExpiry = expiresAt instanceof Date
+      ? expiresAt
+      : new Date(Date.now() + 15 * 60 * 1000);
 
-      const { data, error } = await supabase
-        .from('sessions')
-        .insert([{
-          user_id: userId,
-          role: role,
-          token: token,
-          expires_at: computedExpiry.toISOString()
-        }])
-        .select()
-        .single();
+    for (let attempt = 0; attempt < retries; attempt++) {
+      try {
+        // Delete any existing sessions for this user to avoid duplicate token errors
+        try {
+          await supabase
+            .from('sessions')
+            .delete()
+            .eq('user_id', userId);
+        } catch (deleteError) {
+          console.error('Warning: Could not delete old sessions:', deleteError);
+        }
 
-      if (error) throw error;
-      return data;
-    } catch (error) {
-      console.error('Error creating session:', error);
-      throw error;
+        const { data, error } = await supabase
+          .from('sessions')
+          .insert([{
+            user_id: userId,
+            role: role,
+            token: token,
+            expires_at: computedExpiry.toISOString()
+          }])
+          .select()
+          .single();
+
+        if (error) {
+          // If duplicate key error and not last attempt, retry with delay
+          if (error.code === '23505' && attempt < retries - 1) {
+            const delay = Math.pow(2, attempt) * 100; // Exponential backoff: 100ms, 200ms, 400ms
+            await new Promise(resolve => setTimeout(resolve, delay));
+            continue;
+          }
+          throw error;
+        }
+        return data;
+      } catch (error) {
+        if (attempt === retries - 1) {
+          console.error('Error creating session after retries:', error);
+          throw error;
+        }
+      }
     }
   }
 

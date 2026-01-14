@@ -60,8 +60,9 @@
 }
 
 .user-email {
-  margin: 8px 0 0 0;
-  font-size: 0.9rem;
+  margin: 5px;
+  font-size: 1rem;
+  font-weight: 400;
   opacity: 0.9;
 }
 
@@ -170,6 +171,34 @@
   box-shadow: 0 6px 12px rgba(220, 53, 69, 0.3);
 }
 
+.btn-invitations {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-invitations:hover {
+  background: linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #ff6b6b;
+  color: white;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  margin-left: 0.25rem;
+}
+
 .upcoming-preview {
   background: white;
   border-radius: 12px;
@@ -177,11 +206,35 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
-.upcoming-preview h3 {
-  margin: 0 0 16px 0;
+.upcoming-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.upcoming-header h3 {
+  margin: 0;
   font-size: 1rem;
   color: #333;
   font-weight: 600;
+}
+
+.upcoming-invitations-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+.upcoming-invitations-button:hover {
+  background: linear-gradient(135deg, #5568d3 0%, #6a3f92 100%);
 }
 
 .upcoming-list {

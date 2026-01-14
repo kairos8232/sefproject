@@ -242,8 +242,8 @@ class EventController {
         eventData.visibility = 'campuswide';
       }
 
-      // Only event_organizer can set custom visibility
-      if (userRole !== 'event_organizer' && userRole !== 'administrator') {
+      // Only event_organizer, faculty_manager, and administrator can set custom visibility
+      if (userRole !== 'event_organizer' && userRole !== 'faculty_manager' && userRole !== 'administrator') {
         eventData.visibility = 'campuswide';
       }
 

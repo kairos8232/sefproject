@@ -675,3 +675,159 @@
     grid-template-columns: 1fr;
   }
 }
+/* Package-Level Approve/Reject Styles */
+.brm-packages-section {
+  margin-bottom: 30px;
+}
+
+.brm-packages-section h3 {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.brm-package-card {
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  background: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+}
+
+.brm-package-card:hover {
+  border-color: #667eea;
+  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.15);
+}
+
+.brm-package-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  cursor: pointer;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 6px 6px 0 0;
+}
+
+.brm-package-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex: 1;
+}
+
+.brm-package-id {
+  font-weight: 600;
+  color: #667eea;
+  font-size: 14px;
+}
+
+.brm-package-count {
+  color: #666;
+  font-size: 14px;
+}
+
+.brm-package-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.brm-btn-approve-pkg,
+.brm-btn-reject-pkg,
+.brm-btn-expand-pkg {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.brm-btn-approve-pkg {
+  background: #10b981;
+  color: white;
+}
+
+.brm-btn-approve-pkg:hover {
+  background: #059669;
+  transform: translateY(-1px);
+}
+
+.brm-btn-reject-pkg {
+  background: #ef4444;
+  color: white;
+}
+
+.brm-btn-reject-pkg:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+}
+
+.brm-btn-expand-pkg {
+  background: #6b7280;
+  color: white;
+}
+
+.brm-btn-expand-pkg:hover {
+  background: #4b5563;
+}
+
+.brm-package-items {
+  padding: 15px 20px;
+  background: #fafafa;
+  border-top: 1px solid #e0e0e0;
+}
+
+.brm-package-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 15px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  transition: all 0.2s ease;
+}
+
+.brm-package-item:hover {
+  border-color: #667eea;
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.1);
+}
+
+.brm-package-item:last-child {
+  margin-bottom: 0;
+}
+
+.brm-package-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.brm-package-item-info strong {
+  color: #333;
+  font-size: 14px;
+}
+
+.brm-package-item-info span {
+  color: #666;
+  font-size: 13px;
+}
+
+.brm-package-item-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.brm-package-item-actions .brm-btn-approve,
+.brm-package-item-actions .brm-btn-reject,
+.brm-package-item-actions .brm-btn-modify {
+  padding: 6px 12px;
+  font-size: 16px;
+}

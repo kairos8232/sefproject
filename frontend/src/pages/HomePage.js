@@ -1,8 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import authService from '../services/authService';
 import participationService from '../services/participationService';
 import eventService from '../services/eventService';
+import invitationService from '../services/invitationService';
+import InvitationsReceivedModal from '../components/InvitationsReceivedModal';
 import { authFetch } from '../services/apiClient';
 import './HomePage.css';
 
@@ -12,54 +14,15 @@ function HomePage() {
   const [stats, setStats] = useState({
     registeredEvents: 0,
     myEvents: 0,
-    upcomingRegistrations: []
+    upcomingRegistrations: [],
+    pendingInvitations: 0
   });
   const [loading, setLoading] = useState(true);
+  const [showInvitationsModal, setShowInvitationsModal] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
-  useEffect(() => {
-    document.title = 'Home - CESMS';
-    // Check for session expired message
-    if (location.state?.message) {
-      setMessage(location.state.message);
-    }
-
-    // Check if user is authenticated
-    if (!authService.isAuthenticated()) {
-      navigate('/login');
-      return;
-    }
-
-    // Load user data and dashboard
-    loadUserAndDashboard();
-  }, [navigate, location.state]);
-
-  const loadUserAndDashboard = async () => {
-    try {
-      // Fetch user data from API to get fresh data including faculty
-      const response = await authFetch('/auth/me');
-      
-      if (response.ok) {
-        const data = await response.json();
-        setUser(data.user);
-        loadDashboardData(data.user);
-      } else {
-        // Fallback to localStorage if API fails
-        const currentUser = authService.getCurrentUser();
-        setUser(currentUser);
-        loadDashboardData(currentUser);
-      }
-    } catch (error) {
-      console.error('Failed to load user data:', error);
-      // Fallback to localStorage
-      const currentUser = authService.getCurrentUser();
-      setUser(currentUser);
-      loadDashboardData(currentUser);
-    }
-  };
-
-  const loadDashboardData = async (currentUser) => {
+  const loadDashboardData = useCallback(async (currentUser) => {
     try {
       setLoading(true);
       
@@ -81,18 +44,69 @@ function HomePage() {
         const myEvents = await eventService.getAllEvents();
         myEventsCount = myEvents.events?.filter(e => e.organizer_id === currentUser.id).length || 0;
       }
+
+      // Get pending invitations
+      let pendingInvitationsCount = 0;
+      try {
+        const invitations = await invitationService.getUserInvitations();
+        pendingInvitationsCount = invitations.filter(inv => inv.status === 'pending').length;
+      } catch (error) {
+        console.error('Failed to load pending invitations count:', error);
+      }
       
       setStats({
         registeredEvents: registered.length,
         myEvents: myEventsCount,
-        upcomingRegistrations: upcoming
+        upcomingRegistrations: upcoming,
+        pendingInvitations: pendingInvitationsCount
       });
     } catch (error) {
       console.error('Failed to load dashboard data:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  const loadUserAndDashboard = useCallback(async () => {
+    try {
+      // Fetch user data from API to get fresh data including faculty
+      const response = await authFetch('/auth/me');
+      
+      if (response.ok) {
+        const data = await response.json();
+        setUser(data.user);
+        loadDashboardData(data.user);
+      } else {
+        // Fallback to localStorage if API fails
+        const currentUser = authService.getCurrentUser();
+        setUser(currentUser);
+        loadDashboardData(currentUser);
+      }
+    } catch (error) {
+      console.error('Failed to load user data:', error);
+      // Fallback to localStorage
+      const currentUser = authService.getCurrentUser();
+      setUser(currentUser);
+      loadDashboardData(currentUser);
+    }
+  }, [loadDashboardData]);
+
+  useEffect(() => {
+    document.title = 'Home - CESMS';
+    // Check for session expired message
+    if (location.state?.message) {
+      setMessage(location.state.message);
+    }
+
+    // Check if user is authenticated
+    if (!authService.isAuthenticated()) {
+      navigate('/login');
+      return;
+    }
+
+    // Load user data and dashboard
+    loadUserAndDashboard();
+  }, [navigate, location.state, loadUserAndDashboard]);
 
   const handleLogout = async () => {
     // UC-02: Logout from System
@@ -299,17 +313,32 @@ function HomePage() {
             </div>
             <div className="user-info">
               <h2>{user.name}</h2>
+              <p className="user-email">{user.staff_id || 'N/A'}</p>
               <p className="user-role">
                 {user.faculty ? `${user.faculty.code} ${user.role.replace('_', ' ').toUpperCase()}` : user.role.replace('_', ' ').toUpperCase()}
               </p>
-              <p className="user-email">{user.staff_id || 'N/A'}</p>
             </div>
           </div>
 
           {/* Upcoming Events Preview */}
           {!loading && stats.upcomingRegistrations.length > 0 && user.role !== 'administrator' && (
             <div className="upcoming-preview">
-              <h3>Upcoming Events</h3>
+              <div className="upcoming-header">
+                <h3>Upcoming Events</h3>
+                {stats.pendingInvitations > 0 && (
+                  <button
+                    className="upcoming-invitations-button"
+                    title={`You have ${stats.pendingInvitations} pending invitations`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowInvitationsModal(true);
+                    }}
+                  >
+                    📬
+                    <span className="badge">{stats.pendingInvitations}</span>
+                  </button>
+                )}
+              </div>
               <div className="upcoming-list">
                 {stats.upcomingRegistrations.slice(0, 3).map((participation) => (
                   <div 
@@ -483,6 +512,12 @@ function HomePage() {
           )}
         </div>
       </div>
+      
+      {/* Invitations Modal */}
+      <InvitationsReceivedModal 
+        isOpen={showInvitationsModal} 
+        onClose={() => setShowInvitationsModal(false)} 
+      />
     </div>
   );
 }

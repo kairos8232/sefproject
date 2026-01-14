@@ -17,8 +17,25 @@ function CreateEventPage() {
     document.title = 'Create Event - CESMS';
   }, []);
 
-  // Check if user can change visibility (only event_organizer and administrator)
-  const canChangeVisibility = user.role === 'event_organizer' || user.role === 'administrator';
+  // Check if user can change visibility
+  const canChangeVisibility = user.role === 'event_organizer' || user.role === 'faculty_manager' || user.role === 'administrator';
+
+  // Get visibility options based on user role
+  const getAllVisibilityOptions = () => {
+    const baseOptions = [
+      { value: 'campuswide', label: 'Campus Wide - All users can see' },
+      { value: 'inviteonly', label: 'Invite Only - Only invited users' }
+    ];
+    
+    // Only faculty_manager and administrator can set faculty_only
+    if (user.role === 'faculty_manager' || user.role === 'administrator') {
+      baseOptions.splice(1, 0, { value: 'facultyonly', label: 'Faculty Only - Only your faculty members' });
+    }
+    
+    return baseOptions;
+  };
+
+  const visibilityOptions = getAllVisibilityOptions();
 
   const [formData, setFormData] = useState({
     event_name: '',
@@ -45,12 +62,6 @@ function CreateEventPage() {
     { value: 'networking', label: 'Networking' },
     { value: 'general', label: 'General' },
     { value: 'other', label: 'Other (Specify)' }
-  ];
-
-  const visibilityOptions = [
-    { value: 'campuswide', label: 'Campus Wide - All users can see' },
-    { value: 'facultyonly', label: 'Faculty Only - Only your faculty members' },
-    { value: 'inviteonly', label: 'Invite Only - Only invited users' }
   ];
 
   const handleChange = (e) => {
@@ -131,13 +142,30 @@ function CreateEventPage() {
 
       const result = await eventService.createEvent(eventData);
       
-      // Navigate to My Events with success toast and highlight new event
-      navigate('/my-events', { 
-        state: { 
-          newEventId: result.event?.id,
-          showSuccessToast: true
-        } 
-      });
+      // Ensure we have the event ID
+      const eventId = result.event?.id || result.id;
+      
+      if (!eventId) {
+        throw new Error('Event created but ID not returned');
+      }
+      
+      // For invite-only events, redirect to invitations page to send invitations
+      if (formData.visibility === 'inviteonly') {
+        navigate(`/events/${eventId}/invitations`, { 
+          state: { 
+            showSuccessToast: true,
+            message: 'Event created successfully! Now invite participants.'
+          } 
+        });
+      } else {
+        // Navigate to My Events with success toast and highlight new event
+        navigate('/my-events', { 
+          state: { 
+            newEventId: eventId,
+            showSuccessToast: true
+          } 
+        });
+      }
     } catch (error) {
       console.error('Create event error:', error);
       const errorMessage = error?.response?.data?.error || error?.message || error || 'Failed to create event';

@@ -694,6 +694,15 @@ function MyEventsPage() {
                           >
                             📝
                           </button>
+                          {event.visibility === 'inviteonly' && (
+                            <button 
+                              onClick={() => navigate(`/events/${event.id}/invitations`)}
+                              className="action-button manage-invitations-button"
+                              title="Manage Invitations"
+                            >
+                              💌
+                            </button>
+                          )}
                           <button 
                             onClick={() => handleToggleRegistration(event)}
                             className={`action-button ${event.registration_status === 'open' ? 'close-reg-button' : 'open-reg-button'}`}

@@ -31,6 +31,7 @@ import ResourceCataloguePage from './pages/ResourceCataloguePage';
 import SystemConfigurationPage from './pages/SystemConfigurationPage';
 import BookingRequestsManagementPage from './pages/BookingRequestsManagementPage';
 import ReportsAnalyticsPage from './pages/ReportsAnalyticsPage';
+import EventInvitationPage from './pages/EventInvitationPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import SessionTimeoutModal from './components/SessionTimeoutModal';
 import authService from './services/authService';
@@ -64,6 +65,7 @@ const AppContent = () => {
         <Route path="/events" element={<ProtectedRoute><EventsPage /></ProtectedRoute>} />
         <Route path="/events/:id" element={<ProtectedRoute><EventDetailsPage /></ProtectedRoute>} />
         <Route path="/events/:id/edit" element={<ProtectedRoute><EditEventPage /></ProtectedRoute>} />
+        <Route path="/events/:eventId/invitations" element={<ProtectedRoute><EventInvitationPage /></ProtectedRoute>} />
         <Route path="/my-events" element={<ProtectedRoute><MyEventsPage /></ProtectedRoute>} />
         <Route path="/my-events/:eventId/attendance" element={<ProtectedRoute><RecordAttendancePage /></ProtectedRoute>} />
         <Route path="/my-events/:eventId/customize-form" element={<ProtectedRoute><CustomizeRegistrationFormPage /></ProtectedRoute>} />
