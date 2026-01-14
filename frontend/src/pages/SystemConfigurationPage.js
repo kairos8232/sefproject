@@ -2,13 +2,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import systemSettingService from '../services/systemSettingService';
 import { formatDateTime } from '../utils/dateUtils';
+import { useToast } from '../contexts/ToastContext';
 import './SystemConfigurationPage.css';
 
 const SystemConfigurationPage = () => {
   const navigate = useNavigate();
+  const { showSuccess, showError } = useToast();
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [settings, setSettings] = useState([]);
   const [formData, setFormData] = useState({
     min_advance_booking_days: 3,
@@ -20,7 +20,6 @@ const SystemConfigurationPage = () => {
     document.title = 'System Configuration - CESMS';
     try {
       setLoading(true);
-      setError('');
 
       const token = localStorage.getItem('token');
       if (!token) {
@@ -30,7 +29,7 @@ const SystemConfigurationPage = () => {
 
       const payload = JSON.parse(atob(token.split('.')[1]));
       if (payload.role !== 'administrator') {
-        setError('Access denied. Only administrators can configure system settings.');
+        showError('Access denied. Only administrators can configure system settings.');
         setLoading(false);
         return;
       }
@@ -58,10 +57,10 @@ const SystemConfigurationPage = () => {
       setLoading(false);
     } catch (err) {
       console.error('Error loading settings:', err);
-      setError(err.response?.data?.error || 'Failed to load system settings');
+      showError(err.response?.data?.error || 'Failed to load system settings');
       setLoading(false);
     }
-  }, [navigate]);
+  }, [navigate, showError]);
 
   useEffect(() => {
     loadSettings();
@@ -70,34 +69,31 @@ const SystemConfigurationPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      setError('');
-      setSuccess('');
-
       // Client-side validation
       const minDays = Number(formData.min_advance_booking_days);
       const maxDays = Number(formData.max_advance_booking_days);
 
       if (isNaN(minDays) || isNaN(maxDays)) {
-        setError('Please enter valid numbers for booking days');
+        showError('Please enter valid numbers for booking days');
         return;
       }
 
       if (minDays < 0 || maxDays < 0) {
-        setError('Booking days cannot be negative');
+        showError('Booking days cannot be negative');
         return;
       }
 
       if (minDays >= maxDays) {
-        setError('Minimum advance booking days must be less than maximum');
+        showError('Minimum advance booking days must be less than maximum');
         return;
       }
 
       await systemSettingService.updateSettings(formData);
-      setSuccess('System settings updated successfully!');
+      showSuccess('System settings updated successfully!');
       loadSettings(); // Reload to get updated timestamp
     } catch (err) {
       console.error('Error updating settings:', err);
-      setError(err.response?.data?.error || 'Failed to update system settings');
+      showError(err.response?.data?.error || 'Failed to update system settings');
     }
   };
 
@@ -109,8 +105,6 @@ const SystemConfigurationPage = () => {
       min_advance_booking_days: minSetting ? Number(minSetting.setting_value) : 3,
       max_advance_booking_days: maxSetting ? Number(maxSetting.setting_value) : 30
     });
-    setError('');
-    setSuccess('');
   };
 
   if (loading) {
@@ -128,9 +122,6 @@ const SystemConfigurationPage = () => {
           Back to Home
         </button>
       </div>
-
-      {error && <div className="error-message">{error}</div>}
-      {success && <div className="success-message">{success}</div>}
 
       <div className="config-content">
         <div className="config-section">
