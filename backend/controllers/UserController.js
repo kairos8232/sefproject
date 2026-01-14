@@ -44,12 +44,12 @@ class UserController {
         });
       }
 
-      const { name, email, password, role, faculty_id } = req.body;
+      const { name, email, password, role, faculty_id, staff_id } = req.body;
 
       // Validate required fields
-      if (!name || !email || !password || !role) {
+      if (!name || !email || !password || !role || !staff_id) {
         return res.status(400).json({ 
-          message: 'Name, email, password, and role are required.' 
+          message: 'Name, email, password, role, and staff ID are required.' 
         });
       }
 
@@ -85,6 +85,7 @@ class UserController {
         email,
         password: hashedPassword,
         role,
+        staff_id,  // Required field
         status: 'active'
       };
 

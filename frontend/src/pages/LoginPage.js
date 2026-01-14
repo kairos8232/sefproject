@@ -39,7 +39,8 @@ function LoginPage() {
       // Clear state so refresh doesn't show it again
       window.history.replaceState({}, '');
     }
-  }, [location, showSuccess, showError]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location]); // showSuccess and showError are stable (memoized with useCallback)
 
   // Validate email format
   const isValidEmail = (email) => {

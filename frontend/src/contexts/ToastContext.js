@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
 import Toast from '../components/Toast';
 
 const ToastContext = createContext();
@@ -13,7 +13,7 @@ export function useToast() {
 
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
-  const [counter, setCounter] = useState(0);
+  const counterRef = useRef(0);  // Use useRef instead of useState
 
   const showToast = useCallback((message, type = 'success', options = {}) => {
     // Filter out empty or invalid messages
@@ -22,9 +22,9 @@ export function ToastProvider({ children }) {
       return null;
     }
     
-    // Use combination of timestamp and counter to ensure uniqueness
-    const id = `${Date.now()}-${counter}`;
-    setCounter(prev => prev + 1);
+    // Use counter with timestamp to ensure uniqueness
+    counterRef.current += 1;
+    const id = `toast-${Date.now()}-${counterRef.current}`;
     
     const toast = {
       id,
@@ -37,7 +37,7 @@ export function ToastProvider({ children }) {
     setToasts((prev) => [...prev, toast]);
 
     return id;
-  }, [counter]);
+  }, []);
 
   const hideToast = useCallback((id) => {
     setToasts((prev) => prev.filter((toast) => toast.id !== id));

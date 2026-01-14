@@ -58,6 +58,33 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'Server is running' });
 });
 
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+  
+  // Handle Supabase connection errors
+  if (err.message && err.message.includes('ENOTFOUND')) {
+    return res.status(503).json({ 
+      error: 'Database service unavailable',
+      details: 'Cannot connect to database. Please check your connection.'
+    });
+  }
+  
+  // Handle token errors
+  if (err.name === 'TokenExpiredError') {
+    return res.status(401).json({ error: 'Token expired' });
+  }
+  
+  if (err.name === 'JsonWebTokenError') {
+    return res.status(401).json({ error: 'Invalid token' });
+  }
+  
+  // Default error response
+  res.status(err.status || 500).json({ 
+    error: err.message || 'Internal server error' 
+  });
+});
+
 // Start server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

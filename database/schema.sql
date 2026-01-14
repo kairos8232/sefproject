@@ -55,7 +55,7 @@ CREATE TABLE users (
   password TEXT NOT NULL, -- Hashed with bcrypt
   role VARCHAR(50) NOT NULL DEFAULT 'student', -- 'student', 'event_organizer', 'administrator', 'faculty_staff'
   faculty_id UUID, -- Foreign key to faculties (only for faculty_staff and students)
-  staff_id VARCHAR(50) UNIQUE, -- Student ID (matric number), Staff ID for organizers/admins/faculty staff
+  staff_id VARCHAR(50) UNIQUE NOT NULL, -- Student ID (matric number), Staff ID for organizers/admins/faculty staff
   status VARCHAR(50) NOT NULL DEFAULT 'active', -- 'active', 'inactive', 'blocked'
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
