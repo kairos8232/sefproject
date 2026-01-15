@@ -317,10 +317,11 @@ class ResourceRequestController {
       const requestId = req.params.id;
       const userId = req.user.userId;
       const userRole = req.user.role;
+      const userFaculty = req.user.faculty;
       const { approval_notes } = req.body;
 
-      if (userRole !== 'faculty_staff') {
-        return res.status(403).json({ error: 'Only faculty staff can approve resource requests' });
+      if (userRole !== 'faculty_staff' && userRole !== 'administrator') {
+        return res.status(403).json({ error: 'Only faculty staff and administrators can approve resource requests' });
       }
 
       const request = await ResourceRequest.getById(requestId);
@@ -336,6 +337,13 @@ class ResourceRequestController {
           return res.status(400).json({ 
             error: `Cannot modify resource request for ${event.status} events`,
             eventStatus: event.status
+          });
+        }
+
+        // Faculty staff can only approve requests for their own faculty's events
+        if (userRole === 'faculty_staff' && event.organizer?.faculty !== userFaculty) {
+          return res.status(403).json({ 
+            error: 'Faculty staff can only approve resource requests for their own faculty\'s events' 
           });
         }
       }

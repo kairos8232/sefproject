@@ -37,7 +37,7 @@ class ResourceRequest {
         .from('resource_requests')
         .select(`
           *,
-          event:events(id, event_name, start_datetime, end_datetime, organizer_id),
+          event:events(id, event_name, start_datetime, end_datetime, organizer_id, organizer:users!organizer_id(id, name, email, faculty)),
           venue_booking:venue_bookings(id, venue:venues(name, code)),
           resource:resource_types(id, name, code, unit, total_quantity, category:resource_categories(name)),
           requester:users!requester_user_id(id, name, email),
