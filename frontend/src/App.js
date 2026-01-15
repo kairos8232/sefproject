@@ -21,6 +21,7 @@ import FacultyEventDetailPage from './pages/FacultyEventDetailPage';
 import FacultyProvideFeedbackPage from './pages/FacultyProvideFeedbackPage';
 import FacultyBookingRequestsPage from './pages/FacultyBookingRequestsPage';
 import FacultyBookingRequestDetailPage from './pages/FacultyBookingRequestDetailPage';
+import FacultyResourceRequestsPage from './pages/FacultyResourceRequestsPage';
 import VenueAvailabilityPage from './pages/VenueAvailabilityPage';
 import RecordAttendancePage from './pages/RecordAttendancePage';
 import CustomizeRegistrationFormPage from './pages/CustomizeRegistrationFormPage';
@@ -82,6 +83,7 @@ const AppContent = () => {
         <Route path="/faculty-events/:eventId/feedback" element={<ProtectedRoute><FacultyProvideFeedbackPage /></ProtectedRoute>} />
         <Route path="/faculty/bookings" element={<ProtectedRoute><FacultyBookingRequestsPage /></ProtectedRoute>} />
         <Route path="/faculty/bookings/:id" element={<ProtectedRoute><FacultyBookingRequestDetailPage /></ProtectedRoute>} />
+        <Route path="/faculty/resource-requests" element={<ProtectedRoute><FacultyResourceRequestsPage /></ProtectedRoute>} />
         <Route path="/venue-availability" element={<ProtectedRoute><VenueAvailabilityPage /></ProtectedRoute>} />
         <Route path="/admin/users" element={<ProtectedRoute><UserManagementPage /></ProtectedRoute>} />
         <Route path="/admin/faculties" element={<ProtectedRoute><FacultyVenueManagementPage /></ProtectedRoute>} />

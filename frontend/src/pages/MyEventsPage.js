@@ -687,29 +687,35 @@ function MyEventsPage() {
                               📋
                             </button>
                           )}
-                          <button 
-                            onClick={() => navigate(`/my-events/${event.id}/customize-form`)}
-                            className="action-button customize-form-button"
-                            title="Customize Registration Form"
-                          >
-                            📝
-                          </button>
-                          {event.visibility === 'inviteonly' && (
+                          {(user.role === 'event_organizer' || user.role === 'administrator') && (
                             <button 
-                              onClick={() => navigate(`/events/${event.id}/invitations`)}
-                              className="action-button manage-invitations-button"
-                              title="Manage Invitations"
+                              onClick={() => navigate(`/my-events/${event.id}/customize-form`)}
+                              className="action-button customize-form-button"
+                              title="Customize Registration Form"
                             >
-                              💌
+                              📝
                             </button>
                           )}
-                          <button 
-                            onClick={() => handleToggleRegistration(event)}
-                            className={`action-button ${event.registration_status === 'open' ? 'close-reg-button' : 'open-reg-button'}`}
-                            title={event.registration_status === 'open' ? 'Close Registration' : 'Open Registration'}
-                          >
-                            {event.registration_status === 'open' ? '🔒' : '🔓'}
-                          </button>
+                          {eventBookings[event.id] && (
+                            <>
+                              {event.visibility === 'inviteonly' && (
+                                <button 
+                                  onClick={() => navigate(`/events/${event.id}/invitations`)}
+                                  className="action-button manage-invitations-button"
+                                  title="Manage Invitations"
+                                >
+                                  💌
+                                </button>
+                              )}
+                              <button 
+                                onClick={() => handleToggleRegistration(event)}
+                                className={`action-button ${event.registration_status === 'open' ? 'close-reg-button' : 'open-reg-button'}`}
+                                title={event.registration_status === 'open' ? 'Close Registration' : 'Open Registration'}
+                              >
+                                {event.registration_status === 'open' ? '🔒' : '🔓'}
+                              </button>
+                            </>
+                          )}
                           <button 
                             onClick={() => handleEditEvent(event.id)}
                             className="action-button edit-button"

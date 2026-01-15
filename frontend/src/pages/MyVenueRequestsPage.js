@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import venueBookingService from '../services/venueBookingService';
 import { formatDateTime } from '../utils/dateUtils';
@@ -130,32 +130,52 @@ function MyVenueRequestsPage() {
     navigate(`/venue-bookings/${bookingId}`, { state: { fromVenueRequests: true } });
   };
 
-  const handleCancelBooking = async (bookingId, eventName) => {
-    const bookingToCancel = cancelModalBooking;
+  const handleCancelGroup = async (group) => {
+    const pending = group.filter(b => b.status === 'pending');
+    if (pending.length === 0) {
+      showError('No pending bookings to cancel in this package');
+      setCancelModalBooking(null);
+      return;
+    }
+
     setCancelModalBooking(null);
 
-    // Optimistic update
-    setBookings(bookings.filter(b => b.id !== bookingToCancel.id));
+    // Optimistic update: remove all bookings in this group
+    const idsToRemove = new Set(group.map(b => b.id));
+    setBookings(bookings.filter(b => !idsToRemove.has(b.id)));
 
     let undoTimeout;
-    showSuccess(`Venue booking for "${eventName}" cancelled successfully`, {
+    const eventName = group[0]?.event?.event_name || 'event';
+    showSuccess(`Venue package for "${eventName}" cancelled`, {
       duration: 5000,
       onUndo: async () => {
         clearTimeout(undoTimeout);
         await loadMyBookings();
-        showSuccess('Booking restored');
+        showSuccess('Package restored');
       }
     });
 
     undoTimeout = setTimeout(async () => {
       try {
-        await venueBookingService.cancelBooking(bookingId);
+        for (const booking of pending) {
+          await venueBookingService.cancelBooking(booking.id);
+        }
       } catch (err) {
-        showError(err.response?.data?.error || 'Failed to cancel booking');
+        showError(err.response?.data?.error || 'Failed to cancel package');
         await loadMyBookings();
       }
     }, 5000);
   };
+
+  const groupedBookings = useMemo(() => {
+    const groups = {};
+    bookings.forEach(b => {
+      const key = b.package_id || b.event_id || b.id;
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(b);
+    });
+    return Object.values(groups);
+  }, [bookings]);
 
   const getStatusBadgeClass = (status) => {
     return `mvr-status-${status}`;
@@ -261,78 +281,96 @@ function MyVenueRequestsPage() {
       ) : (
         <>
           <div className="mvr-bookings-count">
-            Showing {bookings.length} request{bookings.length !== 1 ? 's' : ''}
+              Showing {groupedBookings.length} package{groupedBookings.length !== 1 ? 's' : ''}
           </div>
           <div className="mvr-bookings-table-container">
           <table className="mvr-bookings-table">
             <thead>
               <tr>
                 <th>Event</th>
-                <th>Venue</th>
-                <th>Date & Time</th>
+                  <th>Venues</th>
+                  <th>Date & Time</th>
                 <th>Status</th>
                 <th>Submitted</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {bookings.map(booking => (
-                <tr key={booking.id}>
-                  <td>
-                    <div className="mvr-event-name">{booking.event?.event_name || 'N/A'}</div>
-                    {booking.event?.description && (
-                      <div className="mvr-event-description">
-                        {booking.event.description.substring(0, 50)}
-                        {booking.event.description.length > 50 ? '...' : ''}
+                {groupedBookings.map(group => {
+                  const first = group[0];
+                  const statuses = group.map(b => b.status);
+                  const allSame = statuses.every(s => s === statuses[0]);
+                  const groupStatus = allSame ? statuses[0] : 'mixed';
+
+                  const displayStart = new Date(new Date(first.requested_start_datetime).getTime() - (first.setup_time || 0) * 60000);
+                  const displayEnd = new Date(new Date(first.requested_end_datetime).getTime() + (first.teardown_time || 0) * 60000);
+
+                  return (
+                  <tr key={first.id}>
+                    <td>
+                      <div className="mvr-event-name">{first.event?.event_name || 'N/A'}</div>
+                      {first.event?.description && (
+                        <div className="mvr-event-description">
+                          {first.event.description.substring(0, 50)}
+                          {first.event.description.length > 50 ? '...' : ''}
+                        </div>
+                      )}
+                    </td>
+                    <td>
+                      <div className="mvr-venue-list">
+                        {group.map((booking, idx) => (
+                          <div key={booking.id} className="mvr-venue-row">
+                            <div className="mvr-venue-info">
+                              <div className="mvr-venue-name">{idx + 1}. {booking.venue?.name || 'N/A'}</div>
+                              <div className="mvr-venue-code">{booking.venue?.code || ''}</div>
+                            </div>
+                            <span className={`mvr-status-badge ${getStatusBadgeClass(booking.status)}`}>
+                              {booking.status}
+                            </span>
+                          </div>
+                        ))}
                       </div>
-                    )}
-                  </td>
-                  <td>
-                    <div className="mvr-venue-info">
-                      <div className="mvr-venue-name">{booking.venue?.name || 'N/A'}</div>
-                      <div className="mvr-venue-code">{booking.venue?.code || ''}</div>
-                    </div>
-                  </td>
-                  <td>
-                    <div className="mvr-datetime-cell">
-                      <div>{formatDateTime(new Date(new Date(booking.requested_start_datetime).getTime() - (booking.setup_time || 0) * 60000))}</div>
-                      <div className="mvr-datetime-to">to</div>
-                      <div>{formatDateTime(new Date(new Date(booking.requested_end_datetime).getTime() + (booking.teardown_time || 0) * 60000))}</div>
-                    </div>
-                  </td>
-                  <td>
-                    <span className={`mvr-status-badge ${getStatusBadgeClass(booking.status)}`}>
-                      {booking.status}
-                    </span>
-                  </td>
-                  <td>
-                    <div className="mvr-datetime-cell">
-                      <div>{formatDateTime(booking.created_at)}</div>
-                    </div>
-                  </td>
-                  <td className="mvr-actions-cell">
-                    <button 
-                      onClick={() => handleViewDetails(booking.id)}
-                      className="mvr-action-button mvr-view-button"
-                      title="View Details"
-                    >
-                      👁️
-                    </button>
-                    {booking.status === 'pending' && (
+                    </td>
+                    <td>
+                      <div className="mvr-datetime-cell">
+                        <div>{formatDateTime(displayStart)}</div>
+                        <div className="mvr-datetime-to">to</div>
+                        <div>{formatDateTime(displayEnd)}</div>
+                      </div>
+                    </td>
+                    <td>
+                      <span className={`mvr-status-badge ${getStatusBadgeClass(groupStatus)}`}>
+                        {groupStatus}
+                      </span>
+                    </td>
+                    <td>
+                      <div className="mvr-datetime-cell">
+                        <div>{formatDateTime(first.created_at)}</div>
+                      </div>
+                    </td>
+                    <td className="mvr-actions-cell">
                       <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setCancelModalBooking(booking);
-                        }}
-                        className="mvr-action-button mvr-delete-button"
-                        title="Cancel Request"
+                        onClick={() => handleViewDetails(first.id)}
+                        className="mvr-action-button mvr-view-button"
+                        title="View Details"
                       >
-                        ❌
+                        👁️
                       </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
+                      {group.some(b => b.status === 'pending') && (
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCancelModalBooking(group);
+                          }}
+                          className="mvr-action-button mvr-delete-button"
+                          title="Cancel Package"
+                        >
+                          ❌
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                )})}
             </tbody>
           </table>
         </div>
@@ -342,9 +380,9 @@ function MyVenueRequestsPage() {
       {cancelModalBooking && (
         <ConfirmModal
           isOpen={true}
-          title="Cancel Venue Booking"
-          message={`Are you sure you want to cancel the venue booking for "${cancelModalBooking.event?.event_name}"? This action can be undone within 5 seconds.`}
-          onConfirm={() => handleCancelBooking(cancelModalBooking.id, cancelModalBooking.event?.event_name)}
+          title="Cancel Venue Package"
+          message={`Cancel all bookings for "${cancelModalBooking[0]?.event?.event_name || 'this event'}"? Pending items in this package will be cancelled together. Undo available for 5 seconds.`}
+          onConfirm={() => handleCancelGroup(cancelModalBooking)}
           onClose={() => setCancelModalBooking(null)}
           onCancel={() => setCancelModalBooking(null)}
           danger

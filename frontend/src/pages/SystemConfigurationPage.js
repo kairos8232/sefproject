@@ -12,7 +12,8 @@ const SystemConfigurationPage = () => {
   const [settings, setSettings] = useState([]);
   const [formData, setFormData] = useState({
     min_advance_booking_days: 3,
-    max_advance_booking_days: 30
+    max_advance_booking_days: 30,
+    max_event_duration_days: 7
   });
   const [lastUpdated, setLastUpdated] = useState(null);
 
@@ -40,6 +41,7 @@ const SystemConfigurationPage = () => {
       // Populate form data
       const minSetting = data.find(s => s.setting_key === 'min_advance_booking_days');
       const maxSetting = data.find(s => s.setting_key === 'max_advance_booking_days');
+      const durationSetting = data.find(s => s.setting_key === 'max_event_duration_days');
 
       if (minSetting) {
         setFormData(prev => ({ ...prev, min_advance_booking_days: Number(minSetting.setting_value) }));
@@ -52,6 +54,9 @@ const SystemConfigurationPage = () => {
       }
       if (maxSetting) {
         setFormData(prev => ({ ...prev, max_advance_booking_days: Number(maxSetting.setting_value) }));
+      }
+      if (durationSetting) {
+        setFormData(prev => ({ ...prev, max_event_duration_days: Number(durationSetting.setting_value) }));
       }
 
       setLoading(false);
@@ -88,6 +93,12 @@ const SystemConfigurationPage = () => {
         return;
       }
 
+      const durationDays = Number(formData.max_event_duration_days);
+      if (isNaN(durationDays) || durationDays < 1) {
+        showError('Maximum event duration must be at least 1 day');
+        return;
+      }
+
       await systemSettingService.updateSettings(formData);
       showSuccess('System settings updated successfully!');
       loadSettings(); // Reload to get updated timestamp
@@ -100,10 +111,12 @@ const SystemConfigurationPage = () => {
   const handleReset = () => {
     const minSetting = settings.find(s => s.setting_key === 'min_advance_booking_days');
     const maxSetting = settings.find(s => s.setting_key === 'max_advance_booking_days');
+    const durationSetting = settings.find(s => s.setting_key === 'max_event_duration_days');
 
     setFormData({
       min_advance_booking_days: minSetting ? Number(minSetting.setting_value) : 3,
-      max_advance_booking_days: maxSetting ? Number(maxSetting.setting_value) : 30
+      max_advance_booking_days: maxSetting ? Number(maxSetting.setting_value) : 30,
+      max_event_duration_days: durationSetting ? Number(durationSetting.setting_value) : 7
     });
   };
 
@@ -165,6 +178,23 @@ const SystemConfigurationPage = () => {
                 />
                 <small className="field-description">
                   Users can book up to {formData.max_advance_booking_days} day(s) in advance
+                </small>
+              </div>
+
+              <div className="form-group">
+                <label>
+                  Maximum Event Duration Days *
+                  <span className="label-hint">Maximum number of days an event can last</span>
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  value={formData.max_event_duration_days}
+                  onChange={(e) => setFormData({ ...formData, max_event_duration_days: e.target.value })}
+                  required
+                />
+                <small className="field-description">
+                  Events can last up to {formData.max_event_duration_days} day(s)
                 </small>
               </div>
             </div>

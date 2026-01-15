@@ -1,0 +1,345 @@
+.frrp-container {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.frrp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.frrp-header h1 {
+  margin: 0 0 5px 0;
+  font-size: 28px;
+}
+
+.frrp-header p {
+  margin: 0;
+  opacity: 0.9;
+  font-size: 14px;
+}
+
+.frrp-back-button {
+  padding: 10px 20px;
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+
+.frrp-back-button:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+.frrp-filters {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.frrp-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.frrp-filter-group label {
+  font-weight: 600;
+  font-size: 13px;
+  color: #555;
+}
+
+.frrp-filter-group select,
+.frrp-filter-group input {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.frrp-count {
+  text-align: right;
+  margin-bottom: 10px;
+  color: #666;
+  font-size: 14px;
+}
+
+.frrp-table-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow-x: auto;
+}
+
+.frrp-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.frrp-table thead {
+  background: #f8f9fa;
+}
+
+.frrp-table th {
+  padding: 15px;
+  text-align: left;
+  font-weight: 600;
+  color: #333;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.frrp-table td {
+  padding: 15px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.frrp-table tbody tr:hover {
+  background: #f8f9fa;
+}
+
+.frrp-event-name {
+  font-weight: 600;
+  color: #667eea;
+}
+
+.frrp-resource-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.frrp-resource-name {
+  font-weight: 600;
+}
+
+.frrp-resource-code {
+  font-size: 12px;
+  color: #999;
+}
+
+.frrp-datetime {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 13px;
+}
+
+.frrp-to {
+  color: #999;
+  font-size: 11px;
+}
+
+.frrp-requester {
+  font-weight: 500;
+}
+
+.frrp-status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.frrp-status-pending {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.frrp-status-approved {
+  background: #d4edda;
+  color: #155724;
+}
+
+.frrp-status-rejected {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.frrp-status-cancelled {
+  background: #e2e3e5;
+  color: #383d41;
+}
+
+.frrp-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.frrp-btn-approve,
+.frrp-btn-reject {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: transform 0.2s;
+}
+
+.frrp-btn-approve {
+  background: #28a745;
+  color: white;
+}
+
+.frrp-btn-approve:hover {
+  background: #218838;
+  transform: scale(1.05);
+}
+
+.frrp-btn-reject {
+  background: #dc3545;
+  color: white;
+}
+
+.frrp-btn-reject:hover {
+  background: #c82333;
+  transform: scale(1.05);
+}
+
+.frrp-loading,
+.frrp-no-data {
+  text-align: center;
+  padding: 60px 20px;
+  color: #666;
+  font-size: 16px;
+}
+
+/* Modal styles */
+.frrp-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.frrp-modal {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.frrp-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.frrp-modal-header h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.frrp-modal-close {
+  background: none;
+  border: none;
+  font-size: 28px;
+  cursor: pointer;
+  color: #999;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+}
+
+.frrp-modal-close:hover {
+  color: #333;
+}
+
+.frrp-modal-content {
+  padding: 20px;
+}
+
+.frrp-modal-info {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.frrp-modal-info p {
+  margin: 8px 0;
+  font-size: 14px;
+}
+
+.frrp-form-group {
+  margin-bottom: 20px;
+}
+
+.frrp-form-group label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.frrp-form-group textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.frrp-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 20px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.frrp-btn-cancel {
+  padding: 10px 20px;
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.3s;
+}
+
+.frrp-btn-cancel:hover {
+  background: #5a6268;
+}
+
+.frrp-modal-actions .frrp-btn-approve,
+.frrp-modal-actions .frrp-btn-reject {
+  padding: 10px 20px;
+  font-size: 14px;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

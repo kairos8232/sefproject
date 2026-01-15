@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import resourceRequestService from '../services/resourceRequestService';
 import { authFetch } from '../services/apiClient';
@@ -150,28 +150,37 @@ function MyResourceRequestsPage() {
     }
   }, [filter, location, loadMyRequests, showSuccess]);
 
-  const handleCancelRequest = async (requestId, resourceName) => {
-    const requestToCancel = cancelModalRequest;
+  const handleCancelPackage = async (group) => {
+    const pending = group.filter(r => r.status === 'pending');
+    if (pending.length === 0) {
+      showError('No pending requests to cancel in this package');
+      setCancelModalRequest(null);
+      return;
+    }
+
     setCancelModalRequest(null);
 
-    // Optimistic update
-    setRequests(requests.filter(r => r.id !== requestToCancel.id));
+    const idsToRemove = new Set(group.map(r => r.id));
+    setRequests(requests.filter(r => !idsToRemove.has(r.id)));
 
     let undoTimeout;
-    showSuccess(`Resource request for "${resourceName}" cancelled successfully`, {
+    const resourceLabel = group[0]?.event?.event_name || 'resource request';
+    showSuccess(`Resource package for "${resourceLabel}" cancelled`, {
       duration: 5000,
       onUndo: async () => {
         clearTimeout(undoTimeout);
         await loadMyRequests();
-        showSuccess('Request restored');
+        showSuccess('Package restored');
       }
     });
 
     undoTimeout = setTimeout(async () => {
       try {
-        await resourceRequestService.cancel(requestId);
+        for (const request of pending) {
+          await resourceRequestService.cancel(request.id);
+        }
       } catch (err) {
-        showError(err.response?.data?.error || 'Failed to cancel request');
+        showError(err.response?.data?.error || 'Failed to cancel package');
         await loadMyRequests();
       }
     }, 5000);
@@ -204,6 +213,16 @@ function MyResourceRequestsPage() {
     const categoryValue = typeof category === 'object' ? category?.code || category?.name : category;
     return labels[categoryValue] || categoryValue || 'Unknown';
   };
+
+  const groupedRequests = useMemo(() => {
+    const groups = {};
+    requests.forEach(r => {
+      const key = r.package_id || r.event_id || r.id;
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(r);
+    });
+    return Object.values(groups);
+  }, [requests]);
 
   return (
     <div className="my-resource-requests-page">
@@ -317,72 +336,82 @@ function MyResourceRequestsPage() {
       ) : (
         <>
           <div className="mrr-requests-count">
-            Showing {requests.length} request{requests.length !== 1 ? 's' : ''}
+            Showing {groupedRequests.length} package{groupedRequests.length !== 1 ? 's' : ''}
           </div>
           <div className="mrr-requests-table-container">
             <table className="mrr-requests-table">
               <thead>
                 <tr>
                   <th>Event</th>
-                  <th>Resource</th>
-                  <th>Quantity</th>
+                  <th>Resources</th>
                   <th>Date & Time</th>
                   <th>Status</th>
                   <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {requests.map((request) => (
-                  <>
-                    <tr key={request.id}>
-                      <td className="mrr-event-cell">
-                        <div className="mrr-event-name">{request.event?.event_name || 'Unknown Event'}</div>
-                        <div className="mrr-venue-info">
-                          {typeof request.venue_booking?.venue === 'object' 
-                            ? `${request.venue_booking?.venue?.name || 'Unknown'} (${request.venue_booking?.venue?.code || 'N/A'})` 
-                            : request.venue_booking?.venue || 'Unknown Venue'}
-                        </div>
-                      </td>
-                      <td className="mrr-resource-cell">
-                        <div className="mrr-resource-name">{request.resource?.name}</div>
-                        <span className="mrr-resource-category">
-                          {getCategoryLabel(request.resource?.category)}
-                        </span>
-                      </td>
-                      <td>
-                        <strong>{request.requested_quantity}</strong> {typeof request.resource?.unit === 'object' ? request.resource?.unit?.name || 'units' : request.resource?.unit || 'units'}
-                      </td>
-                      <td className="mrr-datetime-cell">
-                        <div>{formatDateTime(request.usage_start_datetime)}</div>
-                        <div className="mrr-datetime-to">to</div>
-                        <div>{formatDateTime(request.usage_end_datetime)}</div>
-                      </td>
-                      <td>
-                        <span className={`mrr-status-badge ${getStatusBadgeClass(request.status)}`}>
-                          {request.status}
-                        </span>
-                      </td>
-                      <td className="mrr-actions-cell">
-                        <button 
-                          onClick={() => navigate(`/resource-requests/${request.id}`)}
-                          className="mrr-action-button mrr-view-button"
-                          title="View Details"
+                {groupedRequests.map(group => {
+                  const first = group[0];
+                  const statuses = group.map(r => r.status);
+                  const allSame = statuses.every(s => s === statuses[0]);
+                  const groupStatus = allSame ? statuses[0] : 'mixed';
+
+                  return (
+                  <tr key={first.id}>
+                    <td className="mrr-event-cell">
+                      <div className="mrr-event-name">{first.event?.event_name || 'Unknown Event'}</div>
+                      <div className="mrr-venue-info">
+                        {typeof first.venue_booking?.venue === 'object' 
+                          ? `${first.venue_booking?.venue?.name || 'Unknown'} (${first.venue_booking?.venue?.code || 'N/A'})` 
+                          : first.venue_booking?.venue || 'Unknown Venue'}
+                      </div>
+                    </td>
+                    <td className="mrr-resource-cell">
+                      <div className="mrr-resource-list">
+                        {group.map((request, idx) => (
+                          <div key={request.id} className="mrr-resource-row">
+                            <div>
+                              <div className="mrr-resource-name">{idx + 1}. {request.resource?.name}</div>
+                              <span className="mrr-resource-category">{getCategoryLabel(request.resource?.category)}</span>
+                              <div className="mrr-resource-qty"><strong>{request.requested_quantity}</strong> {typeof request.resource?.unit === 'object' ? request.resource?.unit?.name || 'units' : request.resource?.unit || 'units'}</div>
+                            </div>
+                            <span className={`mrr-status-badge ${getStatusBadgeClass(request.status)}`}>
+                              {request.status}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="mrr-datetime-cell">
+                      <div>{formatDateTime(first.usage_start_datetime)}</div>
+                      <div className="mrr-datetime-to">to</div>
+                      <div>{formatDateTime(first.usage_end_datetime)}</div>
+                    </td>
+                    <td>
+                      <span className={`mrr-status-badge ${getStatusBadgeClass(groupStatus)}`}>
+                        {groupStatus}
+                      </span>
+                    </td>
+                    <td className="mrr-actions-cell">
+                      <button 
+                        onClick={() => navigate(`/resource-requests/${first.id}`)}
+                        className="mrr-action-button mrr-view-button"
+                        title="View Details"
+                      >
+                        👁️
+                      </button>
+                      {group.some(r => r.status === 'pending') && (
+                        <button
+                          onClick={() => setCancelModalRequest(group)}
+                          className="mrr-action-button mrr-cancel-button"
+                          title="Cancel Package"
                         >
-                          👁️
+                          ✖️
                         </button>
-                        {request.status === 'pending' && (
-                          <button
-                            onClick={() => setCancelModalRequest(request)}
-                            className="mrr-action-button mrr-cancel-button"
-                            title="Cancel Request"
-                          >
-                            ✖️
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  </>
-                ))}
+                      )}
+                    </td>
+                  </tr>
+                )})}
               </tbody>
             </table>
           </div>
@@ -391,9 +420,9 @@ function MyResourceRequestsPage() {
 
       {cancelModalRequest && (
         <ConfirmModal
-          title="Cancel Resource Request"
-          message={`Are you sure you want to cancel the request for "${cancelModalRequest.resource?.name}"? This action can be undone within 5 seconds.`}
-          onConfirm={() => handleCancelRequest(cancelModalRequest.id, cancelModalRequest.resource?.name)}
+          title="Cancel Resource Package"
+          message={`Cancel all requests for "${cancelModalRequest[0]?.event?.event_name || 'this event'}"? Pending items in this package will be cancelled together. Undo available for 5 seconds.`}
+          onConfirm={() => handleCancelPackage(cancelModalRequest)}
           onCancel={() => setCancelModalRequest(null)}
           danger
         />

@@ -42,7 +42,24 @@ function HomePage() {
       let myEventsCount = 0;
       if (currentUser.role === 'student' || currentUser.role === 'faculty_staff' || currentUser.role === 'event_organizer') {
         const myEvents = await eventService.getAllEvents();
-        myEventsCount = myEvents.events?.filter(e => e.organizer_id === currentUser.id).length || 0;
+        const myOwnedEvents = myEvents.events?.filter(e => e.organizer_id === currentUser.id) || [];
+        
+        // Count only events with at least one approved venue booking
+        const eventsWithApprovedVenues = [];
+        for (const event of myOwnedEvents) {
+          try {
+            const bookings = await authFetch(`/venue-bookings/event/${event.id}`);
+            const bookingData = await bookings.json();
+            const hasApprovedBooking = bookingData.bookings?.some(b => b.status === 'approved');
+            if (hasApprovedBooking) {
+              eventsWithApprovedVenues.push(event);
+            }
+          } catch (err) {
+            // If unable to fetch bookings, exclude the event from count
+            console.error(`Failed to check bookings for event ${event.id}:`, err);
+          }
+        }
+        myEventsCount = eventsWithApprovedVenues.length;
       }
 
       // Get pending invitations
@@ -200,6 +217,13 @@ function HomePage() {
         icon: '✔️',
         path: '/faculty/bookings',
         color: '#27ae60'
+      },
+      {
+        title: 'Approve Resource Requests',
+        description: 'Review and approve resource requests',
+        icon: '📦',
+        path: '/faculty/resource-requests',
+        color: '#3498db'
       },
       {
         title: 'Faculty Events',

@@ -256,10 +256,13 @@ class EventController {
       const settings = await SystemSetting.getSettingsObject();
       const minAdvanceDays = parseInt(settings.min_advance_booking_days) || 3;
       const maxAdvanceDays = parseInt(settings.max_advance_booking_days) || 30;
+      const maxEventDurationDays = parseInt(settings.max_event_duration_days) || 7;
       
       const eventStartDate = new Date(eventData.start_datetime);
+      const eventEndDate = new Date(eventData.end_datetime);
       const now = new Date();
       const daysInAdvance = Math.floor((eventStartDate - now) / (1000 * 60 * 60 * 24));
+      const eventDurationDays = Math.ceil((eventEndDate - eventStartDate) / (1000 * 60 * 60 * 24));
       
       if (daysInAdvance < minAdvanceDays) {
         return res.status(400).json({ 
@@ -270,6 +273,12 @@ class EventController {
       if (daysInAdvance > maxAdvanceDays) {
         return res.status(400).json({ 
           error: `Event cannot be scheduled more than ${maxAdvanceDays} days in advance` 
+        });
+      }
+      
+      if (eventDurationDays > maxEventDurationDays) {
+        return res.status(400).json({ 
+          error: `Event duration cannot exceed ${maxEventDurationDays} days` 
         });
       }
 

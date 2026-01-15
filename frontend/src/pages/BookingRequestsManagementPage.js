@@ -56,7 +56,6 @@ const BookingRequestsManagementPage = () => {
   const [showModal, setShowModal] = useState(false);
   const [modalAction, setModalAction] = useState('');
   const [modalData, setModalData] = useState({});
-  const [expandedPackages, setExpandedPackages] = useState(new Set());
 
   const loadVenueBookings = useCallback(async () => {
     try {
@@ -92,17 +91,27 @@ const BookingRequestsManagementPage = () => {
     }
   }, [activeTab, loadVenueBookings, loadResourceRequests]);
 
-  // Load venues and resources for calendar dropdowns
+  // Load faculties always for filtering
   useEffect(() => {
-    const loadVenuesAndResources = async () => {
+    const loadFaculties = async () => {
       try {
-        // Load faculties first
         const facultiesResponse = await authFetch('/faculties');
         const facultiesData = await facultiesResponse.json();
         const facultiesArray = facultiesData.faculties || [];
         setFaculties(facultiesArray);
-        if (facultiesArray.length > 0 && !selectedFaculty) {
-          setSelectedFaculty(facultiesArray[0].id);
+      } catch (err) {
+        console.error('Failed to load faculties:', err);
+      }
+    };
+    loadFaculties();
+  }, []);
+
+  // Load venues and resources for calendar dropdowns
+  useEffect(() => {
+    const loadVenuesAndResources = async () => {
+      try {
+        if (!selectedFaculty && faculties.length > 0) {
+          setSelectedFaculty(faculties[0].id);
         }
         
         const venuesResponse = await authFetch('/venues');
@@ -110,10 +119,14 @@ const BookingRequestsManagementPage = () => {
         setVenues(venuesData.venues || []);
         if (venuesData.venues && venuesData.venues.length > 0 && !selectedVenue) {
           // Set first venue of selected faculty as default
-          const currentFacultyId = selectedFaculty || facultiesData[0]?.id;
-          const facultyVenues = venuesData.venues.filter(v => v.faculty_id === currentFacultyId);
-          if (facultyVenues.length > 0) {
-            setSelectedVenue(facultyVenues[0].id);
+          const currentFacultyId = selectedFaculty || (faculties.length > 0 ? faculties[0].id : null);
+          if (currentFacultyId) {
+            const facultyVenues = venuesData.venues.filter(v => v.faculty_id === currentFacultyId);
+            if (facultyVenues.length > 0) {
+              setSelectedVenue(facultyVenues[0].id);
+            } else {
+              setSelectedVenue(venuesData.venues[0].id);
+            }
           } else {
             setSelectedVenue(venuesData.venues[0].id);
           }
@@ -234,7 +247,6 @@ const BookingRequestsManagementPage = () => {
         }
         await adminOverrideService.overrideVenueBooking(selectedItem.id, submissionData);
         
-        // More specific toast messages
         const actionMsg = submissionData.action === 'approve' ? 'approved' : 'rejected';
         showSuccess(`Venue booking ${actionMsg} successfully`);
         loadVenueBookings();
@@ -247,7 +259,6 @@ const BookingRequestsManagementPage = () => {
         }
         await adminOverrideService.overrideResourceRequest(selectedItem.id, submissionData);
         
-        // More specific toast messages
         const actionMsg = submissionData.action === 'approve' ? 'approved' : 'rejected';
         showSuccess(`Resource request ${actionMsg} successfully`);
         loadResourceRequests();
@@ -266,100 +277,6 @@ const BookingRequestsManagementPage = () => {
       case 'cancelled': return 'brm-status-cancelled';
       default: return '';
     }
-  };
-
-  // Group bookings by package_id
-  const groupByPackage = (bookings) => {
-    const grouped = {};
-    const ungrouped = [];
-
-    bookings.forEach(booking => {
-      if (booking.package_id) {
-        if (!grouped[booking.package_id]) {
-          grouped[booking.package_id] = [];
-        }
-        grouped[booking.package_id].push(booking);
-      } else {
-        ungrouped.push(booking);
-      }
-    });
-
-    return { grouped, ungrouped };
-  };
-
-  // Get package status (all approved, all rejected, mixed, all pending)
-  const getPackageStatus = (items) => {
-    const statuses = new Set(items.map(item => item.status));
-    
-    if (statuses.size === 1) {
-      return Array.from(statuses)[0]; // All same status
-    }
-    
-    if (statuses.has('pending')) {
-      return 'pending';
-    }
-    
-    return 'mixed'; // Different statuses
-  };
-
-  // Handle package-level approve/reject
-  const handlePackageAction = async (packageId, action, notes = '') => {
-    try {
-      const items = activeTab === 'venue' 
-        ? venueBookings.filter(b => b.package_id === packageId)
-        : resourceRequests.filter(r => r.package_id === packageId);
-
-      if (items.length === 0) {
-        showError('No items found in this package');
-        return;
-      }
-
-      // Apply action to all items in package
-      for (const item of items) {
-        if (item.status === 'pending' || item.status === 'mixed') {
-          const actionData = {
-            action: action,
-            approval_notes: notes || (action === 'approve' ? '' : `Package ${action}`),
-          };
-
-          if (activeTab === 'venue') {
-            actionData.approved_start_datetime = toDateTimeLocalInput(item.requested_start_datetime);
-            actionData.approved_end_datetime = toDateTimeLocalInput(item.requested_end_datetime);
-          } else {
-            actionData.usage_start_datetime = toDateTimeLocalInput(item.usage_start_datetime);
-            actionData.usage_end_datetime = toDateTimeLocalInput(item.usage_end_datetime);
-          }
-
-          if (activeTab === 'venue') {
-            await adminOverrideService.overrideVenueBooking(item.id, actionData);
-          } else {
-            await adminOverrideService.overrideResourceRequest(item.id, actionData);
-          }
-        }
-      }
-
-      const actionMsg = action === 'approve' ? 'approved' : 'rejected';
-      showSuccess(`Package ${actionMsg} successfully (${items.length} items)`);
-      
-      if (activeTab === 'venue') {
-        loadVenueBookings();
-      } else {
-        loadResourceRequests();
-      }
-    } catch (err) {
-      showError(err.response?.data?.error || `Failed to ${action} package`);
-    }
-  };
-
-  // Toggle package expansion
-  const togglePackageExpand = (packageId) => {
-    const newExpanded = new Set(expandedPackages);
-    if (newExpanded.has(packageId)) {
-      newExpanded.delete(packageId);
-    } else {
-      newExpanded.add(packageId);
-    }
-    setExpandedPackages(newExpanded);
   };
 
   return (
@@ -662,7 +579,7 @@ const BookingRequestsManagementPage = () => {
                 }
 
                 // Faculty filter
-                if (venueFacultyFilter !== 'all' && b.venue?.faculty?.id !== venueFacultyFilter) {
+                if (venueFacultyFilter !== 'all' && String(b.venue?.faculty?.id) !== String(venueFacultyFilter)) {
                   return false;
                 }
 
@@ -731,11 +648,6 @@ const BookingRequestsManagementPage = () => {
               })}
               onAction={openModal}
               getStatusBadgeClass={getStatusBadgeClass}
-              groupByPackage={groupByPackage}
-              getPackageStatus={getPackageStatus}
-              handlePackageAction={handlePackageAction}
-              expandedPackages={expandedPackages}
-              togglePackageExpand={togglePackageExpand}
             />
           ) : (
             <ResourceRequestsTable
@@ -751,7 +663,7 @@ const BookingRequestsManagementPage = () => {
                 }
 
                 // Faculty filter
-                if (resourceFacultyFilter !== 'all' && r.venue_booking?.venue?.faculty?.id !== resourceFacultyFilter) {
+                if (resourceFacultyFilter !== 'all' && String(r.venue_booking?.venue?.faculty?.id) !== String(resourceFacultyFilter)) {
                   return false;
                 }
 
@@ -820,11 +732,6 @@ const BookingRequestsManagementPage = () => {
               })}
               onAction={openModal}
               getStatusBadgeClass={getStatusBadgeClass}
-              groupByPackage={groupByPackage}
-              getPackageStatus={getPackageStatus}
-              handlePackageAction={handlePackageAction}
-              expandedPackages={expandedPackages}
-              togglePackageExpand={togglePackageExpand}
             />
           )}
         </>
@@ -879,87 +786,45 @@ const BookingRequestsManagementPage = () => {
 };
 
 // Venue Bookings Table Component
-const VenueBookingsTable = ({ bookings, onAction, getStatusBadgeClass, groupByPackage, getPackageStatus, handlePackageAction, expandedPackages, togglePackageExpand }) => {
+const VenueBookingsTable = ({ bookings, onAction, getStatusBadgeClass }) => {
   if (bookings.length === 0) {
     return <div className="brm-no-data">No venue bookings found</div>;
   }
 
-  const { grouped, ungrouped } = groupByPackage ? groupByPackage(bookings) : { grouped: {}, ungrouped: bookings };
-  const packageIds = Object.keys(grouped);
-  const hasPackages = packageIds.length > 0;
+  // Filter out cancelled bookings first to avoid confusion
+  const activeBookings = bookings.filter(b => b.status !== 'cancelled');
+
+  // Group bookings by event_id
+  const groupedByEvent = {};
+  activeBookings.forEach(booking => {
+    const eventId = booking.event_id;
+    if (!groupedByEvent[eventId]) {
+      groupedByEvent[eventId] = [];
+    }
+    groupedByEvent[eventId].push(booking);
+  });
+
+  // Convert to array of groups
+  const eventGroups = Object.values(groupedByEvent);
 
   return (
     <div className="brm-table-container">
-      {hasPackages && (
-        <div className="brm-packages-section">
-          <h3>📦 Grouped Packages</h3>
-          {packageIds.map(packageId => {
-            const items = grouped[packageId];
-            const status = getPackageStatus(items);
-            const isExpanded = expandedPackages?.has(packageId);
-
-            return (
-              <div key={packageId} className="brm-package-card">
-                <div className="brm-package-header" onClick={() => togglePackageExpand(packageId)}>
-                  <div className="brm-package-info">
-                    <span className="brm-package-toggle">{isExpanded ? '▼' : '▶'}</span>
-                    <span className="brm-package-label">Package #{packageId.substring(0, 8)}</span>
-                    <span className="brm-package-count">{items.length} items</span>
-                    <span className={`brm-status-badge ${getStatusBadgeClass(status)}`}>{status}</span>
-                  </div>
-                  <div className="brm-package-actions">
-                    <button 
-                      className="brm-btn-approve-pkg"
-                      onClick={(e) => { e.stopPropagation(); handlePackageAction(packageId, 'approve'); }}
-                      title="Approve all in package"
-                    >
-                      ✅ Approve All
-                    </button>
-                    <button 
-                      className="brm-btn-reject-pkg"
-                      onClick={(e) => { e.stopPropagation(); handlePackageAction(packageId, 'reject'); }}
-                      title="Reject all in package"
-                    >
-                      ❌ Reject All
-                    </button>
-                  </div>
-                </div>
-                {isExpanded && (
-                  <div className="brm-package-items">
-                    {items.map(item => (
-                      <div key={item.id} className="brm-package-item">
-                        <div className="brm-item-summary">
-                          <div className="brm-item-event">{item.event?.event_name || 'N/A'}</div>
-                          <div className="brm-item-venue">{item.venue?.name || 'N/A'}</div>
-                          <span className={`brm-status-badge ${getStatusBadgeClass(item.status)}`}>{item.status}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {(ungrouped.length > 0 || !hasPackages) && (
-        <>
-          {hasPackages && <h3 className="brm-ungrouped-title">Individual Bookings</h3>}
-          <table className="brm-data-table">
-            <thead>
-              <tr>
-                <th>Event</th>
-                <th>Faculty</th>
-                <th>Venue</th>
-                <th>Organiser</th>
-                <th>Requested Time</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(ungrouped.length > 0 ? ungrouped : bookings).map(booking => {
+      <table className="brm-data-table">
+        <thead>
+          <tr>
+            <th>Event</th>
+            <th>Faculty</th>
+            <th>Venues</th>
+            <th>Organiser</th>
+            <th>Requested Time</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {eventGroups.map(group => {
+            const firstBooking = group[0];
+            
             // Helper function to get role class
             const getRoleClass = (role) => {
               if (!role) return 'brm-role-default';
@@ -971,27 +836,32 @@ const VenueBookingsTable = ({ bookings, onAction, getStatusBadgeClass, groupByPa
             };
 
             // Get faculty code from venue, not event organizer
-            const facultyCode = booking.venue?.faculty?.code || 'N/A';
+            const facultyCode = firstBooking.venue?.faculty?.code || 'N/A';
 
             // Calculate start/end time including setup/teardown
-            const setupMinutes = booking.setup_time || 0;
-            const teardownMinutes = booking.teardown_time || 0;
-            const startDate = new Date(booking.requested_start_datetime);
-            const endDate = new Date(booking.requested_end_datetime);
+            const setupMinutes = firstBooking.setup_time || 0;
+            const teardownMinutes = firstBooking.teardown_time || 0;
+            const startDate = new Date(firstBooking.requested_start_datetime);
+            const endDate = new Date(firstBooking.requested_end_datetime);
             
             // Subtract setup time from start
             const displayStartDate = new Date(startDate.getTime() - (setupMinutes * 60 * 1000));
             // Add teardown time to end
             const displayEndDate = new Date(endDate.getTime() + (teardownMinutes * 60 * 1000));
 
+            // Determine overall status for the group
+            const statuses = group.map(b => b.status);
+            const allSameStatus = statuses.every(s => s === statuses[0]);
+            const groupStatus = allSameStatus ? statuses[0] : 'mixed';
+
             return (
-            <tr key={booking.id}>
+            <tr key={firstBooking.id}>
               <td>
-                <div className="brm-event-name">{booking.event?.event_name || 'N/A'}</div>
-                {(booking.event?.description || booking.event?.event_description) && (
+                <div className="brm-event-name">{firstBooking.event?.event_name || 'N/A'}</div>
+                {(firstBooking.event?.description || firstBooking.event?.event_description) && (
                   <div className="brm-event-description">
-                    {(booking.event?.description || booking.event?.event_description).substring(0, 50)}
-                    {(booking.event?.description || booking.event?.event_description).length > 50 ? '...' : ''}
+                    {(firstBooking.event?.description || firstBooking.event?.event_description).substring(0, 50)}
+                    {(firstBooking.event?.description || firstBooking.event?.event_description).length > 50 ? '...' : ''}
                   </div>
                 )}
               </td>
@@ -999,17 +869,39 @@ const VenueBookingsTable = ({ bookings, onAction, getStatusBadgeClass, groupByPa
                 <div className="brm-faculty-badge">{facultyCode}</div>
               </td>
               <td>
-                <div className="brm-venue-info">
-                  <div className="brm-venue-name">{booking.venue?.name || 'N/A'}</div>
-                  <div className="brm-venue-code">{booking.venue?.code || 'N/A'}</div>
+                <div className="brm-venues-list">
+                  {group.map((booking, idx) => {
+                    const setupMinutes = booking.setup_time || 0;
+                    const teardownMinutes = booking.teardown_time || 0;
+                    const startDate = new Date(booking.requested_start_datetime);
+                    const endDate = new Date(booking.requested_end_datetime);
+                    const displayStartDate = new Date(startDate.getTime() - (setupMinutes * 60 * 1000));
+                    const displayEndDate = new Date(endDate.getTime() + (teardownMinutes * 60 * 1000));
+                    
+                    return (
+                    <div key={booking.id} className="brm-venue-item">
+                      <div className="brm-venue-info">
+                        <div className="brm-venue-name">
+                          {idx + 1}. {booking.venue?.name || 'N/A'}
+                        </div>
+                        <div className="brm-venue-code">{booking.venue?.code || 'N/A'}</div>
+                        <div className="brm-venue-time">
+                          {formatDateTime(displayStartDate)} - {formatDateTime(displayEndDate)}
+                        </div>
+                      </div>
+                      <span className={`brm-status-badge ${getStatusBadgeClass(booking.status)}`}>
+                        {booking.status}
+                      </span>
+                    </div>
+                  )})}
                 </div>
               </td>
               <td>
                 <div className="brm-organizer-info">
-                  <div className="brm-organizer-name">{booking.requester?.name || 'N/A'}</div>
-                  {booking.requester?.role && (
-                    <div className={`brm-organizer-role ${getRoleClass(booking.requester.role)}`}>
-                      {booking.requester.role.replace('_', ' ').split(' ').map(word => 
+                  <div className="brm-organizer-name">{firstBooking.requester?.name || 'N/A'}</div>
+                  {firstBooking.requester?.role && (
+                    <div className={`brm-organizer-role ${getRoleClass(firstBooking.requester.role)}`}>
+                      {firstBooking.requester.role.replace('_', ' ').split(' ').map(word => 
                         word.charAt(0).toUpperCase() + word.slice(1)
                       ).join(' ')}
                     </div>
@@ -1024,173 +916,90 @@ const VenueBookingsTable = ({ bookings, onAction, getStatusBadgeClass, groupByPa
                 </div>
               </td>
               <td>
-                <span className={`brm-status-badge ${getStatusBadgeClass(booking.status)}`}>
-                  {booking.status}
+                <span className={`brm-status-badge ${getStatusBadgeClass(groupStatus)}`}>
+                  {groupStatus}
                 </span>
               </td>
               <td className="brm-actions-cell">
-                <div className="brm-action-buttons">
-                  <button
-                    className="brm-btn-approve"
-                    onClick={() => onAction(booking, 'approve')}
-                    disabled={booking.status === 'cancelled'}
-                    title="Approve"
-                  >
-                    ✅
-                  </button>
-                  <button
-                    className="brm-btn-reject"
-                    onClick={() => onAction(booking, 'reject')}
-                    disabled={booking.status === 'cancelled'}
-                    title="Reject"
-                  >
-                    ❌
-                  </button>
-                  <button
-                    className="brm-btn-modify"
-                    onClick={() => onAction(booking, 'modify')}
-                    disabled={booking.status === 'cancelled'}
-                    title="Modify"
-                  >
-                    ✏️
-                  </button>
+                <div className="brm-action-buttons-group">
+                  {group.map(booking => (
+                    <div key={booking.id} className="brm-action-row">
+                      <span className="brm-venue-label">{booking.venue?.code}</span>
+                      <div className="brm-action-buttons">
+                        <button
+                          className="brm-btn-approve"
+                          onClick={() => onAction(booking, 'approve')}
+                          title={`Approve ${booking.venue?.code}`}
+                        >
+                          ✅
+                        </button>
+                        <button
+                          className="brm-btn-reject"
+                          onClick={() => onAction(booking, 'reject')}
+                          title={`Reject ${booking.venue?.code}`}
+                        >
+                          ❌
+                        </button>
+                        <button
+                          className="brm-btn-modify"
+                          onClick={() => onAction(booking, 'modify')}
+                          title={`Modify ${booking.venue?.code}`}
+                        >
+                          ✏️
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </td>
             </tr>
           )})}
-            </tbody>
-          </table>
-        </>
-      )}
+        </tbody>
+      </table>
     </div>
   );
 };
 
 // Resource Requests Table Component
-const ResourceRequestsTable = ({ requests, onAction, getStatusBadgeClass, groupByPackage, getPackageStatus, handlePackageAction, expandedPackages, togglePackageExpand }) => {
+const ResourceRequestsTable = ({ requests, onAction, getStatusBadgeClass }) => {
   if (requests.length === 0) {
     return <div className="brm-no-data">No resource requests found</div>;
   }
 
-  const { grouped, ungrouped } = groupByPackage(requests);
-  const hasPackages = Object.keys(grouped).length > 0;
+  // Filter out cancelled requests first to avoid confusion
+  const activeRequests = requests.filter(r => r.status !== 'cancelled');
+
+  // Group requests by event_id
+  const groupedByEvent = {};
+  activeRequests.forEach(request => {
+    const eventId = request.event_id;
+    if (!groupedByEvent[eventId]) {
+      groupedByEvent[eventId] = [];
+    }
+    groupedByEvent[eventId].push(request);
+  });
+
+  // Convert to array of groups
+  const eventGroups = Object.values(groupedByEvent);
 
   return (
     <div className="brm-table-container">
-      {hasPackages && (
-        <div className="brm-packages-section">
-          <h3>Package Requests</h3>
-          {Object.entries(grouped).map(([packageId, packageItems]) => {
-            const isExpanded = expandedPackages.has(packageId);
-            const packageStatus = getPackageStatus(packageItems);
-
-            return (
-              <div key={packageId} className="brm-package-card">
-                <div className="brm-package-header">
-                  <div className="brm-package-info">
-                    <span className="brm-package-id">Package #{packageId.slice(0, 8)}</span>
-                    <span className="brm-package-count">{packageItems.length} resource requests</span>
-                    <span className={`brm-status-badge ${getStatusBadgeClass(packageStatus)}`}>
-                      {packageStatus}
-                    </span>
-                  </div>
-                  <div className="brm-package-actions">
-                    {packageStatus === 'pending' && (
-                      <>
-                        <button
-                          className="brm-btn-approve-pkg"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handlePackageAction(packageId, 'approve', null);
-                          }}
-                        >
-                          ✅ Approve All
-                        </button>
-                        <button
-                          className="brm-btn-reject-pkg"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handlePackageAction(packageId, 'reject', null);
-                          }}
-                        >
-                          ❌ Reject All
-                        </button>
-                      </>
-                    )}
-                    <button
-                      className="brm-btn-expand-pkg"
-                      onClick={() => togglePackageExpand(packageId)}
-                    >
-                      {isExpanded ? '▲ Collapse' : '▼ Expand'}
-                    </button>
-                  </div>
-                </div>
-                {isExpanded && (
-                  <div className="brm-package-items">
-                    {packageItems.map(request => (
-                      <div key={request.id} className="brm-package-item">
-                        <div className="brm-package-item-info">
-                          <strong>{request.event?.event_name || 'N/A'}</strong>
-                          <span>{request.resource?.name || 'N/A'} ({request.requested_quantity} {request.resource?.unit || ''})</span>
-                          <span>{formatDateTime(request.usage_start_datetime)} - {formatDateTime(request.usage_end_datetime)}</span>
-                          <span className={`brm-status-badge ${getStatusBadgeClass(request.status)}`}>
-                            {request.status}
-                          </span>
-                        </div>
-                        <div className="brm-package-item-actions">
-                          <button
-                            className="brm-btn-approve"
-                            onClick={() => onAction(request, 'approve')}
-                            disabled={request.status === 'cancelled'}
-                            title="Approve"
-                          >
-                            ✅
-                          </button>
-                          <button
-                            className="brm-btn-reject"
-                            onClick={() => onAction(request, 'reject')}
-                            disabled={request.status === 'cancelled'}
-                            title="Reject"
-                          >
-                            ❌
-                          </button>
-                          <button
-                            className="brm-btn-modify"
-                            onClick={() => onAction(request, 'modify')}
-                            disabled={request.status === 'cancelled'}
-                            title="Modify"
-                          >
-                            ✏️
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
-      
-      {ungrouped.length > 0 && (
-        <>
-          {hasPackages && <h3>Individual Requests</h3>}
-          <table className="brm-data-table">
-            <thead>
-              <tr>
-                <th>Event</th>
-                <th>Faculty</th>
-                <th>Resource</th>
-                <th>Quantity</th>
-                <th>Organiser</th>
-                <th>Usage Time</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {ungrouped.map(request => {
+      <table className="brm-data-table">
+        <thead>
+          <tr>
+            <th>Event</th>
+            <th>Faculty</th>
+            <th>Resources</th>
+            <th>Organiser</th>
+            <th>Usage Time</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {eventGroups.map(group => {
+            const firstRequest = group[0];
+            
             // Helper function to get role class
             const getRoleClass = (role) => {
               if (!role) return 'brm-role-default';
@@ -1201,17 +1010,22 @@ const ResourceRequestsTable = ({ requests, onAction, getStatusBadgeClass, groupB
               return 'brm-role-default';
             };
 
-            // Get faculty code from venue booking associated with this request, not event organizer
-            const facultyCode = request.venue_booking?.venue?.faculty?.code || 'N/A';
+            // Get faculty code from venue booking associated with this request
+            const facultyCode = firstRequest.venue_booking?.venue?.faculty?.code || 'N/A';
+
+            // Determine overall status for the group
+            const statuses = group.map(r => r.status);
+            const allSameStatus = statuses.every(s => s === statuses[0]);
+            const groupStatus = allSameStatus ? statuses[0] : 'mixed';
 
             return (
-            <tr key={request.id}>
+            <tr key={firstRequest.id}>
               <td>
-                <div className="brm-event-name">{request.event?.event_name || 'N/A'}</div>
-                {(request.event?.description || request.event?.event_description) && (
+                <div className="brm-event-name">{firstRequest.event?.event_name || 'N/A'}</div>
+                {(firstRequest.event?.description || firstRequest.event?.event_description) && (
                   <div className="brm-event-description">
-                    {(request.event?.description || request.event?.event_description).substring(0, 50)}
-                    {(request.event?.description || request.event?.event_description).length > 50 ? '...' : ''}
+                    {(firstRequest.event?.description || firstRequest.event?.event_description).substring(0, 50)}
+                    {(firstRequest.event?.description || firstRequest.event?.event_description).length > 50 ? '...' : ''}
                   </div>
                 )}
               </td>
@@ -1219,16 +1033,33 @@ const ResourceRequestsTable = ({ requests, onAction, getStatusBadgeClass, groupB
                 <div className="brm-faculty-badge">{facultyCode}</div>
               </td>
               <td>
-                {request.resource?.name || 'N/A'}<br />
-                <small>{request.resource?.category?.name || ''}</small>
+                <div className="brm-venues-list">
+                  {group.map((request, idx) => (
+                    <div key={request.id} className="brm-venue-item">
+                      <div className="brm-venue-info">
+                        <div className="brm-venue-name">
+                          {idx + 1}. {request.resource?.name || 'N/A'}
+                        </div>
+                        <div className="brm-venue-code">
+                          {request.requested_quantity} {request.resource?.unit || 'units'} • {request.resource?.category?.name || ''}
+                        </div>
+                        <div className="brm-venue-time">
+                          {formatDateTime(request.usage_start_datetime)} - {formatDateTime(request.usage_end_datetime)}
+                        </div>
+                      </div>
+                      <span className={`brm-status-badge ${getStatusBadgeClass(request.status)}`}>
+                        {request.status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </td>
-              <td>{request.requested_quantity} {request.resource?.unit ? `${request.resource.unit}` : ''}</td>
               <td>
                 <div className="brm-organizer-info">
-                  <div className="brm-organizer-name">{request.requester?.name || 'N/A'}</div>
-                  {request.requester?.role && (
-                    <div className={`brm-organizer-role ${getRoleClass(request.requester.role)}`}>
-                      {request.requester.role.replace('_', ' ').split(' ').map(word => 
+                  <div className="brm-organizer-name">{firstRequest.requester?.name || 'N/A'}</div>
+                  {firstRequest.requester?.role && (
+                    <div className={`brm-organizer-role ${getRoleClass(firstRequest.requester.role)}`}>
+                      {firstRequest.requester.role.replace('_', ' ').split(' ').map(word => 
                         word.charAt(0).toUpperCase() + word.slice(1)
                       ).join(' ')}
                     </div>
@@ -1237,50 +1068,52 @@ const ResourceRequestsTable = ({ requests, onAction, getStatusBadgeClass, groupB
               </td>
               <td>
                 <div className="brm-datetime-info">
-                  <div>{formatDateTime(request.usage_start_datetime)}</div>
+                  <div>{formatDateTime(firstRequest.usage_start_datetime)}</div>
                   <div className="brm-datetime-to">to</div>
-                  <div>{formatDateTime(request.usage_end_datetime)}</div>
+                  <div>{formatDateTime(firstRequest.usage_end_datetime)}</div>
                 </div>
               </td>
               <td>
-                <span className={`brm-status-badge ${getStatusBadgeClass(request.status)}`}>
-                  {request.status}
+                <span className={`brm-status-badge ${getStatusBadgeClass(groupStatus)}`}>
+                  {groupStatus}
                 </span>
               </td>
               <td className="brm-actions-cell">
-                <div className="brm-action-buttons">
-                  <button
-                    className="brm-btn-approve"
-                    onClick={() => onAction(request, 'approve')}
-                    disabled={request.status === 'cancelled'}
-                    title="Approve"
-                  >
-                    ✅
-                  </button>
-                  <button
-                    className="brm-btn-reject"
-                    onClick={() => onAction(request, 'reject')}
-                    disabled={request.status === 'cancelled'}
-                    title="Reject"
-                  >
-                    ❌
-                  </button>
-                  <button
-                    className="brm-btn-modify"
-                    onClick={() => onAction(request, 'modify')}
-                    disabled={request.status === 'cancelled'}
-                    title="Modify"
-                  >
-                    ✏️
-                  </button>
+                <div className="brm-action-buttons-group">
+                  {group.map(request => (
+                    <div key={request.id} className="brm-action-row">
+                      <span className="brm-venue-label">{request.resource?.code || request.resource?.name?.substring(0, 8)}</span>
+                      <div className="brm-action-buttons">
+                        <button
+                          className="brm-btn-approve"
+                          onClick={() => onAction(request, 'approve')}
+                          title="Approve"
+                        >
+                          ✅
+                        </button>
+                        <button
+                          className="brm-btn-reject"
+                          onClick={() => onAction(request, 'reject')}
+                          title="Reject"
+                        >
+                          ❌
+                        </button>
+                        <button
+                          className="brm-btn-modify"
+                          onClick={() => onAction(request, 'modify')}
+                          title="Modify"
+                        >
+                          ✏️
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </td>
             </tr>
           )})}
         </tbody>
       </table>
-        </>
-      )}
     </div>
   );
 };

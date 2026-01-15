@@ -244,9 +244,13 @@ class EventInvitationController {
         return res.status(403).json({ error: 'Not authorized' });
       }
 
-      // Get all users (excluding organizer)
+      // Get all users (excluding organizer, administrators, and inactive users)
       const allUsers = await User.getAll();
-      const filteredUsers = allUsers.filter(user => user.id !== organizerId);
+      const filteredUsers = allUsers.filter(user => 
+        user.id !== organizerId && 
+        user.role !== 'administrator' &&
+        user.status === 'active'
+      );
 
       // Get already invited users
       const existingInvitations = await EventInvitation.getByEventId(eventId);

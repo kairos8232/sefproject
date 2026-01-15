@@ -707,9 +707,9 @@ class ResourceRequestController {
         return res.status(400).json({ error: 'Venue booking must be approved before requesting resources' });
       }
 
-      // Generate package ID
-      const { v4: uuidv4 } = require('uuid');
-      const packageId = uuidv4();
+      // Generate package ID using built-in crypto
+      const crypto = require('crypto');
+      const packageId = crypto.randomUUID();
 
       // Validate all resources and check availability
       const ResourceType = require('../models/Resource');
@@ -727,15 +727,9 @@ class ResourceRequestController {
           return res.status(404).json({ error: `Resource ${item.resource_id} not found or inactive` });
         }
 
-        // Check quantity availability
-        const availableQty = await ResourceType.getAvailableQuantity(
-          item.resource_id,
-          packageData.usage_start_datetime,
-          packageData.usage_end_datetime
-        );
-
-        if (availableQty < item.requested_quantity) {
-          insufficientQuantityResources.push(`${resource.name} (available: ${availableQty}, requested: ${item.requested_quantity})`);
+        // Check if requested quantity exceeds total quantity
+        if (resource.total_quantity < item.requested_quantity) {
+          insufficientQuantityResources.push(`${resource.name} (total available: ${resource.total_quantity}, requested: ${item.requested_quantity})`);
         }
       }
 

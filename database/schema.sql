@@ -1189,7 +1189,8 @@ COMMENT ON COLUMN system_settings.updated_by IS 'User who last updated this sett
 -- Insert initial system settings
 INSERT INTO system_settings (setting_key, setting_value, description) VALUES
   ('min_advance_booking_days', '3', 'Minimum number of days in advance required to book a venue'),
-  ('max_advance_booking_days', '30', 'Maximum number of days in advance a venue can be booked');
+  ('max_advance_booking_days', '30', 'Maximum number of days in advance a venue can be booked'),
+  ('max_event_duration_days', '7', 'Maximum duration an event can last (in days)');
 
 -- ========================================
 -- Row Level Security for venue_availability_blocks and event_feedbacks
