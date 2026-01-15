@@ -349,19 +349,6 @@ function HomePage() {
             <div className="upcoming-preview">
               <div className="upcoming-header">
                 <h3>Upcoming Events</h3>
-                {stats.pendingInvitations > 0 && (
-                  <button
-                    className="upcoming-invitations-button"
-                    title={`You have ${stats.pendingInvitations} pending invitations`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowInvitationsModal(true);
-                    }}
-                  >
-                    📬
-                    <span className="badge">{stats.pendingInvitations}</span>
-                  </button>
-                )}
               </div>
               <div className="upcoming-list">
                 {stats.upcomingRegistrations.slice(0, 3).map((participation) => (
@@ -403,6 +390,18 @@ function HomePage() {
                     <div className="stat-details">
                       <div className="stat-value">{stats.myEvents}</div>
                       <div className="stat-label">My Events</div>
+                    </div>
+                  </div>
+                )}
+                {stats.pendingInvitations > 0 && (
+                  <div className="stat-item pending-invitations-stat" onClick={() => setShowInvitationsModal(true)} style={{ cursor: 'pointer' }}>
+                    <div className="stat-icon">💌</div>
+                    <div className="stat-details">
+                      <div className="stat-value" style={{ color: '#ff6b6b', fontWeight: 'bold' }}>
+                        {stats.pendingInvitations}
+                        <span style={{ fontSize: '14px', marginLeft: '4px' }}>!</span>
+                      </div>
+                      <div className="stat-label">Pending Invitations</div>
                     </div>
                   </div>
                 )}

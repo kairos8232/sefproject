@@ -59,6 +59,26 @@ class RefreshToken {
     if (error) throw error;
     return true;
   }
+
+  // Delete expired or revoked tokens for a user to keep things clean
+  static async deleteExpired(userId) {
+    try {
+      const { error } = await supabase
+        .from('refresh_tokens')
+        .delete()
+        .eq('user_id', userId)
+        .or(`expires_at.lt.${new Date().toISOString()},revoked_at.not.is.null`);
+
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
+      return true;
+    } catch (error) {
+      // If delete fails, don't break login process
+      console.log('Could not clean old tokens:', error.message);
+      return true;
+    }
+  }
 }
 
 module.exports = RefreshToken;

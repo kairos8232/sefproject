@@ -91,6 +91,13 @@ class AuthController {
       console.log('Refresh token expires at:', refreshExpiresAt);
       
       try {
+        // First, try to delete any existing refresh tokens for this user to prevent duplicates
+        try {
+          await RefreshToken.deleteExpired(user.id);
+        } catch (deleteError) {
+          console.log('Could not clean old tokens:', deleteError.message);
+        }
+        
         const refreshTokenData = await RefreshToken.createToken({
           userId: user.id,
           token: refreshToken,
@@ -286,11 +293,12 @@ class AuthController {
       req.user = decoded;
       next();
     } catch (error) {
-      // Suppress network timeout errors
+      // Suppress expected errors (network timeouts and token expiry)
       if (!error.message?.includes('fetch failed') && 
           !error.message?.includes('ETIMEDOUT') &&
           !error.message?.includes('EADDRNOTAVAIL') &&
-          !error.message?.includes('ConnectTimeoutError')) {
+          !error.message?.includes('ConnectTimeoutError') &&
+          error.name !== 'TokenExpiredError') {
         console.error('Token verification error:', error);
       }
       res.status(401).json({ error: 'Invalid token' });

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import invitationService from '../services/invitationService';
 import venueBookingService from '../services/venueBookingService';
-import { formatEventTimeRange } from '../utils/eventTimeUtils';
 import { useToast } from '../contexts/ToastContext';
 import './InvitationsReceivedModal.css';
 
@@ -57,6 +56,7 @@ const InvitationsReceivedModal = ({ isOpen, onClose }) => {
       setError('');
       setRespondingTo(invitationId);
 
+      const invitation = invitations.find(inv => inv.id === invitationId);
       await invitationService.respondToInvitation(invitationId, status);
 
       // Remove from list after responding
@@ -66,6 +66,12 @@ const InvitationsReceivedModal = ({ isOpen, onClose }) => {
       // Show toast notification
       if (status === 'accepted') {
         showSuccess('Invitation accepted successfully');
+        // Redirect to registration form page
+        if (invitation?.event?.id) {
+          setTimeout(() => {
+            window.location.href = `/events/${invitation.event.id}/register`;
+          }, 500);
+        }
       } else if (status === 'declined') {
         showSuccess('Invitation declined');
       }
@@ -98,63 +104,69 @@ const InvitationsReceivedModal = ({ isOpen, onClose }) => {
             <div className="empty-message">No pending invitations</div>
           ) : (
             <div className="invitations-list">
-              {invitations.map((invitation) => (
-                <div key={invitation.id} className="invitation-card">
-                  <div className="invitation-info">
-                    <h3>{invitation.event?.title}</h3>
-                    <p className="event-datetime">
-                      {new Date(invitation.event?.start_datetime).toLocaleString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        hour: 'numeric',
-                        minute: '2-digit',
-                        meridiem: 'short'
-                      })}
-                    </p>
-                    <p className="organizer-info">
-                      Organized by: {invitation.event?.organizer?.name}
-                    </p>
+              {invitations.map((invitation) => {
+                const event = invitation.event;
+                const booking = eventBookings[event?.id];
+                const startTime = new Date(event?.start_datetime);
+                const endTime = new Date(event?.end_datetime);
+                const dateStr = startTime.toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric'
+                });
+                const startTimeStr = startTime.toLocaleTimeString('en-US', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: true
+                });
+                const endTimeStr = endTime.toLocaleTimeString('en-US', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: true
+                });
 
-                    {/* Display venue and schedule info */}
-                    {eventBookings[invitation.event?.id] && (
-                      <div className="event-schedule-info">
-                        <p className="schedule-detail">
-                          <strong>Venue:</strong> {eventBookings[invitation.event?.id]?.venue?.name || 'N/A'}
-                        </p>
-                        <p className="schedule-detail">
-                          <strong>Time:</strong> {formatEventTimeRange(
-                            invitation.event?.start_datetime,
-                            invitation.event?.end_datetime,
-                            eventBookings[invitation.event?.id]?.setup_time || 0,
-                            eventBookings[invitation.event?.id]?.teardown_time || 0
-                          )}
-                        </p>
-                      </div>
-                    )}
-                  </div>
+                return (
+                  <div key={invitation.id} className="invitation-card">
+                    <div className="invitation-info">
+                      <h3>{event?.event_name || event?.title || 'Event'}</h3>
+                      <p className="event-datetime">
+                        {dateStr} {startTimeStr} - {endTimeStr}
+                      </p>
+                      <p className="organizer-info">
+                        Organized by: {event?.organizer?.name || 'Unknown'}
+                      </p>
 
-                  <div className="invitation-actions">
-                    <button
-                      onClick={() => handleRespond(invitation.id, 'accepted')}
-                      disabled={respondingTo === invitation.id}
-                      className="btn btn-accept"
-                      title="Accept this invitation"
-                    >
-                      <span className="checkmark">✓</span>
-                      {respondingTo === invitation.id ? 'Processing...' : 'Accept'}
-                    </button>
-                    <button
-                      onClick={() => handleRespond(invitation.id, 'declined')}
-                      disabled={respondingTo === invitation.id}
-                      className="btn btn-decline"
-                      title="Decline this invitation"
-                    >
-                      <span className="cross">✕</span>
-                      {respondingTo === invitation.id ? 'Processing...' : 'Decline'}
-                    </button>
+                      {/* Display venue from approved booking */}
+                      {booking?.venue?.name && (
+                        <p className="schedule-detail" style={{ marginTop: '8px' }}>
+                          <strong>Venue:</strong> {booking.venue.name}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="invitation-actions">
+                      <button
+                        onClick={() => handleRespond(invitation.id, 'accepted')}
+                        disabled={respondingTo === invitation.id}
+                        className="btn btn-accept"
+                        title="Accept this invitation"
+                      >
+                        <span className="checkmark">✓</span>
+                        {respondingTo === invitation.id ? 'Processing...' : 'Accept'}
+                      </button>
+                      <button
+                        onClick={() => handleRespond(invitation.id, 'declined')}
+                        disabled={respondingTo === invitation.id}
+                        className="btn btn-decline"
+                        title="Decline this invitation"
+                      >
+                        <span className="cross">✕</span>
+                        {respondingTo === invitation.id ? 'Processing...' : 'Decline'}
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

@@ -5,7 +5,7 @@ import './SessionTimeoutModal.css';
 // Constants - defined outside component to avoid recreating on each render
 const IDLE_WARNING_TIME = 13 * 60 * 1000; // 13 minutes of idle time before warning
 const IDLE_LOGOUT_TIME = 15 * 60 * 1000; // 15 minutes of idle time before logout
-const AUTO_REFRESH_THRESHOLD = 10 * 60 * 1000; // Auto-refresh if JWT expires in < 10 minutes
+const AUTO_REFRESH_THRESHOLD = 3 * 60 * 1000; // Auto-refresh if JWT expires in < 3 minutes
 const ACTIVITY_CHECK_INTERVAL = 30 * 1000; // Check every 30 seconds
 
 const SessionTimeoutModal = ({ onExtendSession, onLogout }) => {
@@ -29,6 +29,40 @@ const SessionTimeoutModal = ({ onExtendSession, onLogout }) => {
     }
   }, []);
 
+  const handleAutoLogout = useCallback(() => {
+    setShowModal(false);
+    localStorage.setItem('sessionExpired', 'true');
+    localStorage.setItem('sessionExpiredMessage', 'Your session has ended due to inactivity. Please log in again.');
+    onLogout();
+  }, [onLogout]);
+
+  // Check if token is about to expire and show warning
+  const checkTokenExpiry = useCallback(() => {
+    const tokenExpiry = getTokenExpiry();
+    if (!tokenExpiry) return;
+
+    const now = Date.now();
+    const timeUntilExpiry = tokenExpiry - now;
+    const timeBeforeWarning = 2 * 60 * 1000; // Warn 2 minutes before expiry
+
+    // If token expires in less than 2 minutes, show the modal
+    if (timeUntilExpiry > 0 && timeUntilExpiry <= timeBeforeWarning) {
+      console.log('[SessionTimeoutModal] Token expiring soon, showing warning. Time until expiry:', Math.floor(timeUntilExpiry / 1000), 'seconds');
+      setShowModal(true);
+      setTimeRemaining(Math.floor(timeUntilExpiry / 1000));
+      return true;
+    }
+
+    // If token already expired, logout immediately
+    if (timeUntilExpiry <= 0) {
+      console.log('[SessionTimeoutModal] Token expired, logging out');
+      handleAutoLogout();
+      return true;
+    }
+
+    return false;
+  }, [getTokenExpiry, handleAutoLogout]);
+
   const clearTimeouts = useCallback(() => {
     if (warningTimeoutRef.current) {
       clearTimeout(warningTimeoutRef.current);
@@ -44,45 +78,16 @@ const SessionTimeoutModal = ({ onExtendSession, onLogout }) => {
     }
   }, []);
 
-  const handleAutoLogout = useCallback(() => {
-    setShowModal(false);
-    localStorage.setItem('sessionExpired', 'true');
-    localStorage.setItem('sessionExpiredMessage', 'Your session has ended due to inactivity. Please log in again.');
-    onLogout();
-  }, [onLogout]);
-
-  // Silent token refresh on user activity
-  const refreshTokenSilently = useCallback(async () => {
-    try {
-      const expiry = getTokenExpiry();
-      if (!expiry) return;
-
-      const now = Date.now();
-      const timeUntilExpiry = expiry - now;
-
-      // Only refresh if token expires soon
-      if (timeUntilExpiry < AUTO_REFRESH_THRESHOLD && timeUntilExpiry > 0) {
-        console.log('Auto-refreshing token due to user activity...');
-        await authService.refreshAccessToken();
-      }
-    } catch (err) {
-      console.error('Silent token refresh failed:', err);
-    }
-  }, [getTokenExpiry]);
-
-  // Update last activity time and refresh token if needed
+  // Update last activity time
   const updateActivity = useCallback(() => {
     const now = Date.now();
     lastActivityRef.current = now;
-    
-    // Refresh token silently if needed
-    refreshTokenSilently();
     
     // Hide modal if it's showing (user is active)
     if (showModal) {
       setShowModal(false);
     }
-  }, [showModal, refreshTokenSilently]);
+  }, [showModal]);
 
   const setupTimeouts = useCallback(() => {
     clearTimeouts();
@@ -113,6 +118,11 @@ const SessionTimeoutModal = ({ onExtendSession, onLogout }) => {
     activityCheckIntervalRef.current = setInterval(() => {
       const timeSinceLastActivity = Date.now() - lastActivityRef.current;
       
+      // First, check if token is expiring
+      if (checkTokenExpiry()) {
+        return; // Token expiry modal is now showing or logout happened
+      }
+      
       // If user was active, reset timeouts
       if (timeSinceLastActivity < IDLE_WARNING_TIME) {
         if (showModal) {
@@ -130,15 +140,18 @@ const SessionTimeoutModal = ({ onExtendSession, onLogout }) => {
         setTimeRemaining(Math.floor(remainingTime / 1000));
       }
     }, ACTIVITY_CHECK_INTERVAL);
-  }, [clearTimeouts, handleAutoLogout, showModal]);
+  }, [clearTimeouts, handleAutoLogout, showModal, checkTokenExpiry]);
 
   const handleExtendSession = async () => {
     try {
+      console.log('[SessionTimeoutModal] User clicked Stay Logged In, refreshing token...');
       await onExtendSession();
       setShowModal(false);
-      // Update activity time and reset timeouts
+      // Reset activity time to NOW and restart timeouts
       lastActivityRef.current = Date.now();
+      clearTimeouts();
       setupTimeouts();
+      console.log('[SessionTimeoutModal] Session extended, timer reset');
     } catch (err) {
       console.error('Failed to extend session:', err);
       handleAutoLogout();
@@ -213,7 +226,7 @@ const SessionTimeoutModal = ({ onExtendSession, onLogout }) => {
       window.removeEventListener('storage', handleStorageChange);
       window.removeEventListener('tokenUpdated', handleTokenUpdate);
     };
-  }, [setupTimeouts, clearTimeouts]);
+  }, [setupTimeouts, clearTimeouts, getTokenExpiry]);
 
   if (!showModal) return null;
 

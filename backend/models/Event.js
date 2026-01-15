@@ -175,13 +175,14 @@ class Event {
     }
   }
 
-  // Get event invitations for a user
+  // Get event invitations for a user (only accepted ones count for access)
   static async getUserInvitations(userId) {
     try {
       const { data, error } = await supabase
         .from('event_invitations')
         .select('event_id')
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .eq('status', 'accepted');
 
       if (error) throw error;
       return data.map(inv => inv.event_id);

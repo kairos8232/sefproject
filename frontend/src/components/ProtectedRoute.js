@@ -31,11 +31,13 @@ function ProtectedRoute({ children }) {
         return;
       }
 
-      // Token is expired, try to refresh
+      // Token is expired, try to refresh silently
+      console.log('[ProtectedRoute] Token expired, attempting silent refresh...');
       const refreshed = await authService.refreshAccessToken();
       if (isMounted) {
         setIsAllowed(refreshed);
       }
+      // If refresh fails, SessionTimeoutModal will handle logout instead
     };
 
     checkAuth();

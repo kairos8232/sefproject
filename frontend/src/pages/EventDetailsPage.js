@@ -54,16 +54,20 @@ function EventDetailsPage() {
       
       const isCreator = userId && data.event.organizer_id === userId;
       
-      // If user is the creator, load venue bookings and resources
+      // Load venue bookings for all users (not just creators)
+      try {
+        console.log('[EventDetailsPage] Loading venue bookings for event:', id);
+        const bookingResponse = await venueBookingService.getBookingsByEvent(id);
+        console.log('[EventDetailsPage] Venue booking response:', bookingResponse);
+        const approvedBookings = bookingResponse.bookings?.filter(b => b.status === 'approved') || [];
+        console.log('[EventDetailsPage] Approved venue bookings:', approvedBookings);
+        setVenueBookings(approvedBookings);
+      } catch (err) {
+        console.error('[EventDetailsPage] Error loading venue bookings:', err);
+      }
+      
+      // If user is the creator, also load resources
       if (isCreator) {
-        try {
-          const bookingResponse = await venueBookingService.getBookingsByEvent(id);
-          const approvedBookings = bookingResponse.bookings?.filter(b => b.status === 'approved') || [];
-          setVenueBookings(approvedBookings);
-        } catch (err) {
-          console.error('Error loading venue bookings:', err);
-        }
-        
         try {
           const resourceResponse = await resourceRequestService.getByEvent(id);
           const approvedResources = resourceResponse.requests?.filter(r => r.status === 'approved') || [];
@@ -333,6 +337,23 @@ function EventDetailsPage() {
             <span>{formatDateTime(event.end_datetime)}</span>
           </div>
         </div>
+
+        {/* Display Venue if available */}
+        {venueBookings.length > 0 && (
+          <div className="ed-event-venue">
+            <h3>Venue</h3>
+            <div className="ed-venue-list">
+              {venueBookings.map((booking) => (
+                <div key={booking.id} className="ed-venue-item">
+                  <p><strong>{booking.venue?.name || 'Venue'}</strong></p>
+                  {booking.venue?.location && (
+                    <p className="ed-venue-location">{booking.venue.location}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Show created date only to event creator */}
         {isManagementView && (

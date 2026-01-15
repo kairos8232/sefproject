@@ -66,27 +66,43 @@ class VenueBookingController {
       const userId = req.user.userId;
       const userRole = req.user.role;
 
-      // Get event to check ownership
+      // Get event to check if it exists
       const event = await Event.getById(eventId);
       
       if (!event) {
         return res.status(404).json({ error: 'Event not found' });
       }
 
-      // Check if user can view these bookings
-      if (
-        userRole !== 'administrator' &&
-        userRole !== 'faculty_staff' &&
-        event.organizer_id !== userId
-      ) {
-        return res.status(403).json({ error: 'Not authorized to view bookings for this event' });
-      }
+      // Anyone can view approved venue bookings for an event they have access to
+      // Only show sensitive details (like admin notes) to authorized users
+      const isAuthorized = (
+        userRole === 'administrator' ||
+        userRole === 'faculty_staff' ||
+        event.organizer_id === userId
+      );
 
       const bookings = await VenueBooking.getByEventId(eventId);
 
+      // If not authorized, filter to only show approved bookings and remove sensitive fields
+      const filteredBookings = isAuthorized 
+        ? bookings 
+        : bookings
+            .filter(b => b.status === 'approved')
+            .map(b => ({
+              id: b.id,
+              event_id: b.event_id,
+              venue_id: b.venue_id,
+              venue: b.venue,
+              start_datetime: b.start_datetime,
+              end_datetime: b.end_datetime,
+              setup_time: b.setup_time,
+              teardown_time: b.teardown_time,
+              status: b.status
+            }));
+
       res.json({
         success: true,
-        bookings
+        bookings: filteredBookings
       });
     } catch (error) {
       console.error('Get bookings by event error:', error);

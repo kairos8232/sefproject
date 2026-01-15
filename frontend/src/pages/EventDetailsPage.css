@@ -196,6 +196,51 @@
   color: #333;
 }
 
+.ed-event-venue {
+  margin-bottom: 30px;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+}
+
+.ed-event-venue h3 {
+  margin: 0 0 15px 0;
+  color: #333;
+}
+
+.ed-venue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.ed-venue-item {
+  padding: 15px;
+  background-color: white;
+  border-left: 4px solid #667eea;
+  border-radius: 4px;
+}
+
+.ed-venue-item p {
+  margin: 0 0 8px 0;
+  color: #333;
+}
+
+.ed-venue-item p:last-child {
+  margin-bottom: 0;
+}
+
+.ed-venue-location {
+  color: #666;
+  font-size: 14px;
+}
+
+.ed-venue-time-info {
+  color: #999;
+  font-size: 13px;
+  font-style: italic;
+}
+
 .ed-event-meta {
   padding-top: 20px;
   border-top: 1px solid #eee;

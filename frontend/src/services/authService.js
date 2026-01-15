@@ -79,6 +79,12 @@ const authService = {
       });
       const data = await response.json();
       if (!response.ok || !data.token) {
+        // If refresh token is invalid, clear tokens and stop trying
+        if (response.status === 401) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          console.log('[authService] Refresh token expired, tokens cleared');
+        }
         throw new Error(data.error || 'Failed to refresh session');
       }
       localStorage.setItem('token', data.token);
