@@ -87,7 +87,13 @@ class ResourceRequestController {
         requests
       });
     } catch (error) {
-      console.error('Get requests by event error:', error);
+      // Suppress network timeout errors
+      if (!error.message?.includes('fetch failed') && 
+          !error.message?.includes('ETIMEDOUT') &&
+          !error.message?.includes('EADDRNOTAVAIL') &&
+          !error.message?.includes('ConnectTimeoutError')) {
+        console.error('Get requests by event error:', error);
+      }
       res.status(500).json({ error: 'Failed to get event resource requests' });
     }
   }

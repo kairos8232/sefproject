@@ -73,7 +73,13 @@ class Session {
 
       return data;
     } catch (error) {
-      console.error('Error finding session:', error);
+      // Suppress network timeout errors
+      if (!error.message?.includes('fetch failed') && 
+          !error.message?.includes('ETIMEDOUT') &&
+          !error.message?.includes('EADDRNOTAVAIL') &&
+          !error.message?.includes('ConnectTimeoutError')) {
+        console.error('Error finding session:', error);
+      }
       throw error;
     }
   }

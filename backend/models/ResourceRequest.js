@@ -19,7 +19,13 @@ class ResourceRequest {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error('Error getting resource requests:', error);
+      // Suppress network timeout errors
+      if (!error.message?.includes('fetch failed') && 
+          !error.message?.includes('ETIMEDOUT') &&
+          !error.message?.includes('EADDRNOTAVAIL') &&
+          !error.message?.includes('ConnectTimeoutError')) {
+        console.error('Error getting resource requests:', error);
+      }
       throw error;
     }
   }
@@ -67,7 +73,13 @@ class ResourceRequest {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error('Error getting resource requests by event ID:', error);
+      // Suppress network timeout errors
+      if (!error.message?.includes('fetch failed') && 
+          !error.message?.includes('ETIMEDOUT') &&
+          !error.message?.includes('EADDRNOTAVAIL') &&
+          !error.message?.includes('ConnectTimeoutError')) {
+        console.error('Error getting resource requests by event ID:', error);
+      }
       throw error;
     }
   }
@@ -91,7 +103,13 @@ class ResourceRequest {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error('Error getting resource requests by user ID:', error);
+      // Suppress network timeout errors
+      if (!error.message?.includes('fetch failed') && 
+          !error.message?.includes('ETIMEDOUT') &&
+          !error.message?.includes('EADDRNOTAVAIL') &&
+          !error.message?.includes('ConnectTimeoutError')) {
+        console.error('Error getting resource requests by user ID:', error);
+      }
       throw error;
     }
   }
@@ -265,7 +283,13 @@ class ResourceRequest {
       if (error) throw error;
       return data;
     } catch (error) {
-      console.error('Error getting resource requests with filters:', error);
+      // Suppress network timeout errors
+      if (!error.message?.includes('fetch failed') && 
+          !error.message?.includes('ETIMEDOUT') &&
+          !error.message?.includes('EADDRNOTAVAIL') &&
+          !error.message?.includes('ConnectTimeoutError')) {
+        console.error('Error getting resource requests with filters:', error);
+      }
       throw error;
     }
   }

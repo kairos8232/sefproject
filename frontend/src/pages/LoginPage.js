@@ -20,9 +20,11 @@ function LoginPage() {
     
     // Check for session expired flag in localStorage
     const sessionExpired = localStorage.getItem('sessionExpired');
+    const sessionExpiredMessage = localStorage.getItem('sessionExpiredMessage');
     if (sessionExpired === 'true') {
-      showError('Your session has expired. Please login again.');
+      showError(sessionExpiredMessage || 'Your session has expired. Please login again.');
       localStorage.removeItem('sessionExpired'); // Clear the flag
+      localStorage.removeItem('sessionExpiredMessage');
     }
     
     // Check for session expired from URL (backup method)

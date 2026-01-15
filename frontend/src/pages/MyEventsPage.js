@@ -636,11 +636,15 @@ function MyEventsPage() {
                       <span className={`status-badge ${getStatusBadgeClass(event.status)}`}>
                         {event.status}
                       </span>
-                      {event.registration_status === 'open' && (
-                        <span className="registration-status-badge open">Open</span>
-                      )}
-                      {event.registration_status === 'closed' && (
-                        <span className="registration-status-badge closed">Closed</span>
+                      {event.visibility !== 'inviteonly' && (
+                        <>
+                          {event.registration_status === 'open' && (
+                            <span className="registration-status-badge open">Open</span>
+                          )}
+                          {event.registration_status === 'closed' && (
+                            <span className="registration-status-badge closed">Closed</span>
+                          )}
+                        </>
                       )}
                     </td>
                     <td>
@@ -707,13 +711,15 @@ function MyEventsPage() {
                                   💌
                                 </button>
                               )}
-                              <button 
-                                onClick={() => handleToggleRegistration(event)}
-                                className={`action-button ${event.registration_status === 'open' ? 'close-reg-button' : 'open-reg-button'}`}
-                                title={event.registration_status === 'open' ? 'Close Registration' : 'Open Registration'}
-                              >
-                                {event.registration_status === 'open' ? '🔒' : '🔓'}
-                              </button>
+                              {event.visibility !== 'inviteonly' && (
+                                <button 
+                                  onClick={() => handleToggleRegistration(event)}
+                                  className={`action-button ${event.registration_status === 'open' ? 'close-reg-button' : 'open-reg-button'}`}
+                                  title={event.registration_status === 'open' ? 'Close Registration' : 'Open Registration'}
+                                >
+                                  {event.registration_status === 'open' ? '🔒' : '🔓'}
+                                </button>
+                              )}
                             </>
                           )}
                           <button 

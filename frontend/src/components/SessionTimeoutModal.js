@@ -46,6 +46,8 @@ const SessionTimeoutModal = ({ onExtendSession, onLogout }) => {
 
   const handleAutoLogout = useCallback(() => {
     setShowModal(false);
+    localStorage.setItem('sessionExpired', 'true');
+    localStorage.setItem('sessionExpiredMessage', 'Your session has ended due to inactivity. Please log in again.');
     onLogout();
   }, [onLogout]);
 
@@ -95,6 +97,7 @@ const SessionTimeoutModal = ({ onExtendSession, onLogout }) => {
         setShowModal(true);
         const warningDuration = (IDLE_LOGOUT_TIME - IDLE_WARNING_TIME) / 1000;
         setTimeRemaining(Math.floor(warningDuration));
+        console.log('Session warning shown, time remaining:', Math.floor(warningDuration), 'seconds');
       }
     }, IDLE_WARNING_TIME);
 

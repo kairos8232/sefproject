@@ -331,21 +331,35 @@ function EditEventPage() {
               </span>
             </div>
 
-            <div className="ee-form-group">
-              <label htmlFor="registration_limit">Registration Limit (Optional)</label>
-              <input
-                type="number"
-                id="registration_limit"
-                name="registration_limit"
-                value={formData.registration_limit}
-                onChange={handleChange}
-                min="1"
-                placeholder="Leave empty to use venue capacity"
-              />
-              <span className="ee-helper-text">
-                Maximum number of participants allowed to register. If left empty, the system will use the venue's capacity from your booking request.
-              </span>
-            </div>
+            {formData.visibility !== 'inviteonly' && (
+              <div className="ee-form-group">
+                <label htmlFor="registration_limit">Registration Limit (Optional)</label>
+                <input
+                  type="number"
+                  id="registration_limit"
+                  name="registration_limit"
+                  value={formData.registration_limit}
+                  onChange={handleChange}
+                  min="1"
+                  placeholder="Leave empty to use venue capacity"
+                />
+                <span className="ee-helper-text">
+                  Maximum number of participants allowed to register. If left empty, the system will use the venue's capacity from your booking request.
+                </span>
+              </div>
+            )}
+            
+            {formData.visibility === 'inviteonly' && (
+              <div className="ee-form-group">
+                <div className="ee-locked-info" style={{ padding: '15px', background: '#f8f9fa', borderRadius: '8px', border: '1px solid #dee2e6' }}>
+                  <span style={{ fontSize: '20px', marginRight: '10px' }}>✉️</span>
+                  <div>
+                    <strong>Invite-Only Event</strong>
+                    <p style={{ margin: '5px 0 0 0', fontSize: '14px', color: '#666' }}>Registration is controlled through invitations. No public registration limit needed.</p>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

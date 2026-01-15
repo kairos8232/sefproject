@@ -4,6 +4,7 @@ import { useToast } from '../contexts/ToastContext';
 import invitationService from '../services/invitationService';
 import eventService from '../services/eventService';
 import venueBookingService from '../services/venueBookingService';
+import facultyService from '../services/facultyService';
 import { formatEventTimeRange } from '../utils/eventTimeUtils';
 import './EventInvitationPage.css';
 
@@ -22,6 +23,8 @@ const EventInvitationPage = () => {
   const [statistics, setStatistics] = useState({ total: 0, pending: 0, accepted: 0, declined: 0 });
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [facultyFilter, setFacultyFilter] = useState('all');
+  const [faculties, setFaculties] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [approvedBooking, setApprovedBooking] = useState(null);
 
@@ -51,6 +54,14 @@ const EventInvitationPage = () => {
       setBookings(bookingList);
       const approved = bookingList.find((b) => b.status === 'approved') || null;
       setApprovedBooking(approved);
+
+      // Fetch faculties for filter
+      try {
+        const facultiesData = await facultyService.getPublicFaculties();
+        setFaculties(facultiesData.filter(f => f.status === 'active'));
+      } catch (err) {
+        console.error('Error fetching faculties:', err);
+      }
     } catch (err) {
       showError(err.message || 'Failed to load invitation data');
       console.error('Error fetching data:', err);
@@ -91,7 +102,7 @@ const EventInvitationPage = () => {
 
       await invitationService.inviteUsers(eventId, selectedUserIds);
 
-      showSuccess(`Successfully invited ${selectedUserIds.length} user(s)`);
+      showSuccess(`Successfully sent ${selectedUserIds.length} invitation(s)`);
       setSelectedUserIds([]);
 
       // Refresh data
@@ -111,7 +122,7 @@ const EventInvitationPage = () => {
 
     try {
       await invitationService.revokeInvitation(invitationId);
-      showSuccess('Invitation revoked successfully');
+      showSuccess('Invitation has been revoked');
 
       // Refresh data
       setTimeout(() => fetchData(), 500);
@@ -142,11 +153,13 @@ const EventInvitationPage = () => {
     return matchesSearch && matchesFilter;
   });
 
-  const filteredInvitableUsers = invitableUsers.filter((user) =>
-    user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.staff_id?.toString().toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredInvitableUsers = invitableUsers.filter((user) => {
+    const matchesSearch = user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.staff_id?.toString().toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesFaculty = facultyFilter === 'all' || String(user.faculty_id) === String(facultyFilter);
+    return matchesSearch && matchesFaculty;
+  });
 
   if (loading) {
     return <div className="invitation-page loading">Loading invitation data...</div>;
@@ -188,12 +201,14 @@ const EventInvitationPage = () => {
           <div className="schedule-row">
             <span className="schedule-label">Time</span>
             <span className="schedule-value">
-              {formatEventTimeRange(
-                event.start_datetime,
-                event.end_datetime,
-                approvedBooking?.setup_time || 0,
-                approvedBooking?.teardown_time || 0
-              )}
+              {event.start_datetime && event.end_datetime
+                ? formatEventTimeRange(
+                    event.start_datetime,
+                    event.end_datetime,
+                    approvedBooking?.setup_time || 0,
+                    approvedBooking?.teardown_time || 0
+                  )
+                : 'Not set'}
             </span>
           </div>
         </div>
@@ -242,8 +257,17 @@ const EventInvitationPage = () => {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="search-input"
-                />
-                </div>
+                />                <select
+                  value={facultyFilter}
+                  onChange={(e) => setFacultyFilter(e.target.value)}
+                  className="filter-select"
+                  style={{ marginTop: '10px' }}
+                >
+                  <option value="all">All Faculties</option>
+                  {faculties.map(faculty => (
+                    <option key={faculty.id} value={faculty.id}>{faculty.name}</option>
+                  ))}
+                </select>                </div>
 
                 <div className="user-selection">
                   <div className="select-all-header">

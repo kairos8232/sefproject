@@ -100,9 +100,13 @@ class AuthController {
         });
         console.log('Refresh token created successfully:', refreshTokenData?.id);
       } catch (refreshError) {
-        console.error('Error creating refresh token:', refreshError);
-        console.error('Error details:', refreshError.message);
-        console.error('Error code:', refreshError.code);
+        // Log only if it's not a network/timeout error
+        if (!refreshError.message?.includes('fetch failed') && 
+            !refreshError.message?.includes('SocketError')) {
+          console.error('Error creating refresh token:', refreshError);
+          console.error('Error details:', refreshError.message);
+          console.error('Error code:', refreshError.code);
+        }
         // Don't fail login if refresh token creation fails
       }
 
@@ -247,7 +251,11 @@ class AuthController {
 
       res.json({ success: true, token });
     } catch (error) {
-      console.error('Refresh token error:', error);
+      // Log only if it's not a network/timeout error
+      if (!error.message?.includes('fetch failed') && 
+          !error.message?.includes('SocketError')) {
+        console.error('Refresh token error:', error);
+      }
       res.status(500).json({ error: 'Failed to refresh session' });
     }
   }
@@ -278,7 +286,13 @@ class AuthController {
       req.user = decoded;
       next();
     } catch (error) {
-      console.error('Token verification error:', error);
+      // Suppress network timeout errors
+      if (!error.message?.includes('fetch failed') && 
+          !error.message?.includes('ETIMEDOUT') &&
+          !error.message?.includes('EADDRNOTAVAIL') &&
+          !error.message?.includes('ConnectTimeoutError')) {
+        console.error('Token verification error:', error);
+      }
       res.status(401).json({ error: 'Invalid token' });
     }
   }
