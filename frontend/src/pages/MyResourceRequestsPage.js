@@ -36,26 +36,51 @@ function MyResourceRequestsPage() {
       if (allRequests.length > 0) {
       }
       
-      // Apply event name filter
+      // Build event IDs that match category/resource filters
+      let eventIdsMatchingFilters = null;
+      
+      if (resourceTypeFilter !== 'all' || resourceSearch.trim()) {
+        eventIdsMatchingFilters = new Set();
+        
+        allRequests.forEach(r => {
+          let matches = true;
+          
+          // Check category filter
+          if (resourceTypeFilter !== 'all') {
+            const categoryName = r.resource?.category?.name;
+            if (categoryName !== resourceTypeFilter) {
+              matches = false;
+            }
+          }
+          
+          // Check resource search filter
+          if (resourceSearch.trim()) {
+            if (!r.resource?.name?.toLowerCase().includes(resourceSearch.toLowerCase())) {
+              matches = false;
+            }
+          }
+          
+          // If this request matches, include its entire event
+          if (matches) {
+            const eventKey = `${r.event_id}_${r.venue_booking_id}`;
+            eventIdsMatchingFilters.add(eventKey);
+          }
+        });
+      }
+      
+      // Apply event name filter first
       if (eventSearch.trim()) {
         allRequests = allRequests.filter(r => 
           r.event?.event_name?.toLowerCase().includes(eventSearch.toLowerCase())
         );
       }
       
-      // Apply resource type filter (match by category name)
-      if (resourceTypeFilter !== 'all') {
+      // Apply event-level filter for categories/resources
+      if (eventIdsMatchingFilters !== null) {
         allRequests = allRequests.filter(r => {
-          const categoryName = r.resource?.category?.name;
-          return categoryName === resourceTypeFilter;
+          const eventKey = `${r.event_id}_${r.venue_booking_id}`;
+          return eventIdsMatchingFilters.has(eventKey);
         });
-      }
-      
-      // Apply resource search filter
-      if (resourceSearch.trim()) {
-        allRequests = allRequests.filter(r => 
-          r.resource?.name?.toLowerCase().includes(resourceSearch.toLowerCase())
-        );
       }
 
       // Apply status filter
@@ -179,6 +204,8 @@ function MyResourceRequestsPage() {
         for (const request of pending) {
           await resourceRequestService.cancel(request.id);
         }
+        // Reload requests after successful cancellation
+        await loadMyRequests();
       } catch (err) {
         showError(err.response?.data?.error || 'Failed to cancel package');
         await loadMyRequests();
@@ -217,7 +244,8 @@ function MyResourceRequestsPage() {
   const groupedRequests = useMemo(() => {
     const groups = {};
     requests.forEach(r => {
-      const key = r.package_id || r.event_id || r.id;
+      // Group by package_id to show each submission separately
+      const key = r.package_id || r.id;
       if (!groups[key]) groups[key] = [];
       groups[key].push(r);
     });
@@ -355,6 +383,7 @@ function MyResourceRequestsPage() {
                   const statuses = group.map(r => r.status);
                   const allSame = statuses.every(s => s === statuses[0]);
                   const groupStatus = allSame ? statuses[0] : 'mixed';
+                  const hasPending = group.some(r => r.status === 'pending');
 
                   return (
                   <tr key={first.id}>
@@ -400,11 +429,11 @@ function MyResourceRequestsPage() {
                       >
                         👁️
                       </button>
-                      {group.some(r => r.status === 'pending') && (
+                      {hasPending && (
                         <button
                           onClick={() => setCancelModalRequest(group)}
                           className="mrr-action-button mrr-cancel-button"
-                          title="Cancel Package"
+                          title="Cancel Pending Requests"
                         >
                           ✖️
                         </button>
@@ -420,10 +449,11 @@ function MyResourceRequestsPage() {
 
       {cancelModalRequest && (
         <ConfirmModal
-          title="Cancel Resource Package"
-          message={`Cancel all requests for "${cancelModalRequest[0]?.event?.event_name || 'this event'}"? Pending items in this package will be cancelled together. Undo available for 5 seconds.`}
+          isOpen={true}
+          title="Cancel Resource Requests"
+          message={`Cancel all pending requests for "${cancelModalRequest[0]?.event?.event_name || 'this event'}"? Undo available for 5 seconds.`}
           onConfirm={() => handleCancelPackage(cancelModalRequest)}
-          onCancel={() => setCancelModalRequest(null)}
+          onClose={() => setCancelModalRequest(null)}
           danger
         />
       )}

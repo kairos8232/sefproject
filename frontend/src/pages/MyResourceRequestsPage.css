@@ -227,20 +227,48 @@
 }
 
 /* Resource Cell */
+.mrr-resource-cell {
+  min-width: 250px;
+}
+
+.mrr-resource-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mrr-resource-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border-left: 3px solid #667eea;
+}
+
 .mrr-resource-name {
   font-weight: 600;
   color: #333;
-  margin-bottom: 5px;
+  margin-bottom: 3px;
 }
 
 .mrr-resource-category {
   background: #667eea;
   color: white;
-  padding: 4px 10px;
+  padding: 2px 8px;
   border-radius: 4px;
-  font-size: 0.9rem;
+  font-size: 11px;
   font-weight: 600;
   display: inline-block;
+  margin-top: 3px;
+}
+
+.mrr-resource-qty {
+  font-size: 12px;
+  color: #555;
+  margin-top: 3px;
 }
 
 /* DateTime Cell */

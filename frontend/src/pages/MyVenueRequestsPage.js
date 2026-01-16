@@ -27,6 +27,19 @@ function MyVenueRequestsPage() {
       const result = await venueBookingService.getMyBookings();
       let myBookings = result.bookings || [];
 
+      // Build event IDs that match venue filter (event-level filtering)
+      let eventIdsMatchingVenue = null;
+      
+      if (venueSearch.trim()) {
+        eventIdsMatchingVenue = new Set();
+        
+        myBookings.forEach(b => {
+          if (b.venue?.name?.toLowerCase().includes(venueSearch.toLowerCase())) {
+            eventIdsMatchingVenue.add(b.event_id);
+          }
+        });
+      }
+
       // Apply event name filter
       if (eventSearch.trim()) {
         myBookings = myBookings.filter(b => 
@@ -34,10 +47,10 @@ function MyVenueRequestsPage() {
         );
       }
       
-      // Apply venue filter
-      if (venueSearch.trim()) {
+      // Apply event-level venue filter
+      if (eventIdsMatchingVenue !== null) {
         myBookings = myBookings.filter(b => 
-          b.venue?.name?.toLowerCase().includes(venueSearch.toLowerCase())
+          eventIdsMatchingVenue.has(b.event_id)
         );
       }
 
