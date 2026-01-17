@@ -107,6 +107,7 @@
 .frrp-table td {
   padding: 15px;
   border-bottom: 1px solid #f0f0f0;
+  vertical-align: top;
 }
 
 .frrp-table tbody tr:hover {
@@ -181,6 +182,7 @@
 .frrp-actions {
   display: flex;
   gap: 8px;
+  align-items: flex-start;
 }
 
 .frrp-btn-approve,

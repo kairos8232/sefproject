@@ -17,6 +17,7 @@ const resourceCategoryRoutes = require('./routes/resourceCategoryRoutes');
 const resourceTypeRoutes = require('./routes/resourceTypeRoutes');
 const systemSettingRoutes = require('./routes/systemSettingRoutes');
 const reportRoutes = require('./routes/reportRoutes');
+const { autoCancelOutdatedBookings } = require('./jobs/autoCancelOutdatedBookings');
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -88,4 +89,12 @@ app.use((err, req, res, next) => {
 // Start server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+  // Run auto-cancel job if enabled via environment variable
+  if (process.env.ENABLE_AUTO_CANCEL_JOB === 'true') {
+    setInterval(() => {
+      autoCancelOutdatedBookings();
+    }, 30 * 60 * 1000);
+    // Also run once shortly after startup
+    setTimeout(() => autoCancelOutdatedBookings(), 10 * 1000);
+  }
 });

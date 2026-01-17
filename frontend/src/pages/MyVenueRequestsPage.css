@@ -151,6 +151,7 @@
 .mvr-bookings-table td {
   padding: 15px;
   border-bottom: 1px solid #eee;
+  vertical-align: top;
 }
 
 .mvr-bookings-table tbody tr {

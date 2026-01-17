@@ -28,7 +28,11 @@ function HomePage() {
       
       // Get registered events count and upcoming events
       const participations = await participationService.getMyParticipations();
-      const registered = participations.filter(p => p.status === 'registered');
+      // Count only registrations tied to active events (exclude cancelled/completed)
+      const registered = participations.filter(p => {
+        const evStatus = p.event?.status;
+        return p.status === 'registered' && evStatus !== 'cancelled' && evStatus !== 'completed';
+      });
       
       // Filter upcoming events - event is directly in participation object
       const upcoming = registered

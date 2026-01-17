@@ -4,6 +4,7 @@ import resourceRequestService from '../services/resourceRequestService';
 import { useToast } from '../contexts/ToastContext';
 import { formatDateTime } from '../utils/dateUtils';
 import './FacultyResourceRequestsPage.css';
+import authService from '../services/authService';
 
 const FacultyResourceRequestsPage = () => {
   const [requests, setRequests] = useState([]);
@@ -65,7 +66,7 @@ const FacultyResourceRequestsPage = () => {
 
     try {
       setProcessing(true);
-      await resourceRequestService.approve(selectedRequest.id, { approval_notes: approvalNotes });
+      await resourceRequestService.approve(selectedRequest.id, approvalNotes || null);
       showSuccess('Resource request approved successfully');
       closeModal();
       loadRequests();
@@ -89,7 +90,7 @@ const FacultyResourceRequestsPage = () => {
 
     try {
       setProcessing(true);
-      await resourceRequestService.reject(selectedRequest.id, { rejection_reason: rejectionReason });
+      await resourceRequestService.reject(selectedRequest.id, rejectionReason);
       showSuccess('Resource request rejected');
       closeModal();
       loadRequests();
@@ -143,7 +144,11 @@ const FacultyResourceRequestsPage = () => {
           <h1>📦 Resource Request Approval</h1>
           <p>Review and approve resource requests for your faculty</p>
         </div>
-        <button onClick={() => navigate('/home')} className="frrp-back-button">
+        <button onClick={async () => {
+          // Attempt to refresh the session before navigating home
+          try { await authService.refreshAccessToken(); } catch (e) {}
+          navigate('/home');
+        }} className="frrp-back-button">
           Back to Home
         </button>
       </div>
