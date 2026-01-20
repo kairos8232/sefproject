@@ -139,6 +139,8 @@ function EventDetailsPage() {
       // Reload participation status
       const statusData = await participationService.getEventStatus(id);
       setParticipationStatus(statusData);
+      // Notify parent routes to refresh their data
+      window.dispatchEvent(new Event('registration-cancelled'));
     } catch (err) {
       showError(err || 'Failed to cancel registration');
     } finally {

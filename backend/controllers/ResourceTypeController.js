@@ -56,6 +56,14 @@ class ResourceTypeController {
         return res.status(400).json({ error: 'Total quantity cannot be negative' });
       }
 
+      // Validate unit contains only letters, spaces, and hyphens (no numbers)
+      if (unit) {
+        const unitRegex = /^[a-zA-Z\s\-]+$/;
+        if (!unitRegex.test(unit.trim())) {
+          return res.status(400).json({ error: 'Unit must contain only letters, spaces, and hyphens (no numbers allowed)' });
+        }
+      }
+
       // Check if category exists and is active
       const category = await ResourceCategory.findById(category_id);
       if (!category) {

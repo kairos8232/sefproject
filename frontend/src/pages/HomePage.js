@@ -127,7 +127,18 @@ function HomePage() {
 
     // Load user data and dashboard
     loadUserAndDashboard();
-  }, [navigate, location.state, loadUserAndDashboard]);
+
+    // Listen for registration cancellation to refresh stats
+    const handleRegistrationCancelled = () => {
+      const currentUser = authService.getCurrentUser();
+      if (currentUser) {
+        loadDashboardData(currentUser);
+      }
+    };
+
+    window.addEventListener('registration-cancelled', handleRegistrationCancelled);
+    return () => window.removeEventListener('registration-cancelled', handleRegistrationCancelled);
+  }, [navigate, location.state, loadUserAndDashboard, loadDashboardData]);
 
   const handleLogout = async () => {
     // UC-02: Logout from System

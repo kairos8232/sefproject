@@ -415,7 +415,7 @@ class VenueBookingController {
         return res.status(400).json({ error: 'Can only approve pending bookings' });
       }
 
-      // Double-check availability before approving
+      // Double-check venue availability before approving
       const isAvailable = await Venue.checkAvailability(
         booking.venue_id,
         booking.requested_start_datetime,
@@ -425,6 +425,25 @@ class VenueBookingController {
 
       if (!isAvailable) {
         return res.status(409).json({ error: 'Venue is no longer available for the requested time' });
+      }
+
+      // Check organizer's time conflict
+      const Event = require('../models/Event');
+      const Participation = require('../models/Participation');
+      const event = await Event.getById(booking.event_id);
+      if (event && event.organizer_id) {
+        const conflict = await Participation.checkTimeConflict(
+          event.organizer_id,
+          booking.requested_start_datetime,
+          booking.requested_end_datetime,
+          booking.event_id
+        );
+        if (conflict.hasConflict) {
+          return res.status(409).json({ 
+            error: 'Organizer has a time conflict with another event. Both venues cannot be approved.',
+            conflictingEvent: conflict.conflictingEvent
+          });
+        }
       }
 
       const approvedBooking = await VenueBooking.approve(bookingId, userId, approval_notes);

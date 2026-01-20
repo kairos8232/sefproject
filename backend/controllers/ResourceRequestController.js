@@ -339,11 +339,14 @@ class ResourceRequestController {
             eventStatus: event.status
           });
         }
+      }
 
-        // Faculty staff can only approve requests for their own faculty's events
-        if (userRole === 'faculty_staff' && event.organizer?.faculty !== userFaculty) {
+      // Faculty staff can only approve requests for venues under their faculty
+      if (userRole === 'faculty_staff') {
+        const venueFacultyId = request.venue_booking?.venue?.faculty_id;
+        if (venueFacultyId !== req.user.faculty_id) {
           return res.status(403).json({ 
-            error: 'Faculty staff can only approve resource requests for their own faculty\'s events' 
+            error: 'Faculty staff can only approve resource requests for venues under their faculty' 
           });
         }
       }
