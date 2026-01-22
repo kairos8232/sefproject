@@ -63,17 +63,17 @@ const InvitationsReceivedModal = ({ isOpen, onClose }) => {
       setInvitations((prev) => prev.filter((inv) => inv.id !== invitationId));
       setRespondingTo(null);
 
-      // Show toast notification
+      // Show toast notification and redirect to homepage
       if (status === 'accepted') {
         showSuccess('Invitation accepted successfully');
-        // Redirect to registration form page
-        if (invitation?.event?.id) {
-          setTimeout(() => {
-            window.location.href = `/events/${invitation.event.id}/register`;
-          }, 500);
-        }
+        setTimeout(() => {
+          window.location.href = '/home';
+        }, 500);
       } else if (status === 'declined') {
         showSuccess('Invitation declined');
+        setTimeout(() => {
+          window.location.href = '/home';
+        }, 500);
       }
     } catch (err) {
       setError(err.message || 'Failed to respond to invitation');

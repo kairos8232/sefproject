@@ -265,7 +265,7 @@ const EventInvitationPage = () => {
                 >
                   <option value="all">All Faculties</option>
                   {faculties.map(faculty => (
-                    <option key={faculty.id} value={faculty.id}>{faculty.name}</option>
+                    <option key={faculty.id} value={String(faculty.id)}>{faculty.name}</option>
                   ))}
                 </select>                </div>
 

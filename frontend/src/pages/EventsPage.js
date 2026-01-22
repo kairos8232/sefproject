@@ -26,7 +26,9 @@ function EventsPage() {
   const [customEndDate, setCustomEndDate] = useState('');
   const [showMyRegistrations, setShowMyRegistrations] = useState(location.state?.filter === 'registered' || false);
   const [myEventsFilter, setMyEventsFilter] = useState('all'); // 'all', 'exclude', 'only'
-  const [registrationFilter, setRegistrationFilter] = useState('open'); // 'all', 'open', 'closed'
+  const [registrationFilter, setRegistrationFilter] = useState(
+    location.state?.filter === 'registered' ? 'all' : 'open'
+  ); // 'all', 'open', 'closed'
 
   const userRole = currentUser?.role;
 
@@ -59,6 +61,31 @@ function EventsPage() {
     loadEvents();
   }, [loadEvents]);
 
+  // Listen for invitation accepted event to refresh participations
+  useEffect(() => {
+    const handleInvitationAccepted = () => {
+      participationService.getMyParticipations()
+        .then(participations => setMyParticipations(participations || []))
+        .catch(err => console.error('Failed to refresh participations:', err));
+    };
+
+    window.addEventListener('invitation-accepted', handleInvitationAccepted);
+    return () => window.removeEventListener('invitation-accepted', handleInvitationAccepted);
+  }, []);
+
+  // Refresh participations when showMyRegistrations filter is toggled
+  useEffect(() => {
+    if (showMyRegistrations) {
+      participationService.getMyParticipations()
+        .then(participations => setMyParticipations(participations || []))
+        .catch(err => console.error('Failed to refresh participations:', err));
+      
+      eventService.getAllEvents()
+        .then(data => setAllEvents(data.events || []))
+        .catch(err => console.error('Failed to refresh events:', err));
+    }
+  }, [showMyRegistrations]);
+
   // Client-side filtering when filter changes
   useEffect(() => {
     const applyFilter = () => {
@@ -66,7 +93,8 @@ function EventsPage() {
       
       // Filter by approved venue bookings for students only
       // Admins, event organizers, and faculty managers can see all events
-      if (userRole === 'student') {
+      // Exception: Show all events if "My Registrations" filter is active
+      if (userRole === 'student' && !showMyRegistrations) {
         filtered = filtered.filter(e => {
           // Event must have at least one approved venue booking
           return e.venue_bookings && e.venue_bookings.some(b => b.status === 'approved');

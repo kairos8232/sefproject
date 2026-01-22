@@ -1,6 +1,7 @@
 const EventInvitation = require('../models/EventInvitation');
 const Event = require('../models/Event');
 const User = require('../models/User');
+const Participation = require('../models/Participation');
 
 class EventInvitationController {
   // UC-XX: Get all invitations for an event
@@ -142,8 +143,19 @@ class EventInvitationController {
         return res.status(403).json({ error: 'Not authorized to respond to this invitation' });
       }
 
-      // Update status
+      // Update invitation status
       const updatedInvitation = await EventInvitation.updateStatus(invitationId, status);
+
+      // If accepted, also create a participation record so they show up as registered
+      if (status === 'accepted') {
+        try {
+          await Participation.register(invitation.event_id, userId);
+        } catch (participationError) {
+          console.error('Error creating participation record for accepted invitation:', participationError);
+          // Don't fail the invitation response if participation fails
+          // but log it for debugging
+        }
+      }
 
       res.json({
         success: true,
