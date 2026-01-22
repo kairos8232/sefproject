@@ -613,134 +613,142 @@ function MyEventsPage() {
                 </tr>
               </thead>
               <tbody>
-                {events.map((event) => (
-                  <tr 
-                    key={event.id}
-                    className={highlightedEventId === event.id ? 'highlighted-event' : ''}
-                  >
-                    <td className="event-name-cell">
-                      <div className="event-name">{event.event_name}</div>
-                      {event.description && (
-                        <div className="event-description-preview">
-                          {event.description.substring(0, 50)}
-                          {event.description.length > 50 ? '...' : ''}
-                        </div>
-                      )}
-                    </td>
-                    <td>
-                      <span className="event-type-badge">
-                        {event.event_type || 'General'}
-                      </span>
-                    </td>
-                    <td>
-                      <span className={`status-badge ${getStatusBadgeClass(event.status)}`}>
-                        {event.status}
-                      </span>
-                      {event.visibility !== 'inviteonly' && (
-                        <>
-                          {event.registration_status === 'open' && (
-                            <span className="registration-status-badge open">Open</span>
-                          )}
-                          {event.registration_status === 'closed' && (
-                            <span className="registration-status-badge closed">Closed</span>
-                          )}
-                        </>
-                      )}
-                    </td>
-                    <td>
-                      <span className="visibility-badge">
-                        {formatVisibility(event.visibility)}
-                      </span>
-                    </td>
-                    <td>{formatDateTime(event.start_datetime)}</td>
-                    <td>{formatDateTime(event.end_datetime)}</td>
-                    <td className="actions-cell">
-                      <button 
-                        onClick={() => handleViewEvent(event.id)}
-                        className="action-button view-button"
-                        title="View Details"
-                      >
-                        👁️
-                      </button>
-                      {event.status !== 'cancelled' && event.status !== 'completed' && (
-                        <>
-                          {!eventBookings[event.id] && (
-                            <button 
-                              onClick={() => handleBookVenue(event)}
-                              className="action-button book-button"
-                              title="Book Venue"
-                            >
-                              📍
-                            </button>
-                          )}
-                          {eventBookings[event.id] && !eventResources[event.id] && (
-                            <button 
-                              onClick={() => handleRequestResources(event)}
-                              className="action-button resource-button"
-                              title="Request Resources"
-                            >
-                              📦
-                            </button>
-                          )}
-                          {isAttendanceAvailable(event) && (
-                            <button 
-                              onClick={() => handleRecordAttendance(event)}
-                              className="action-button attendance-button"
-                              title="Record Attendance"
-                            >
-                              📋
-                            </button>
-                          )}
-                          {(user.role === 'event_organizer' || user.role === 'administrator') && (
-                            <button 
-                              onClick={() => navigate(`/my-events/${event.id}/customize-form`)}
-                              className="action-button customize-form-button"
-                              title="Customize Registration Form"
-                            >
-                              📝
-                            </button>
-                          )}
-                          {eventBookings[event.id] && (
-                            <>
-                              {event.visibility === 'inviteonly' && (
+                {events.map((event) => {
+                  const canManage = event.status !== 'cancelled' && event.status !== 'completed';
+                  const canEditOrCancel = event.status === 'upcoming';
+                  return (
+                    <tr 
+                      key={event.id}
+                      className={highlightedEventId === event.id ? 'highlighted-event' : ''}
+                    >
+                      <td className="event-name-cell">
+                        <div className="event-name">{event.event_name}</div>
+                        {event.description && (
+                          <div className="event-description-preview">
+                            {event.description.substring(0, 50)}
+                            {event.description.length > 50 ? '...' : ''}
+                          </div>
+                        )}
+                      </td>
+                      <td>
+                        <span className="event-type-badge">
+                          {event.event_type || 'General'}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`status-badge ${getStatusBadgeClass(event.status)}`}>
+                          {event.status}
+                        </span>
+                        {event.visibility !== 'inviteonly' && (
+                          <>
+                            {event.registration_status === 'open' && (
+                              <span className="registration-status-badge open">Open</span>
+                            )}
+                            {event.registration_status === 'closed' && (
+                              <span className="registration-status-badge closed">Closed</span>
+                            )}
+                          </>
+                        )}
+                      </td>
+                      <td>
+                        <span className="visibility-badge">
+                          {formatVisibility(event.visibility)}
+                        </span>
+                      </td>
+                      <td>{formatDateTime(event.start_datetime)}</td>
+                      <td>{formatDateTime(event.end_datetime)}</td>
+                      <td className="actions-cell">
+                        <button 
+                          onClick={() => handleViewEvent(event.id)}
+                          className="action-button view-button"
+                          title="View Details"
+                        >
+                          👁️
+                        </button>
+                        {canManage && (
+                          <>
+                            {!eventBookings[event.id] && (
+                              <button 
+                                onClick={() => handleBookVenue(event)}
+                                className="action-button book-button"
+                                title="Book Venue"
+                              >
+                                📍
+                              </button>
+                            )}
+                            {eventBookings[event.id] && !eventResources[event.id] && (
+                              <button 
+                                onClick={() => handleRequestResources(event)}
+                                className="action-button resource-button"
+                                title="Request Resources"
+                              >
+                                📦
+                              </button>
+                            )}
+                            {isAttendanceAvailable(event) && (
+                              <button 
+                                onClick={() => handleRecordAttendance(event)}
+                                className="action-button attendance-button"
+                                title="Record Attendance"
+                              >
+                                📋
+                              </button>
+                            )}
+                            {(user.role === 'event_organizer' || user.role === 'administrator') && (
+                              <button 
+                                onClick={() => navigate(`/my-events/${event.id}/customize-form`)}
+                                className="action-button customize-form-button"
+                                title="Customize Registration Form"
+                              >
+                                📝
+                              </button>
+                            )}
+                            {eventBookings[event.id] && (
+                              <>
+                                {event.visibility === 'inviteonly' && (
+                                  <button 
+                                    onClick={() => navigate(`/events/${event.id}/invitations`)}
+                                    className="action-button manage-invitations-button"
+                                    title="Manage Invitations"
+                                  >
+                                    💌
+                                  </button>
+                                )}
+                                {event.visibility !== 'inviteonly' && (
+                                  <button 
+                                    onClick={() => handleToggleRegistration(event)}
+                                    className={`action-button ${event.registration_status === 'open' ? 'close-reg-button' : 'open-reg-button'}`}
+                                    title={event.registration_status === 'open' ? 'Close Registration' : 'Open Registration'}
+                                  >
+                                    {event.registration_status === 'open' ? '🔒' : '🔓'}
+                                  </button>
+                                )}
+                              </>
+                            )}
+                            {canEditOrCancel && (
+                              <>
                                 <button 
-                                  onClick={() => navigate(`/events/${event.id}/invitations`)}
-                                  className="action-button manage-invitations-button"
-                                  title="Manage Invitations"
+                                  onClick={() => handleEditEvent(event.id)}
+                                  className="action-button edit-button"
+                                  title="Edit Event"
                                 >
-                                  💌
+                                  ✏️
                                 </button>
-                              )}
-                              {event.visibility !== 'inviteonly' && (
                                 <button 
-                                  onClick={() => handleToggleRegistration(event)}
-                                  className={`action-button ${event.registration_status === 'open' ? 'close-reg-button' : 'open-reg-button'}`}
-                                  title={event.registration_status === 'open' ? 'Close Registration' : 'Open Registration'}
+                                  onClick={() => handleCancelEventClick(event)}
+                                  className="action-button delete-button"
+                                  title="Cancel Event"
                                 >
-                                  {event.registration_status === 'open' ? '🔒' : '🔓'}
+                                  ❌
                                 </button>
-                              )}
-                            </>
-                          )}
-                          <button 
-                            onClick={() => handleEditEvent(event.id)}
-                            className="action-button edit-button"
-                            title="Edit Event"
-                          >
-                            ✏️
-                          </button>
-                          <button 
-                            onClick={() => handleCancelEventClick(event)}
-                            className="action-button delete-button"
-                            title="Cancel Event"
-                          >
-                            ❌
-                          </button>
-                        </>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                              </>
+                            )}
+                          </>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
