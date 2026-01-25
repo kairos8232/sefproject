@@ -184,7 +184,7 @@ const EventInvitationPage = () => {
           <p className="event-title">{event.event_name || event.title}</p>
         </div>
         <button onClick={() => navigate('/my-events')} className="header-back-button">
-          ← Back
+          Back to My Events
         </button>
       </div>
 
