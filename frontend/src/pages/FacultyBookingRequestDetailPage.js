@@ -2,15 +2,16 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { authFetch } from '../services/apiClient';
 import { toDateTimeLocalInput } from '../utils/dateUtils';
+import { useToast } from '../contexts/ToastContext';
 import './FacultyBookingRequestDetailPage.css';
 
 const FacultyBookingRequestDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const toast = useToast();
   const [booking, setBooking] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [successMessage, setSuccessMessage] = useState('');
   const [processing, setProcessing] = useState(false);
   
   // Approval/Rejection forms
@@ -50,10 +51,11 @@ const FacultyBookingRequestDetailPage = () => {
       setAdjustedEndTime(data.booking.requested_end_datetime);
     } catch (err) {
       setError(err.message);
+      toast.showError(err.message);
     } finally {
       setLoading(false);
     }
-  }, [id, navigate]);
+  }, [id, navigate, toast]);
 
   useEffect(() => {
     fetchBookingDetails();
@@ -63,7 +65,7 @@ const FacultyBookingRequestDetailPage = () => {
     e.preventDefault();
     
     if (adjustTime && (!adjustedStartTime || !adjustedEndTime)) {
-      setError('Please provide adjusted start and end times');
+      toast.showError('Please provide adjusted start and end times');
       return;
     }
 
@@ -93,12 +95,12 @@ const FacultyBookingRequestDetailPage = () => {
         throw new Error(data.error || 'Failed to approve booking');
       }
 
-      setSuccessMessage('✅ Booking request approved successfully!');
+      toast.showSuccess('Booking request approved successfully!');
       setTimeout(() => {
         navigate('/faculty/bookings');
       }, 2000);
     } catch (err) {
-      setError(err.message);
+      toast.showError(err.message);
     } finally {
       setProcessing(false);
     }
@@ -108,7 +110,7 @@ const FacultyBookingRequestDetailPage = () => {
     e.preventDefault();
     
     if (!rejectionReason || rejectionReason.trim().length < 10) {
-      setError('Please provide a detailed rejection reason (at least 10 characters)');
+      toast.showError('Please provide a detailed rejection reason (at least 10 characters)');
       return;
     }
 
@@ -129,12 +131,12 @@ const FacultyBookingRequestDetailPage = () => {
         throw new Error(data.error || 'Failed to reject booking');
       }
 
-      setSuccessMessage('❌ Booking request rejected');
+      toast.showSuccess('Booking request rejected successfully!');
       setTimeout(() => {
         navigate('/faculty/bookings');
       }, 2000);
     } catch (err) {
-      setError(err.message);
+      toast.showError(err.message);
     } finally {
       setProcessing(false);
     }
@@ -223,7 +225,6 @@ const FacultyBookingRequestDetailPage = () => {
         </button>
       </div>
 
-      {successMessage && <div className="fbrd-success-message">{successMessage}</div>}
       {error && <div className="fbrd-error-message">{error}</div>}
 
       <div className="fbrd-content">

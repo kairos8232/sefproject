@@ -5,7 +5,6 @@ import invitationService from '../services/invitationService';
 import eventService from '../services/eventService';
 import venueBookingService from '../services/venueBookingService';
 import facultyService from '../services/facultyService';
-import { formatEventTimeRange } from '../utils/eventTimeUtils';
 import './EventInvitationPage.css';
 
 const EventInvitationPage = () => {
@@ -34,7 +33,7 @@ const EventInvitationPage = () => {
 
       // Fetch event details
       const eventData = await eventService.getEventById(eventId);
-      setEvent(eventData);
+      setEvent(eventData.event);
 
       // Fetch invitations
       const invitationsData = await invitationService.getEventInvitations(eventId);
@@ -202,12 +201,30 @@ const EventInvitationPage = () => {
             <span className="schedule-label">Time</span>
             <span className="schedule-value">
               {event.start_datetime && event.end_datetime
-                ? formatEventTimeRange(
-                    event.start_datetime,
-                    event.end_datetime,
-                    approvedBooking?.setup_time || 0,
-                    approvedBooking?.teardown_time || 0
-                  )
+                ? (() => {
+                    const start = new Date(event.start_datetime);
+                    const end = new Date(event.end_datetime);
+                    
+                    const dateStr = start.toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric'
+                    });
+                    
+                    const startTimeStr = start.toLocaleTimeString('en-US', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      hour12: true
+                    });
+                    
+                    const endTimeStr = end.toLocaleTimeString('en-US', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      hour12: true
+                    });
+                    
+                    return `${dateStr} ${startTimeStr} - ${endTimeStr}`;
+                  })()
                 : 'Not set'}
             </span>
           </div>

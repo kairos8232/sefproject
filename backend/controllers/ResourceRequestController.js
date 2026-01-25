@@ -1,5 +1,5 @@
 const ResourceRequest = require('../models/ResourceRequest');
-const Resource = require('../models/Resource');
+const ResourceType = require('../models/ResourceType');
 const VenueBooking = require('../models/VenueBooking');
 const Event = require('../models/Event');
 const SystemSetting = require('../models/SystemSetting');
@@ -124,7 +124,7 @@ class ResourceRequestController {
         return res.status(400).json({ error: 'Start and end datetime are required' });
       }
 
-      const availableResources = await Resource.getAvailableResources(
+      const availableResources = await ResourceType.getAvailableForTimeRange(
         start_datetime,
         end_datetime,
         category || null
@@ -188,7 +188,7 @@ class ResourceRequestController {
       }
 
       // Check if resource exists and is active
-      const resource = await Resource.getById(requestData.resource_id);
+      const resource = await ResourceType.findById(requestData.resource_id);
       
       if (!resource || resource.status !== 'active') {
         return res.status(404).json({ error: 'Resource not found or inactive' });
@@ -216,7 +216,7 @@ class ResourceRequestController {
       }
 
       // Check resource availability
-      const availability = await Resource.checkAvailableQuantity(
+      const availability = await ResourceType.checkAvailableQuantity(
         requestData.resource_id,
         requestData.usage_start_datetime,
         requestData.usage_end_datetime
@@ -283,7 +283,7 @@ class ResourceRequestController {
         const endTime = updateData.usage_end_datetime || request.usage_end_datetime;
         const quantity = updateData.requested_quantity || request.requested_quantity;
 
-        const availability = await Resource.checkAvailableQuantity(resourceId, startTime, endTime, requestId);
+        const availability = await ResourceType.checkAvailableQuantity(resourceId, startTime, endTime, requestId);
 
         if (availability.available < quantity) {
           return res.status(409).json({ 
@@ -356,7 +356,7 @@ class ResourceRequestController {
       }
 
       // Check availability one more time
-      const availability = await Resource.checkAvailableQuantity(
+      const availability = await ResourceType.checkAvailableQuantity(
         request.resource_id,
         request.usage_start_datetime,
         request.usage_end_datetime,
@@ -591,7 +591,7 @@ class ResourceRequestController {
         const finalEndTime = usage_end_datetime || request.usage_end_datetime;
 
         // Check resource availability (required rule)
-        const availability = await Resource.checkAvailableQuantity(
+        const availability = await ResourceType.checkAvailableQuantity(
           request.resource_id,
           finalStartTime,
           finalEndTime,
@@ -635,7 +635,7 @@ class ResourceRequestController {
           const finalStartTime = usage_start_datetime || request.usage_start_datetime;
           const finalEndTime = usage_end_datetime || request.usage_end_datetime;
 
-          const availability = await Resource.checkAvailableQuantity(
+          const availability = await ResourceType.checkAvailableQuantity(
             request.resource_id,
             finalStartTime,
             finalEndTime,
@@ -729,7 +729,6 @@ class ResourceRequestController {
       const packageId = crypto.randomUUID();
 
       // Validate all resources and check availability
-      const ResourceType = require('../models/Resource');
       const unavailableResources = [];
       const insufficientQuantityResources = [];
 

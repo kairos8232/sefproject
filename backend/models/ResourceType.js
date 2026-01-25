@@ -221,6 +221,144 @@ class ResourceType {
       throw error;
     }
   }
+
+  /**
+   * Check available quantity for a specific date/time range
+   * @param {string} resourceId - Resource type ID
+   * @param {string} startDatetime - Start time
+   * @param {string} endDatetime - End time
+   * @param {string} excludeRequestId - Optional request ID to exclude from calculation
+   */
+  static async checkAvailableQuantity(resourceId, startDatetime, endDatetime, excludeRequestId = null) {
+    try {
+      // Get the resource's total quantity
+      const resource = await this.findById(resourceId);
+      if (!resource) {
+        throw new Error('Resource not found');
+      }
+
+      // Get all approved requests that overlap with the requested time
+      let query = supabase
+        .from('resource_requests')
+        .select('requested_quantity')
+        .eq('resource_id', resourceId)
+        .eq('status', 'approved')
+        .lt('usage_start_datetime', endDatetime)
+        .gt('usage_end_datetime', startDatetime);
+
+      // Exclude a specific request (useful for updates)
+      if (excludeRequestId) {
+        query = query.neq('id', excludeRequestId);
+      }
+
+      const { data: overlappingRequests, error } = await query;
+
+      if (error) {
+        console.error('Error checking available quantity:', error);
+        throw error;
+      }
+
+      // Calculate total quantity already allocated
+      const allocatedQuantity = overlappingRequests.reduce(
+        (sum, req) => sum + (req.requested_quantity || 0),
+        0
+      );
+
+      // Calculate available quantity
+      const availableQuantity = resource.total_quantity - allocatedQuantity;
+
+      return {
+        total: resource.total_quantity,
+        allocated: allocatedQuantity,
+        available: Math.max(0, availableQuantity)
+      };
+    } catch (error) {
+      console.error('Error checking available quantity:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get available resource types for a specific time range with quantities
+   * @param {string} startDatetime - Start time
+   * @param {string} endDatetime - End time
+   * @param {string} categoryCodeOrId - Optional category code or ID to filter
+   */
+  static async getAvailableForTimeRange(startDatetime, endDatetime, categoryCodeOrId = null) {
+    try {
+      console.log('[ResourceType] getAvailableForTimeRange called with:', { startDatetime, endDatetime, categoryCodeOrId });
+      
+      // Get all active resource types
+      let query = supabase
+        .from('resource_types')
+        .select(`
+          *,
+          resource_categories!inner(id, code, name)
+        `)
+        .eq('status', 'active');
+
+      // First check if filtering by UUID (can be done in query)
+      let filterByCode = null;
+      if (categoryCodeOrId) {
+        console.log('[ResourceType] Filtering by category:', categoryCodeOrId);
+        const isUUID = categoryCodeOrId.includes('-');
+        if (isUUID) {
+          query = query.eq('category_id', categoryCodeOrId);
+        } else {
+          // For category code, we'll filter after fetching
+          filterByCode = categoryCodeOrId;
+        }
+      }
+
+      const { data: resources, error } = await query.order('name', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching resources:', error);
+        throw error;
+      }
+
+      // Filter by category code if needed (after query)
+      let filteredResources = resources;
+      if (filterByCode && resources) {
+        // Debug: Log all category codes to see what we have
+        const categoryCodes = resources.map(r => r.resource_categories?.code).filter(Boolean);
+        console.log(`[ResourceType] Available category codes in results:`, categoryCodes);
+        console.log(`[ResourceType] Looking for category code:`, filterByCode);
+        
+        filteredResources = resources.filter(r => r.resource_categories?.code === filterByCode);
+        console.log(`[ResourceType] Filtered ${resources.length} resources to ${filteredResources.length} matching code: ${filterByCode}`);
+        
+        // If no matches, show first resource's category for debugging
+        if (filteredResources.length === 0 && resources.length > 0) {
+          console.log(`[ResourceType] Sample resource category:`, resources[0].resource_categories);
+        }
+      }
+
+      if (!filteredResources || filteredResources.length === 0) {
+        return [];
+      }
+
+      // Check availability for each resource
+      const availabilityChecks = await Promise.all(
+        filteredResources.map(async (resource) => {
+          const availability = await this.checkAvailableQuantity(resource.id, startDatetime, endDatetime);
+          return { 
+            ...resource,
+            category_id: resource.resource_categories?.id,
+            category_code: resource.resource_categories?.code,
+            category_name: resource.resource_categories?.name,
+            availableQuantity: availability.available,
+            allocatedQuantity: availability.allocated
+          };
+        })
+      );
+
+      return availabilityChecks;
+    } catch (error) {
+      console.error('Error getting available resources:', error);
+      throw error;
+    }
+  }
 }
 
 module.exports = ResourceType;

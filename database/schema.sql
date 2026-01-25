@@ -358,7 +358,6 @@ CREATE TABLE resource_types (
 CREATE INDEX idx_resource_types_category_id ON resource_types(category_id);
 CREATE INDEX idx_resource_types_code ON resource_types(code);
 CREATE INDEX idx_resource_types_status ON resource_types(status);
-CREATE INDEX idx_resource_types_managed_by ON resource_types(managed_by);
 
 -- ========================================
 -- Table: resources (LEGACY - kept for backward compatibility)
