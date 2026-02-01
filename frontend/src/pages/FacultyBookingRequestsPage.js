@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authFetch } from '../services/apiClient';
+import { useToast } from '../contexts/ToastContext';
 import './FacultyBookingRequestsPage.css';
 
 const FacultyBookingRequestsPage = () => {
+  const { showError, showSuccess } = useToast();
   const [bookings, setBookings] = useState([]);
   const [allBookings, setAllBookings] = useState([]); // Store all bookings for client-side filtering
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
@@ -17,7 +18,6 @@ const FacultyBookingRequestsPage = () => {
   const [adjustedStartTime, setAdjustedStartTime] = useState('');
   const [adjustedEndTime, setAdjustedEndTime] = useState('');
   const [processing, setProcessing] = useState(false);
-  const [successMessage, setSuccessMessage] = useState('');
 
   // Filters
   const [statusFilter, setStatusFilter] = useState('pending');
@@ -34,7 +34,6 @@ const FacultyBookingRequestsPage = () => {
   const fetchBookings = useCallback(async () => {
     try {
       setLoading(true);
-      setError(null);
       
       const token = localStorage.getItem('token');
       if (!token) {
@@ -62,11 +61,11 @@ const FacultyBookingRequestsPage = () => {
 
       setAllBookings(data.bookings || []);
     } catch (err) {
-      setError(err.message);
+      showError(err.message);
     } finally {
       setLoading(false);
     }
-  }, [statusFilter, navigate]);
+  }, [statusFilter, navigate, showError]);
 
   // Client-side filtering
   useEffect(() => {
@@ -208,13 +207,12 @@ const FacultyBookingRequestsPage = () => {
         throw new Error(data.error || 'Failed to approve booking');
       }
 
-      setSuccessMessage('✅ Booking request approved successfully');
-      setTimeout(() => setSuccessMessage(''), 3000);
+      showSuccess('Booking request approved successfully');
       
       closeModal();
       fetchBookings();
     } catch (err) {
-      setError(err.message);
+      showError(err.message);
     } finally {
       setProcessing(false);
     }
@@ -222,12 +220,12 @@ const FacultyBookingRequestsPage = () => {
 
   const handleReject = async () => {
     if (!selectedBooking || !rejectionReason.trim()) {
-      setError('Rejection reason is required');
+      showError('Rejection reason is required');
       return;
     }
 
     if (rejectionReason.trim().length < 10) {
-      setError('Rejection reason must be at least 10 characters');
+      showError('Rejection reason must be at least 10 characters');
       return;
     }
 
@@ -247,13 +245,12 @@ const FacultyBookingRequestsPage = () => {
         throw new Error(data.error || 'Failed to reject booking');
       }
 
-      setSuccessMessage('❌ Booking request rejected');
-      setTimeout(() => setSuccessMessage(''), 3000);
+      showSuccess('Booking request rejected');
       
       closeModal();
       fetchBookings();
     } catch (err) {
-      setError(err.message);
+      showError(err.message);
     } finally {
       setProcessing(false);
     }
@@ -268,7 +265,6 @@ const FacultyBookingRequestsPage = () => {
     setAdjustTime(false);
     setAdjustedStartTime('');
     setAdjustedEndTime('');
-    setError(null);
   };
 
   const getStatusBadgeClass = (status) => {
@@ -358,9 +354,6 @@ const FacultyBookingRequestsPage = () => {
           Back to Home
         </button>
       </div>
-
-      {successMessage && <div className="fbrp-success-message">{successMessage}</div>}
-      {error && <div className="fbrp-error-message">{error}</div>}
 
       <div className="fbrp-filter-section">
         <div className="fbrp-filter-group">

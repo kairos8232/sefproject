@@ -3,19 +3,20 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import registrationFieldService from '../services/registrationFieldService';
 import participationService from '../services/participationService';
 import eventService from '../services/eventService';
+import { useToast } from '../contexts/ToastContext';
 import './CustomRegistrationFormPage.css';
 
 function CustomRegistrationFormPage() {
   const { eventId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const { showError, showSuccess } = useToast();
   
   const [event, setEvent] = useState(null);
   const [fields, setFields] = useState([]);
   const [formData, setFormData] = useState({});
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
   const [participationId, setParticipationId] = useState(null);
   const [requiresRegistration, setRequiresRegistration] = useState(false);
 
@@ -50,11 +51,11 @@ function CustomRegistrationFormPage() {
       });
       setFormData(initialData);
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to load form');
+      showError(err.response?.data?.error || 'Failed to load form');
     } finally {
       setLoading(false);
     }
-  }, [eventId, location.state]);
+  }, [eventId, location.state, showError]);
 
   useEffect(() => {
     loadData();
@@ -81,12 +82,12 @@ function CustomRegistrationFormPage() {
       if (field.is_required) {
         if (field.field_type === 'checkbox') {
           if (!value || value.length === 0) {
-            setError(`"${field.label}" is required`);
+            showError(`"${field.label}" is required`);
             return false;
           }
         } else {
           if (!value || value.trim() === '') {
-            setError(`"${field.label}" is required`);
+            showError(`"${field.label}" is required`);
             return false;
           }
         }
@@ -101,7 +102,7 @@ function CustomRegistrationFormPage() {
       if (field.field_type === 'email') {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(value)) {
-          setError(`"${field.label}" must be a valid email address`);
+          showError(`"${field.label}" must be a valid email address`);
           return false;
         }
       }
@@ -110,7 +111,7 @@ function CustomRegistrationFormPage() {
       if (field.field_type === 'phone') {
         const phoneRegex = /^[\d\s\-+()]+$/;
         if (!phoneRegex.test(value)) {
-          setError(`"${field.label}" must be a valid phone number`);
+          showError(`"${field.label}" must be a valid phone number`);
           return false;
         }
       }
@@ -119,13 +120,13 @@ function CustomRegistrationFormPage() {
       if (typeof value === 'string') {
         // Min length
         if (rules.minLength && value.length < rules.minLength) {
-          setError(`"${field.label}" must be at least ${rules.minLength} characters`);
+          showError(`"${field.label}" must be at least ${rules.minLength} characters`);
           return false;
         }
         
         // Max length
         if (rules.maxLength && value.length > rules.maxLength) {
-          setError(`"${field.label}" must not exceed ${rules.maxLength} characters`);
+          showError(`"${field.label}" must not exceed ${rules.maxLength} characters`);
           return false;
         }
         
@@ -134,7 +135,7 @@ function CustomRegistrationFormPage() {
           const regex = new RegExp(rules.pattern);
           if (!regex.test(value)) {
             const message = rules.message || `"${field.label}" format is invalid`;
-            setError(message);
+            showError(message);
             return false;
           }
         }
@@ -142,7 +143,7 @@ function CustomRegistrationFormPage() {
         // Allowed values
         if (rules.allowed && Array.isArray(rules.allowed)) {
           if (!rules.allowed.includes(value)) {
-            setError(`"${field.label}" must be one of: ${rules.allowed.join(', ')}`);
+            showError(`"${field.label}" must be one of: ${rules.allowed.join(', ')}`);
             return false;
           }
         }
@@ -153,19 +154,19 @@ function CustomRegistrationFormPage() {
         const numValue = parseFloat(value);
         
         if (isNaN(numValue)) {
-          setError(`"${field.label}" must be a valid number`);
+          showError(`"${field.label}" must be a valid number`);
           return false;
         }
         
         // Min value
         if (rules.min !== undefined && numValue < rules.min) {
-          setError(`"${field.label}" must be at least ${rules.min}`);
+          showError(`"${field.label}" must be at least ${rules.min}`);
           return false;
         }
         
         // Max value
         if (rules.max !== undefined && numValue > rules.max) {
-          setError(`"${field.label}" must not exceed ${rules.max}`);
+          showError(`"${field.label}" must not exceed ${rules.max}`);
           return false;
         }
       }
@@ -174,13 +175,13 @@ function CustomRegistrationFormPage() {
       if (Array.isArray(value)) {
         // Min items
         if (rules.minItems && value.length < rules.minItems) {
-          setError(`"${field.label}" requires at least ${rules.minItems} selection(s)`);
+          showError(`"${field.label}" requires at least ${rules.minItems} selection(s)`);
           return false;
         }
         
         // Max items
         if (rules.maxItems && value.length > rules.maxItems) {
-          setError(`"${field.label}" allows at most ${rules.maxItems} selection(s)`);
+          showError(`"${field.label}" allows at most ${rules.maxItems} selection(s)`);
           return false;
         }
       }
@@ -190,7 +191,6 @@ function CustomRegistrationFormPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
     
     if (!validateForm()) {
       return;
@@ -210,14 +210,14 @@ function CustomRegistrationFormPage() {
         } catch (regError) {
           console.error('[CustomRegistrationForm] Registration error:', regError);
           const errorMsg = regError?.response?.data?.error || regError?.message || 'Failed to register for event. Please try again.';
-          setError(errorMsg);
+          showError(errorMsg);
           setSubmitting(false);
           return;
         }
       }
       
       if (!finalParticipationId) {
-        setError('Failed to create registration. Please try again.');
+        showError('Failed to create registration. Please try again.');
         setSubmitting(false);
         return;
       }
@@ -243,17 +243,13 @@ function CustomRegistrationFormPage() {
 
       await registrationFieldService.saveResponses(eventId, finalParticipationId, responses);
       
-      // Navigate back to event details page with success flag
-      navigate(`/events/${eventId}`, {
-        state: { 
-          registrationComplete: true,
-          message: 'Registration completed successfully!'
-        }
-      });
+      showSuccess('Registration completed successfully!');
+      // Navigate back to event details page
+      navigate(`/events/${eventId}`);
     } catch (err) {
       console.error('[CustomRegistrationForm] Form submission error:', err);
       console.error('[CustomRegistrationForm] Error response:', err.response);
-      setError(err.response?.data?.error || 'Failed to submit form');
+      showError(err.response?.data?.error || 'Failed to submit form');
     } finally {
       setSubmitting(false);
     }
@@ -406,9 +402,8 @@ function CustomRegistrationFormPage() {
 
   if (fields.length === 0) {
     // No custom fields - redirect to my events
-    navigate('/my-events', {
-      state: { message: 'Registration completed successfully!' }
-    });
+    showSuccess('Registration completed successfully!');
+    navigate('/my-events');
     return null;
   }
 
@@ -422,8 +417,6 @@ function CustomRegistrationFormPage() {
             Please fill out the following information to complete your registration
           </p>
         </div>
-
-        {error && <div className="error-message">{error}</div>}
 
         <form onSubmit={handleSubmit} className="registration-form">
           {fields.map((field) => (
@@ -442,7 +435,10 @@ function CustomRegistrationFormPage() {
           <div className="form-actions">
             <button
               type="button"
-              onClick={() => navigate('/events', { state: { message: 'Registration cancelled. You are not registered for this event.' } })}
+              onClick={() => {
+                showError('Registration cancelled. You are not registered for this event.');
+                navigate('/events');
+              }}
               className="skip-button"
               disabled={submitting}
             >

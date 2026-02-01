@@ -1,29 +1,29 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import resourceRequestService from '../services/resourceRequestService';
+import { useToast } from '../contexts/ToastContext';
 import { formatDateTime } from '../utils/dateUtils';
 import './ResourceRequestDetailsPage.css';
 
 function ResourceRequestDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { showError } = useToast();
   const [request, setRequest] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
 
   const loadRequestDetails = useCallback(async () => {
     try {
       setLoading(true);
-      setError('');
       const result = await resourceRequestService.getById(id);
       setRequest(result.request);
     } catch (err) {
       console.error('Load request error:', err);
-      setError(err.response?.data?.error || 'Failed to load request details');
+      showError(err.response?.data?.error || 'Failed to load request details');
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, showError]);
 
   useEffect(() => {
     document.title = 'My Resource Request Details - CESMS';
@@ -57,17 +57,6 @@ function ResourceRequestDetailsPage() {
     return (
       <div className="request-details-container">
         <div className="rrd-loading">Loading request details...</div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="request-details-container">
-        <div className="rrd-error-message">{error}</div>
-        <button onClick={() => navigate('/my-resource-requests')} className="rrd-back-button">
-          Back to My Resource Requests
-        </button>
       </div>
     );
   }

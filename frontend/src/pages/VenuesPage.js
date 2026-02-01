@@ -2,15 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import venueService from '../services/venueService';
 import facultyService from '../services/facultyService';
+import { useToast } from '../contexts/ToastContext';
 import './VenuesPage.css';
 
 const VenuesPage = () => {
   const navigate = useNavigate();
+  const { showError, showSuccess } = useToast();
   const [venues, setVenues] = useState([]);
   const [faculties, setFaculties] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
 
   const [filters, setFilters] = useState({
     status: 'active',
@@ -39,7 +39,6 @@ const VenuesPage = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      setError('');
 
       // Get current user from token
       const token = localStorage.getItem('token');
@@ -51,7 +50,7 @@ const VenuesPage = () => {
       // Decode token to check role
       const payload = JSON.parse(atob(token.split('.')[1]));
       if (payload.role !== 'administrator') {
-        setError('Access denied. Only administrators can manage venues.');
+        showError('Access denied. Only administrators can manage venues.');
         setLoading(false);
         return;
       }
@@ -61,7 +60,7 @@ const VenuesPage = () => {
       setLoading(false);
     } catch (err) {
       console.error('Error loading venues:', err);
-      setError(err.response?.data?.message || 'Failed to load venues');
+      showError(err.response?.data?.message || 'Failed to load venues');
       setLoading(false);
     }
   };
@@ -78,17 +77,14 @@ const VenuesPage = () => {
   const handleCreateVenue = async (e) => {
     e.preventDefault();
     try {
-      setError('');
-      setSuccess('');
-
       await venueService.createVenue(formData);
-      setSuccess('Venue created successfully!');
+      showSuccess('Venue created successfully!');
       setShowCreateModal(false);
       setFormData({ faculty_id: '', code: '', name: '', location: '', capacity: '' });
       loadData();
     } catch (err) {
       console.error('Error creating venue:', err);
-      setError(err.response?.data?.message || 'Failed to create venue');
+      showError(err.response?.data?.message || 'Failed to create venue');
     }
   };
 
@@ -107,33 +103,27 @@ const VenuesPage = () => {
   const handleEditVenue = async (e) => {
     e.preventDefault();
     try {
-      setError('');
-      setSuccess('');
-
       await venueService.updateVenue(selectedVenue.id, formData);
-      setSuccess('Venue updated successfully!');
+      showSuccess('Venue updated successfully!');
       setShowEditModal(false);
       setSelectedVenue(null);
       setFormData({ faculty_id: '', code: '', name: '', location: '', capacity: '' });
       loadData();
     } catch (err) {
       console.error('Error updating venue:', err);
-      setError(err.response?.data?.message || 'Failed to update venue');
+      showError(err.response?.data?.message || 'Failed to update venue');
     }
   };
 
   const handleStatusToggle = async (venue) => {
     try {
-      setError('');
-      setSuccess('');
-
       const newStatus = venue.status === 'active' ? 'inactive' : 'active';
       await venueService.updateVenueStatus(venue.id, newStatus);
-      setSuccess(`Venue ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully!`);
+      showSuccess(`Venue ${newStatus === 'active' ? 'activated' : 'deactivated'} successfully!`);
       loadData();
     } catch (err) {
       console.error('Error updating status:', err);
-      setError(err.response?.data?.message || 'Failed to update venue status');
+      showError(err.response?.data?.message || 'Failed to update venue status');
     }
   };
 
@@ -157,9 +147,6 @@ const VenuesPage = () => {
           </button>
         </div>
       </div>
-
-      {error && <div className="message error-message">{error}</div>}
-      {success && <div className="message success-message">{success}</div>}
 
       <div className="venues-filters">
         <div className="filter-group">

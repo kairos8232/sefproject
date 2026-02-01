@@ -2,21 +2,21 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getFacultyEventById } from '../services/facultyEventService';
 import { getFeedbacksForEvent } from '../services/feedbackService';
+import { useToast } from '../contexts/ToastContext';
 import { formatDateTime, formatDate } from '../utils/dateUtils';
 import './FacultyEventDetailPage.css';
 
 function FacultyEventDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { showError } = useToast();
   const [event, setEvent] = useState(null);
   const [feedbacks, setFeedbacks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
 
   const loadEventDetails = useCallback(async () => {
     try {
       setLoading(true);
-      setError('');
       const response = await getFacultyEventById(id);
       setEvent(response.event);
       
@@ -32,11 +32,11 @@ function FacultyEventDetailPage() {
       }
     } catch (err) {
       console.error('Error loading event details:', err);
-      setError(err.response?.data?.error || 'Failed to load event details');
+      showError(err.response?.data?.error || 'Failed to load event details');
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, showError]);
 
   useEffect(() => {
     document.title = 'Faculty Event Details - CESMS';
@@ -60,23 +60,6 @@ function FacultyEventDetailPage() {
     return (
       <div className="faculty-event-detail-page">
         <div className="loading">Loading event details...</div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="faculty-event-detail-page">
-        <div className="page-header">
-          <div>
-            <h1>Faculty Event Details</h1>
-            <p>Review event information</p>
-          </div>
-          <button onClick={() => navigate('/faculty-events')} className="back-button">
-            ← Back to Faculty Events
-          </button>
-        </div>
-        <div className="error-message">{error}</div>
       </div>
     );
   }

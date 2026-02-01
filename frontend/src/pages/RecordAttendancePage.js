@@ -1,16 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { authFetch } from '../services/apiClient';
+import { useToast } from '../contexts/ToastContext';
 import './RecordAttendancePage.css';
 
 const RecordAttendancePage = () => {
   const { eventId } = useParams();
   const navigate = useNavigate();
+  const { showError, showSuccess } = useToast();
   const [event, setEvent] = useState(null);
   const [participants, setParticipants] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   
@@ -21,7 +21,6 @@ const RecordAttendancePage = () => {
     document.title = 'Record Attendance - CESMS';
     try {
       setLoading(true);
-      setError('');
       
       const token = localStorage.getItem('token');
       if (!token) {
@@ -76,10 +75,10 @@ const RecordAttendancePage = () => {
       setLoading(false);
     } catch (err) {
       console.error('Error loading data:', err);
-      setError(err.message);
+      showError(err.message);
       setLoading(false);
     }
-  }, [eventId, navigate]);
+  }, [eventId, navigate, showError]);
 
   useEffect(() => {
     loadEventAndParticipants();
@@ -111,8 +110,6 @@ const RecordAttendancePage = () => {
   const handleSaveAttendance = async () => {
     try {
       setSaving(true);
-      setError('');
-      setSuccess('');
       
       // Prepare attendance updates
       const attendanceUpdates = Object.keys(attendanceMap).map(participationId => ({
@@ -137,10 +134,10 @@ const RecordAttendancePage = () => {
         throw new Error(data.error || 'Failed to save attendance');
       }
 
-      setSuccess(`✅ Attendance recorded successfully for ${data.updatedCount} participant(s)!`);
+      showSuccess(`Attendance recorded successfully for ${data.updatedCount} participant(s)!`);
     } catch (err) {
       console.error('Error saving attendance:', err);
-      setError(err.message);
+      showError(err.message);
     } finally {
       setSaving(false);
     }
@@ -168,7 +165,7 @@ const RecordAttendancePage = () => {
     );
   }
 
-  if (error && !event) {
+  if (!event) {
     return (
       <div className="record-attendance-page">
         <div className="ra-page-header">
@@ -180,7 +177,6 @@ const RecordAttendancePage = () => {
             ← Back to My Events
           </button>
         </div>
-        <div className="ra-error-message">{error}</div>
       </div>
     );
   }
@@ -196,9 +192,6 @@ const RecordAttendancePage = () => {
           ← Back to My Events
         </button>
       </div>
-
-      {success && <div className="ra-success-message">{success}</div>}
-      {error && <div className="ra-error-message">{error}</div>}
 
       {/* Event Information */}
       {event && (

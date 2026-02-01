@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getFacultyEvents } from '../services/facultyEventService';
+import { useToast } from '../contexts/ToastContext';
 import { formatDateTime } from '../utils/dateUtils';
 import './FacultyEventsPage.css';
 
 function FacultyEventsPage() {
   const navigate = useNavigate();
+  const { showError } = useToast();
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   
   // Filter states
   const [filters, setFilters] = useState({
@@ -28,7 +29,6 @@ function FacultyEventsPage() {
   const loadFacultyEvents = useCallback(async () => {
     try {
       setLoading(true);
-      setError('');
       
       const dateRange = getPeriodDateRange();
       const filterParams = {
@@ -42,12 +42,12 @@ function FacultyEventsPage() {
       setEvents(response.events || []);
     } catch (err) {
       console.error('Error loading faculty events:', err);
-      setError(err.response?.data?.error || 'Failed to load faculty events');
+      showError(err.response?.data?.error || 'Failed to load faculty events');
     } finally {
       setLoading(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters.status, filters.booking_status, filters.period, filters.start_date, filters.end_date]);
+  }, [filters.status, filters.booking_status, filters.period, filters.start_date, filters.end_date, showError]);
 
   useEffect(() => {
     document.title = 'Faculty Events - CESMS';
@@ -290,9 +290,6 @@ function FacultyEventsPage() {
           </select>
         </div>
       </div>
-
-      {/* Error Message */}
-      {error && <div className="fep-error-message">{error}</div>}
 
       {/* Loading State */}
       {loading ? (

@@ -142,7 +142,7 @@ CREATE TABLE venues (
   name VARCHAR(255) NOT NULL,
   location VARCHAR(255), -- e.g., 'Level 2', 'Ground Floor'
   capacity INTEGER, -- Maximum number of people
-  status VARCHAR(50) NOT NULL DEFAULT 'active', -- 'active', 'inactive', 'maintenance'
+  status VARCHAR(50) NOT NULL DEFAULT 'active', -- 'active', 'inactive'
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -711,7 +711,7 @@ INSERT INTO venues (id, faculty_id, code, name, location, capacity, status) VALU
   ('b3a5e8f3-3333-3333-3333-333333333333', 'f2f2f2f2-f2f2-f2f2-f2f2-f2f2f2f2f2f2', 'SR-FOM-01', 'Seminar Room 1', 'Level 1', 30, 'active'),
   ('b4a5e8f4-4444-4444-4444-444444444444', 'f3f3f3f3-f3f3-f3f3-f3f3-f3f3f3f3f3f3', 'CR-FOB-01', 'Business Case Room', 'Level 2', 25, 'active'),
   ('b5a5e8f5-5555-5555-5555-555555555555', 'f4f4f4f4-f4f4-f4f4-f4f4-f4f4f4f4f4f4', 'STUDIO-FAC-01', 'Media Production Studio', 'Ground Floor', 20, 'active'),
-  ('b6a5e8f6-6666-6666-6666-666666666666', 'f1f1f1f1-f1f1-f1f1-f1f1-f1f1f1f1f1f1', 'LAB-CS-02', 'Computer Lab 2', 'Level 3', 40, 'maintenance'),
+  ('b6a5e8f6-6666-6666-6666-666666666666', 'f1f1f1f1-f1f1-f1f1-f1f1-f1f1f1f1f1f1', 'LAB-CS-02', 'Computer Lab 2', 'Level 3', 40, 'inactive'),
   ('b7a5e8f7-7777-7777-7777-777777777777', 'f1f1f1f1-f1f1-f1f1-f1f1-f1f1f1f1f1f1', 'AUD-FCI-01', 'FCI Auditorium', 'Ground Floor', 300, 'active'),
   ('b8a5e8f8-8888-8888-8888-888888888888', 'f2f2f2f2-f2f2-f2f2-f2f2-f2f2f2f2f2f2', 'CR-FOM-01', 'Conference Room', 'Level 3', 50, 'active'),
   ('b9a5e8f9-9999-9999-9999-999999999999', 'f3f3f3f3-f3f3-f3f3-f3f3-f3f3f3f3f3f3', 'TR-FOB-01', 'Trading Room', 'Level 4', 35, 'active'),
@@ -1081,7 +1081,7 @@ COMMENT ON COLUMN faculties.status IS 'Faculty status: active or inactive';
 COMMENT ON COLUMN venues.code IS 'Unique code for venue (e.g., LT-FCI-01, LAB-CS-01)';
 COMMENT ON COLUMN venues.location IS 'Floor or room location (e.g., Level 2, Ground Floor)';
 COMMENT ON COLUMN venues.capacity IS 'Maximum number of people the venue can accommodate';
-COMMENT ON COLUMN venues.status IS 'Venue status: active, inactive, maintenance';
+COMMENT ON COLUMN venues.status IS 'Venue status: active, inactive';
 COMMENT ON COLUMN events.visibility IS 'Event visibility: campuswide (all users), facultyonly (same faculty as organizer), inviteonly (explicitly invited users only)';
 COMMENT ON COLUMN events.event_type IS 'Event type: seminar, workshop, sports, cultural, career, orientation, networking, general, or custom value when Other is selected';
 COMMENT ON COLUMN events.status IS 'Event status: upcoming (before start), ongoing (currently happening, can still register), completed (finished), cancelled';
