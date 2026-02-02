@@ -35,21 +35,26 @@ function VenueBookingPage() {
     
     if (!event) {
       navigate('/my-events');
+      return;
     }
+  }, [event, navigate]);
 
-    // Load faculties using public endpoint
+  // Load faculties separately
+  useEffect(() => {
     const loadFaculties = async () => {
       try {
-        const data = await facultyService.getPublicFaculties();
-        setFaculties(data.faculties || []);
+        console.log('[VenueBookingPage] Loading faculties...');
+        const faculties = await facultyService.getPublicFaculties();
+        console.log('[VenueBookingPage] Faculties loaded:', faculties?.length || 0);
+        setFaculties(faculties || []);
       } catch (err) {
-        console.error('Error loading faculties:', err);
+        console.error('[VenueBookingPage] Error loading faculties:', err);
         // Don't show error to user - faculty filter is optional
       }
     };
 
     loadFaculties();
-  }, [event, navigate]);
+  }, []);
 
   if (!event) {
     return null;

@@ -90,27 +90,41 @@ function HomePage() {
 
   const loadUserAndDashboard = useCallback(async () => {
     try {
+      console.log('[HomePage] Loading user data...');
       // Fetch user data from API to get fresh data including faculty
       const response = await authFetch('/auth/me');
       
       if (response.ok) {
         const data = await response.json();
+        console.log('[HomePage] User data loaded from API:', data.user?.email);
         setUser(data.user);
         loadDashboardData(data.user);
       } else {
+        console.log('[HomePage] API failed, using localStorage fallback');
         // Fallback to localStorage if API fails
         const currentUser = authService.getCurrentUser();
-        setUser(currentUser);
-        loadDashboardData(currentUser);
+        if (currentUser) {
+          setUser(currentUser);
+          loadDashboardData(currentUser);
+        } else {
+          console.error('[HomePage] No user in localStorage, redirecting to login');
+          navigate('/login');
+        }
       }
     } catch (error) {
-      console.error('Failed to load user data:', error);
+      console.error('[HomePage] Failed to load user data:', error);
       // Fallback to localStorage
       const currentUser = authService.getCurrentUser();
-      setUser(currentUser);
-      loadDashboardData(currentUser);
+      if (currentUser) {
+        console.log('[HomePage] Using localStorage fallback after error');
+        setUser(currentUser);
+        loadDashboardData(currentUser);
+      } else {
+        console.error('[HomePage] No user in localStorage, redirecting to login');
+        navigate('/login');
+      }
     }
-  }, [loadDashboardData]);
+  }, [loadDashboardData, navigate]);
 
   useEffect(() => {
     document.title = 'Home - CESMS';
@@ -142,8 +156,17 @@ function HomePage() {
 
   const handleLogout = async () => {
     // UC-02: Logout from System
-    await authService.logout();
-    navigate('/login', { state: { message: 'Logged out successfully' } });
+    try {
+      await authService.logout();
+      // Don't call clearSession again - logout already clears it
+      navigate('/login', { state: { message: 'Logged out successfully' } });
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Even if API fails, clear local storage and redirect
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      navigate('/login', { state: { message: 'Logged out successfully' } });
+    }
   };
 
   const getRoleBasedFeatures = () => {
@@ -302,7 +325,32 @@ function HomePage() {
   };
 
   if (!user) {
-    return <div className="loading-screen">Loading...</div>;
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        flexDirection: 'column',
+        gap: '1rem'
+      }}>
+        <div style={{
+          border: '4px solid #f3f3f3',
+          borderTop: '4px solid #3498db',
+          borderRadius: '50%',
+          width: '40px',
+          height: '40px',
+          animation: 'spin 1s linear infinite'
+        }}></div>
+        <p style={{ color: '#666', fontSize: '14px' }}>Loading dashboard...</p>
+        <style>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
+      </div>
+    );
   }
 
   const features = getRoleBasedFeatures();

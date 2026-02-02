@@ -10,6 +10,12 @@ const authService = {
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
+        
+        // Store token issue time for proactive refresh
+        localStorage.setItem('tokenIssueTime', Date.now().toString());
+        
+        // Generate unique tab ID for multi-tab sync
+        sessionStorage.setItem('tabId', Math.random().toString(36).substr(2, 9));
       }
       
       return response.data;
@@ -87,16 +93,43 @@ const authService = {
         }
         throw new Error(data.error || 'Failed to refresh session');
       }
-      localStorage.setItem('token', data.token);
       
-      // Dispatch event to notify components that token was updated
-      window.dispatchEvent(new Event('tokenUpdated'));
+      const newToken = data.token;
+      localStorage.setItem('token', newToken);
+      
+      // Calculate and store token issue time for proactive refresh
+      const tokenIssueTime = Date.now();
+      localStorage.setItem('tokenIssueTime', tokenIssueTime.toString());
+      
+      // Broadcast to other tabs via localStorage
+      const syncData = {
+        token: newToken,
+        timestamp: tokenIssueTime,
+        tabId: sessionStorage.getItem('tabId') || Math.random().toString(36)
+      };
+      localStorage.setItem('tokenSync', JSON.stringify(syncData));
+      localStorage.removeItem('tokenSync'); // Remove immediately to trigger storage event
+      
+      // Dispatch event to notify components in current tab
+      window.dispatchEvent(new CustomEvent('tokenUpdated', { detail: { token: newToken } }));
       
       return true;
     } catch (error) {
       console.error('Token refresh error:', error);
       return false;
     }
+  },
+
+  getTimeUntilExpiry: () => {
+    const expiryTime = authService.getTokenExpiryTime();
+    if (!expiryTime) return 0;
+    return Math.max(0, expiryTime - Date.now());
+  },
+
+  shouldProactivelyRefresh: () => {
+    const timeUntilExpiry = authService.getTimeUntilExpiry();
+    const PROACTIVE_REFRESH_THRESHOLD = 5 * 60 * 1000; // 5 minutes
+    return timeUntilExpiry > 0 && timeUntilExpiry <= PROACTIVE_REFRESH_THRESHOLD;
   },
 
   clearSession: (markExpired = false) => {

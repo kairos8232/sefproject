@@ -5,7 +5,7 @@ import './SessionTimeoutModal.css';
 // Constants - defined outside component to avoid recreating on each render
 const IDLE_WARNING_TIME = 13 * 60 * 1000; // 13 minutes of idle time before warning
 const IDLE_LOGOUT_TIME = 15 * 60 * 1000; // 15 minutes of idle time before logout
-const AUTO_REFRESH_THRESHOLD = 10 * 60 * 1000; // Auto-refresh if JWT expires in < 10 minutes
+const TOKEN_EXPIRY_WARNING_BUFFER = 5 * 60 * 1000; // Show warning 5 minutes before token expires
 const ACTIVITY_CHECK_INTERVAL = 30 * 1000; // Check every 30 seconds
 
 const SessionTimeoutModal = ({ onExtendSession, onLogout }) => {
@@ -43,10 +43,10 @@ const SessionTimeoutModal = ({ onExtendSession, onLogout }) => {
 
     const now = Date.now();
     const timeUntilExpiry = tokenExpiry - now;
-    const timeBeforeWarning = 2 * 60 * 1000; // Warn 2 minutes before expiry
 
-    // If token expires in less than 2 minutes, show the modal
-    if (timeUntilExpiry > 0 && timeUntilExpiry <= timeBeforeWarning) {
+    // Show warning if token expires in less than TOKEN_EXPIRY_WARNING_BUFFER (5 mins)
+    // Note: Proactive refresh should happen at 10-min mark, so this warning is a backup
+    if (timeUntilExpiry > 0 && timeUntilExpiry <= TOKEN_EXPIRY_WARNING_BUFFER) {
       console.log('[SessionTimeoutModal] Token expiring soon, showing warning. Time until expiry:', Math.floor(timeUntilExpiry / 1000), 'seconds');
       setShowModal(true);
       setTimeRemaining(Math.floor(timeUntilExpiry / 1000));
@@ -78,7 +78,7 @@ const SessionTimeoutModal = ({ onExtendSession, onLogout }) => {
     }
   }, []);
 
-  // Silent token refresh on user activity
+  // Silent token refresh on user activity - no longer needed as proactive refresh handles this
   const refreshTokenSilently = useCallback(async () => {
     try {
       const expiry = getTokenExpiry();
@@ -87,13 +87,14 @@ const SessionTimeoutModal = ({ onExtendSession, onLogout }) => {
       const now = Date.now();
       const timeUntilExpiry = expiry - now;
 
-      // Only refresh if token expires soon
-      if (timeUntilExpiry < AUTO_REFRESH_THRESHOLD && timeUntilExpiry > 0) {
-        console.log('Auto-refreshing token due to user activity...');
+      // Only refresh if token expires very soon (within 2 minutes) as backup
+      // Proactive refresh at 10-min mark should prevent reaching this point
+      if (timeUntilExpiry < 2 * 60 * 1000 && timeUntilExpiry > 0) {
+        console.log('[SessionTimeoutModal] Emergency token refresh due to near-expiry...');
         await authService.refreshAccessToken();
       }
     } catch (err) {
-      console.error('Silent token refresh failed:', err);
+      console.error('Emergency token refresh failed:', err);
     }
   }, [getTokenExpiry]);
 

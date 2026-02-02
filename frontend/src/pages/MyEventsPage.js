@@ -453,6 +453,14 @@ function MyEventsPage() {
     return visibility;
   };
 
+  const formatEventType = (eventType) => {
+    if (!eventType) return 'General';
+    return eventType
+      .split(/[\s_-]+/)
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  };
+
   const getStatusBadgeClass = (status) => {
     switch (status) {
       case 'upcoming':
@@ -632,7 +640,7 @@ function MyEventsPage() {
                       </td>
                       <td>
                         <span className="event-type-badge">
-                          {event.event_type || 'General'}
+                          {formatEventType(event.event_type)}
                         </span>
                       </td>
                       <td>
