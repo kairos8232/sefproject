@@ -73,7 +73,7 @@ function FacultyEventDetailPage() {
             <p>Review event information</p>
           </div>
           <button onClick={() => navigate('/faculty-events')} className="back-button">
-            ← Back to Faculty Events
+            Back to Faculty Events
           </button>
         </div>
         <div className="error-message">Event not found</div>
@@ -109,7 +109,7 @@ function FacultyEventDetailPage() {
           <p>Review event information</p>
         </div>
         <button onClick={() => navigate('/faculty-events')} className="back-button">
-          ← Back to Faculty Events
+          Back to Faculty Events
         </button>
       </div>
 
@@ -482,7 +482,7 @@ function FacultyEventDetailPage() {
 
       {/* Participants Section */}
       <div className="detail-section">
-        <h2>👥 Participants ({event.participant_count || 0})</h2>
+        <h2>👥 Participants ({event.participants?.length ?? event.participant_count ?? 0})</h2>
         {event.participants && event.participants.length > 0 ? (
           <div className="table-container">
             <table className="participants-table">

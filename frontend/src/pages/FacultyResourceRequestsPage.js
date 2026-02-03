@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import resourceRequestService from '../services/resourceRequestService';
 import { useToast } from '../contexts/ToastContext';
@@ -8,6 +8,7 @@ import authService from '../services/authService';
 
 const FacultyResourceRequestsPage = () => {
   const [requests, setRequests] = useState([]);
+  const [allRequests, setAllRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('pending');
   const [eventSearch, setEventSearch] = useState('');
@@ -26,40 +27,45 @@ const FacultyResourceRequestsPage = () => {
     try {
       setLoading(true);
       const data = await resourceRequestService.getAll();
-      let filtered = data.requests || [];
-
-      // Apply status filter
-      if (statusFilter && statusFilter !== 'all') {
-        filtered = filtered.filter(r => r.status === statusFilter);
-      }
-
-      // Apply event search
-      if (eventSearch.trim()) {
-        filtered = filtered.filter(r => 
-          r.event?.event_name?.toLowerCase().includes(eventSearch.toLowerCase())
-        );
-      }
-
-      // Apply resource search
-      if (resourceSearch.trim()) {
-        filtered = filtered.filter(r => 
-          r.resource?.name?.toLowerCase().includes(resourceSearch.toLowerCase()) ||
-          r.resource?.code?.toLowerCase().includes(resourceSearch.toLowerCase())
-        );
-      }
-
-      setRequests(filtered);
+      const fetched = data.requests || [];
+      setAllRequests(fetched);
+      setRequests(fetched);
     } catch (err) {
       showError(err.response?.data?.error || 'Failed to load resource requests');
     } finally {
       setLoading(false);
     }
-  }, [statusFilter, eventSearch, resourceSearch, showError]);
+  }, [showError]);
 
   useEffect(() => {
     document.title = 'Resource Request Approval - CESMS';
     loadRequests();
   }, [loadRequests]);
+
+  useEffect(() => {
+    let filtered = allRequests;
+
+    if (statusFilter && statusFilter !== 'all') {
+      filtered = filtered.filter(r => r.status === statusFilter);
+    }
+
+    if (eventSearch.trim()) {
+      const search = eventSearch.toLowerCase();
+      filtered = filtered.filter(r =>
+        r.event?.event_name?.toLowerCase().includes(search)
+      );
+    }
+
+    if (resourceSearch.trim()) {
+      const search = resourceSearch.toLowerCase();
+      filtered = filtered.filter(r =>
+        r.resource?.name?.toLowerCase().includes(search) ||
+        r.resource?.code?.toLowerCase().includes(search)
+      );
+    }
+
+    setRequests(filtered);
+  }, [allRequests, statusFilter, eventSearch, resourceSearch]);
 
   const handleApprove = async () => {
     if (!selectedRequest) return;
@@ -133,13 +139,37 @@ const FacultyResourceRequestsPage = () => {
     }
   };
 
+  const getRoleColorClass = (role) => {
+    if (!role) return 'frrp-role-default';
+    switch (role.toLowerCase()) {
+      case 'student':
+        return 'frrp-role-student';
+      case 'faculty_staff':
+        return 'frrp-role-faculty';
+      case 'event_organizer':
+        return 'frrp-role-organizer';
+      default:
+        return 'frrp-role-default';
+    }
+  };
+
+  const groupedRequests = useMemo(() => {
+    const groups = {};
+    requests.forEach(r => {
+      const key = r.package_id || r.event_id || r.id;
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(r);
+    });
+    return Object.values(groups);
+  }, [requests]);
+
   if (loading) {
     return <div className="frrp-container"><div className="frrp-loading">Loading resource requests...</div></div>;
   }
 
   return (
     <div className="frrp-container">
-      <div className="frrp-header">
+      <div className="fbrp-page-header">
         <div>
           <h1>📦 Resource Request Approval</h1>
           <p>Review and approve resource requests for your faculty</p>
@@ -148,7 +178,7 @@ const FacultyResourceRequestsPage = () => {
           // Attempt to refresh the session before navigating home
           try { await authService.refreshAccessToken(); } catch (e) {}
           navigate('/home');
-        }} className="frrp-back-button">
+        }} className="fbrp-back-button">
           Back to Home
         </button>
       </div>
@@ -193,7 +223,7 @@ const FacultyResourceRequestsPage = () => {
       ) : (
         <>
           <div className="frrp-count">
-            Showing {requests.length} request{requests.length !== 1 ? 's' : ''}
+            Showing {groupedRequests.length} group{groupedRequests.length !== 1 ? 's' : ''}
           </div>
           <div className="frrp-table-container">
             <table className="frrp-table">
@@ -209,57 +239,97 @@ const FacultyResourceRequestsPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {requests.map(request => (
-                  <tr key={request.id}>
-                    <td>
-                      <div className="frrp-event-name">{request.event?.event_name || 'N/A'}</div>
-                    </td>
-                    <td>
-                      <div className="frrp-resource-info">
-                        <div className="frrp-resource-name">{request.resource?.name || 'N/A'}</div>
-                        <div className="frrp-resource-code">{request.resource?.code || ''}</div>
-                      </div>
-                    </td>
-                    <td>
-                      <strong>{request.requested_quantity}</strong> {request.resource?.unit}
-                    </td>
-                    <td>
-                      <div className="frrp-datetime">
-                        <div>{formatDateTime(request.usage_start_datetime)}</div>
-                        <div className="frrp-to">to</div>
-                        <div>{formatDateTime(request.usage_end_datetime)}</div>
-                      </div>
-                    </td>
-                    <td>
-                      <div className="frrp-requester">{request.requester?.name || 'N/A'}</div>
-                    </td>
-                    <td>
-                      <span className={`frrp-status-badge ${getStatusBadgeClass(request.status)}`}>
-                        {request.status}
-                      </span>
-                    </td>
-                    <td className="frrp-actions">
-                      {request.status === 'pending' && (
-                        <>
-                          <button
-                            onClick={() => openApproveModal(request)}
-                            className="frrp-btn-approve"
-                            title="Approve"
-                          >
-                            ✅
-                          </button>
-                          <button
-                            onClick={() => openRejectModal(request)}
-                            className="frrp-btn-reject"
-                            title="Reject"
-                          >
-                            ❌
-                          </button>
-                        </>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                {groupedRequests.map(group => {
+                  const first = group[0];
+                  const statuses = group.map(r => r.status);
+                  const allSame = statuses.every(s => s === statuses[0]);
+                  const groupStatus = allSame ? statuses[0] : 'mixed';
+
+                  return (
+                    <tr key={first.id}>
+                      <td>
+                        <div className="frrp-event-name">{first.event?.event_name || 'N/A'}</div>
+                      </td>
+                      <td>
+                        <div className="frrp-resource-list">
+                          {group.map((request, idx) => (
+                            <div key={request.id} className="frrp-resource-row">
+                              <div className="frrp-resource-info">
+                                <div className="frrp-resource-name">
+                                  {idx + 1}. {request.resource?.name || 'N/A'}
+                                </div>
+                                {request.resource?.code && (
+                                  <div className="frrp-resource-code">{request.resource.code}</div>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </td>
+                      <td>
+                        <div className="frrp-quantity-list">
+                          {group.map(request => (
+                            <div key={request.id} className="frrp-quantity-row">
+                              <strong>{request.requested_quantity}</strong> {request.resource?.unit}
+                            </div>
+                          ))}
+                        </div>
+                      </td>
+                      <td>
+                        <div className="frrp-datetime">
+                          <div>{formatDateTime(first.usage_start_datetime)}</div>
+                          <div className="frrp-to">to</div>
+                          <div>{formatDateTime(first.usage_end_datetime)}</div>
+                        </div>
+                      </td>
+                      <td>
+                        <div className="frrp-requester-info">
+                          <div className="frrp-requester-name">{first.requester?.name || 'N/A'}</div>
+                          {first.requester?.role && (
+                            <div className={`frrp-requester-role ${getRoleColorClass(first.requester.role)}`}>
+                              {first.requester.role.replace('_', ' ').split(' ').map(word => 
+                                word.charAt(0).toUpperCase() + word.slice(1)
+                              ).join(' ')}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td>
+                        <span className={`frrp-status-badge ${getStatusBadgeClass(groupStatus)}`}>
+                          {groupStatus}
+                        </span>
+                      </td>
+                      <td>
+                        <div className="frrp-actions-list">
+                          {group.map(request => (
+                            <div key={request.id} className="frrp-action-row">
+                              {request.status === 'pending' ? (
+                                <div className="frrp-action-buttons">
+                                  <button
+                                    onClick={() => openApproveModal(request)}
+                                    className="frrp-btn-approve"
+                                    title={`Approve ${request.resource?.name || 'request'}`}
+                                  >
+                                    ✅
+                                  </button>
+                                  <button
+                                    onClick={() => openRejectModal(request)}
+                                    className="frrp-btn-reject"
+                                    title={`Reject ${request.resource?.name || 'request'}`}
+                                  >
+                                    ❌
+                                  </button>
+                                </div>
+                              ) : (
+                                <span className="frrp-action-placeholder">—</span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -313,7 +383,7 @@ const FacultyResourceRequestsPage = () => {
               </button>
               <button
                 onClick={isRejecting ? handleReject : handleApprove}
-                className={isRejecting ? 'frrp-btn-reject' : 'frrp-btn-approve'}
+                className={isRejecting ? 'frrp-btn-confirm-reject' : 'frrp-btn-approve'}
                 disabled={processing || (isRejecting && !rejectionReason.trim())}
               >
                 {processing ? 'Processing...' : (isRejecting ? 'Reject Request' : 'Approve Request')}

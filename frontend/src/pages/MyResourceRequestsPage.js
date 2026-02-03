@@ -244,8 +244,8 @@ function MyResourceRequestsPage() {
   const groupedRequests = useMemo(() => {
     const groups = {};
     requests.forEach(r => {
-      // Group by package_id to show each submission separately
-      const key = r.package_id || r.id;
+      // Group by package_id; otherwise group standalone requests by event_id
+      const key = r.package_id || r.event_id || r.id;
       if (!groups[key]) groups[key] = [];
       groups[key].push(r);
     });

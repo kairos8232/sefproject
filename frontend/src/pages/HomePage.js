@@ -250,7 +250,7 @@ function HomePage() {
 
     const facultyManagerFeatures = [
       {
-        title: 'Approve Bookings',
+        title: 'Approve Venue Bookings',
         description: 'Review venue requests',
         icon: '✔️',
         path: '/faculty/bookings',

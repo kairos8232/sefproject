@@ -189,7 +189,7 @@ const FacultyProvideFeedbackPage = () => {
       <div className="faculty-events-page">
         <div className="error-message">Event not found</div>
         <button onClick={() => navigate('/faculty-events')} className="back-button">
-          ← Back to Events
+          Back to Events
         </button>
       </div>
     );
@@ -203,7 +203,7 @@ const FacultyProvideFeedbackPage = () => {
           <p>Share your feedback about this event</p>
         </div>
         <button onClick={() => navigate('/faculty-events')} className="back-button">
-          ← Back to Events
+          Back to Events
         </button>
       </div>
 

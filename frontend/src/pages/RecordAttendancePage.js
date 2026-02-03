@@ -174,7 +174,7 @@ const RecordAttendancePage = () => {
             <p>Mark participant attendance for your event</p>
           </div>
           <button onClick={() => navigate('/my-events')} className="ra-back-button">
-            ← Back to My Events
+            Back to My Events
           </button>
         </div>
       </div>
@@ -189,7 +189,7 @@ const RecordAttendancePage = () => {
           <p>Mark participant attendance for your event</p>
         </div>
         <button onClick={() => navigate('/my-events')} className="ra-back-button">
-          ← Back to My Events
+          Back to My Events
         </button>
       </div>
 

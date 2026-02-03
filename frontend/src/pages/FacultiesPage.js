@@ -123,7 +123,7 @@ const FacultiesPage = () => {
         </div>
         <div className="header-actions">
           <button className="back-button" onClick={() => navigate('/home')}>
-            ← Back
+            Back
           </button>
           <button className="fp-btn-create" onClick={() => setShowCreateModal(true)}>
             ➕ Create Faculty

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authFetch } from '../services/apiClient';
 import { useToast } from '../contexts/ToastContext';
@@ -343,6 +343,16 @@ const FacultyBookingRequestsPage = () => {
     });
   };
 
+  const groupedBookings = useMemo(() => {
+    const groups = {};
+    bookings.forEach(b => {
+      const key = b.package_id || b.event_id || b.id;
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(b);
+    });
+    return Object.values(groups);
+  }, [bookings]);
+
   return (
     <div className="faculty-booking-requests-page">
       <div className="fbrp-page-header">
@@ -464,59 +474,76 @@ const FacultyBookingRequestsPage = () => {
               </tr>
             </thead>
             <tbody>
-              {bookings.map(booking => (
-                <tr key={booking.id}>
-                  <td className="fbrp-event-name-cell">
-                    <div className="fbrp-event-name">{booking.event?.event_name || 'N/A'}</div>
-                    {booking.event?.description && (
-                      <div className="fbrp-event-description-preview">
-                        {booking.event.description.substring(0, 50)}
-                        {booking.event.description.length > 50 ? '...' : ''}
-                      </div>
-                    )}
-                  </td>
-                  <td>
-                    <div className="fbrp-requester-info">
-                      <div className="fbrp-requester-name">{booking.requester?.name || 'N/A'}</div>
-                      {booking.requester?.role && (
-                        <div className={`fbrp-requester-role ${getRoleColorClass(booking.requester.role)}`}>
-                          {booking.requester.role.replace('_', ' ').split(' ').map(word => 
-                            word.charAt(0).toUpperCase() + word.slice(1)
-                          ).join(' ')}
+              {groupedBookings.map(group => {
+                const first = group[0];
+                const statuses = group.map(b => b.status);
+                const allSame = statuses.every(s => s === statuses[0]);
+                const groupStatus = allSame ? statuses[0] : 'mixed';
+
+                return (
+                  <tr key={first.id}>
+                    <td className="fbrp-event-name-cell">
+                      <div className="fbrp-event-name">{first.event?.event_name || 'N/A'}</div>
+                      {first.event?.description && (
+                        <div className="fbrp-event-description-preview">
+                          {first.event.description.substring(0, 50)}
+                          {first.event.description.length > 50 ? '...' : ''}
                         </div>
                       )}
-                    </div>
-                  </td>
-                  <td>
-                    <div className="fbrp-venue-info">
-                      <div className="fbrp-venue-name">{booking.venue?.name || 'N/A'}</div>
-                      {booking.venue?.code && (
-                        <div className="fbrp-venue-code">{booking.venue.code}</div>
-                      )}
-                    </div>
-                  </td>
-                  <td>
-                    <span className={`fbrp-status-badge ${getStatusBadgeClass(booking.status)}`}>
-                      {booking.status}
-                    </span>
-                  </td>
-                  <td className="fbrp-datetime-cell">
-                    <div>{formatDateTime(booking.requested_start_datetime)}</div>
-                    <div className="fbrp-datetime-to">to</div>
-                    <div>{formatDateTime(booking.requested_end_datetime)}</div>
-                  </td>
-                  <td className="fbrp-submitted-cell">{formatDateTime(booking.created_at)}</td>
-                  <td className="fbrp-actions-cell">
-                    <button 
-                      className="fbrp-action-button fbrp-view-button"
-                      onClick={() => handleViewDetails(booking)}
-                      title="View Details"
-                    >
-                      👁️
-                    </button>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td>
+                      <div className="fbrp-requester-info">
+                        <div className="fbrp-requester-name">{first.requester?.name || 'N/A'}</div>
+                        {first.requester?.role && (
+                          <div className={`fbrp-requester-role ${getRoleColorClass(first.requester.role)}`}>
+                            {first.requester.role.replace('_', ' ').split(' ').map(word => 
+                              word.charAt(0).toUpperCase() + word.slice(1)
+                            ).join(' ')}
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                    <td>
+                      <div className="fbrp-venue-info">
+                        {group.map((booking, idx) => (
+                          <div key={booking.id} className="fbrp-venue-name">
+                            {idx + 1}. {booking.venue?.name || 'N/A'}
+                            {booking.venue?.code ? ` (${booking.venue.code})` : ''}
+                          </div>
+                        ))}
+                      </div>
+                    </td>
+                    <td>
+                      <span className={`fbrp-status-badge ${getStatusBadgeClass(groupStatus)}`}>
+                        {groupStatus}
+                      </span>
+                    </td>
+                    <td className="fbrp-datetime-cell">
+                      {group.map(booking => (
+                        <div key={booking.id}>
+                          <div>{formatDateTime(booking.requested_start_datetime)}</div>
+                          <div className="fbrp-datetime-to">to</div>
+                          <div>{formatDateTime(booking.requested_end_datetime)}</div>
+                        </div>
+                      ))}
+                    </td>
+                    <td className="fbrp-submitted-cell">{formatDateTime(first.created_at)}</td>
+                    <td className="fbrp-actions-cell">
+                      {group.map(booking => (
+                        <button 
+                          key={booking.id}
+                          className="fbrp-action-button fbrp-view-button"
+                          onClick={() => handleViewDetails(booking)}
+                          title={`View ${booking.venue?.name || 'Details'}`}
+                          style={{ marginBottom: '6px' }}
+                        >
+                          👁️
+                        </button>
+                      ))}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

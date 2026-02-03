@@ -205,7 +205,7 @@ const FacultyBookingRequestDetailPage = () => {
             <p>Review and manage venue booking request</p>
           </div>
           <button onClick={() => navigate('/faculty/bookings')} className="fbrd-back-button">
-            ← Back to Requests
+            Back to Requests
           </button>
         </div>
         <div className="fbrd-error-message">Booking request not found</div>
@@ -221,7 +221,7 @@ const FacultyBookingRequestDetailPage = () => {
           <p>Review and manage venue booking request</p>
         </div>
         <button onClick={() => navigate('/faculty/bookings')} className="fbrd-back-button">
-          ← Back to Requests
+          Back to Requests
         </button>
       </div>
 
