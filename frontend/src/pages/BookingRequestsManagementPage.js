@@ -871,13 +871,6 @@ const VenueBookingsTable = ({ bookings, onAction, getStatusBadgeClass }) => {
               <td>
                 <div className="brm-venues-list">
                   {group.map((booking, idx) => {
-                    const setupMinutes = booking.setup_time || 0;
-                    const teardownMinutes = booking.teardown_time || 0;
-                    const startDate = new Date(booking.requested_start_datetime);
-                    const endDate = new Date(booking.requested_end_datetime);
-                    const displayStartDate = new Date(startDate.getTime() - (setupMinutes * 60 * 1000));
-                    const displayEndDate = new Date(endDate.getTime() + (teardownMinutes * 60 * 1000));
-                    
                     return (
                     <div key={booking.id} className="brm-venue-item">
                       <div className="brm-venue-info">
@@ -885,13 +878,7 @@ const VenueBookingsTable = ({ bookings, onAction, getStatusBadgeClass }) => {
                           {idx + 1}. {booking.venue?.name || 'N/A'}
                         </div>
                         <div className="brm-venue-code">{booking.venue?.code || 'N/A'}</div>
-                        <div className="brm-venue-time">
-                          {formatDateTime(displayStartDate)} - {formatDateTime(displayEndDate)}
-                        </div>
                       </div>
-                      <span className={`brm-status-badge ${getStatusBadgeClass(booking.status)}`}>
-                        {booking.status}
-                      </span>
                     </div>
                   )})}
                 </div>
@@ -921,35 +908,28 @@ const VenueBookingsTable = ({ bookings, onAction, getStatusBadgeClass }) => {
                 </span>
               </td>
               <td className="brm-actions-cell">
-                <div className="brm-action-buttons-group">
-                  {group.map(booking => (
-                    <div key={booking.id} className="brm-action-row">
-                      <span className="brm-venue-label">{booking.venue?.code}</span>
-                      <div className="brm-action-buttons">
-                        <button
-                          className="brm-btn-approve"
-                          onClick={() => onAction(booking, 'approve')}
-                          title={`Approve ${booking.venue?.code}`}
-                        >
-                          ✅
-                        </button>
-                        <button
-                          className="brm-btn-reject"
-                          onClick={() => onAction(booking, 'reject')}
-                          title={`Reject ${booking.venue?.code}`}
-                        >
-                          ❌
-                        </button>
-                        <button
-                          className="brm-btn-modify"
-                          onClick={() => onAction(booking, 'modify')}
-                          title={`Modify ${booking.venue?.code}`}
-                        >
-                          ✏️
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                <div className="brm-action-buttons">
+                  <button
+                    className="brm-btn-approve"
+                    onClick={() => onAction(firstBooking, 'approve')}
+                    title="Approve Package"
+                  >
+                    ✅
+                  </button>
+                  <button
+                    className="brm-btn-reject"
+                    onClick={() => onAction(firstBooking, 'reject')}
+                    title="Reject Package"
+                  >
+                    ❌
+                  </button>
+                  <button
+                    className="brm-btn-modify"
+                    onClick={() => onAction(firstBooking, 'modify')}
+                    title="Modify Package"
+                  >
+                    ✏️
+                  </button>
                 </div>
               </td>
             </tr>
@@ -990,6 +970,7 @@ const ResourceRequestsTable = ({ requests, onAction, getStatusBadgeClass }) => {
             <th>Event</th>
             <th>Faculty</th>
             <th>Resources</th>
+            <th>Quantity</th>
             <th>Organiser</th>
             <th>Usage Time</th>
             <th>Status</th>
@@ -1041,15 +1022,19 @@ const ResourceRequestsTable = ({ requests, onAction, getStatusBadgeClass }) => {
                           {idx + 1}. {request.resource?.name || 'N/A'}
                         </div>
                         <div className="brm-venue-code">
-                          {request.requested_quantity} {request.resource?.unit || 'units'} • {request.resource?.category?.name || ''}
-                        </div>
-                        <div className="brm-venue-time">
-                          {formatDateTime(request.usage_start_datetime)} - {formatDateTime(request.usage_end_datetime)}
+                          {request.resource?.code || 'N/A'}
                         </div>
                       </div>
-                      <span className={`brm-status-badge ${getStatusBadgeClass(request.status)}`}>
-                        {request.status}
-                      </span>
+                    </div>
+                  ))}
+                </div>
+              </td>
+              <td>
+                <div className="brm-quantity-list">
+                  {group.map((request) => (
+                    <div key={request.id} className="brm-quantity-row">
+                      <strong>{request.requested_quantity}</strong>
+                      <span>{request.resource?.unit || 'units'}</span>
                     </div>
                   ))}
                 </div>
@@ -1079,35 +1064,28 @@ const ResourceRequestsTable = ({ requests, onAction, getStatusBadgeClass }) => {
                 </span>
               </td>
               <td className="brm-actions-cell">
-                <div className="brm-action-buttons-group">
-                  {group.map(request => (
-                    <div key={request.id} className="brm-action-row">
-                      <span className="brm-venue-label">{request.resource?.code || request.resource?.name?.substring(0, 8)}</span>
-                      <div className="brm-action-buttons">
-                        <button
-                          className="brm-btn-approve"
-                          onClick={() => onAction(request, 'approve')}
-                          title="Approve"
-                        >
-                          ✅
-                        </button>
-                        <button
-                          className="brm-btn-reject"
-                          onClick={() => onAction(request, 'reject')}
-                          title="Reject"
-                        >
-                          ❌
-                        </button>
-                        <button
-                          className="brm-btn-modify"
-                          onClick={() => onAction(request, 'modify')}
-                          title="Modify"
-                        >
-                          ✏️
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                <div className="brm-action-buttons">
+                  <button
+                    className="brm-btn-approve"
+                    onClick={() => onAction(firstRequest, 'approve')}
+                    title="Approve Package"
+                  >
+                    ✅
+                  </button>
+                  <button
+                    className="brm-btn-reject"
+                    onClick={() => onAction(firstRequest, 'reject')}
+                    title="Reject Package"
+                  >
+                    ❌
+                  </button>
+                  <button
+                    className="brm-btn-modify"
+                    onClick={() => onAction(firstRequest, 'modify')}
+                    title="Modify Package"
+                  >
+                    ✏️
+                  </button>
                 </div>
               </td>
             </tr>

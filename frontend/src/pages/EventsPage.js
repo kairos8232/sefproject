@@ -220,12 +220,10 @@ function EventsPage() {
   }, [allEvents, userRole, filter, myParticipations, statusFilter, eventTypeFilter, searchQuery, visibilityFilter, periodFilter, customStartDate, customEndDate, showMyRegistrations, myEventsFilter, registrationFilter, currentUser?.id]);
 
   const handleEventClick = useCallback((eventId) => {
-    console.log('[EventsPage] Navigating to event:', eventId);
     navigate(`/events/${eventId}`, { state: { fromEventsPage: true, filter } });
   }, [navigate, filter]);
 
   const handleBackToHome = useCallback(() => {
-    console.log('[EventsPage] Navigating back to home');
     navigate('/home');
   }, [navigate]);
 

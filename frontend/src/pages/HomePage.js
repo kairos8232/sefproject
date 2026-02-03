@@ -90,17 +90,14 @@ function HomePage() {
 
   const loadUserAndDashboard = useCallback(async () => {
     try {
-      console.log('[HomePage] Loading user data...');
       // Fetch user data from API to get fresh data including faculty
       const response = await authFetch('/auth/me');
       
       if (response.ok) {
         const data = await response.json();
-        console.log('[HomePage] User data loaded from API:', data.user?.email);
         setUser(data.user);
         loadDashboardData(data.user);
       } else {
-        console.log('[HomePage] API failed, using localStorage fallback');
         // Fallback to localStorage if API fails
         const currentUser = authService.getCurrentUser();
         if (currentUser) {
@@ -116,7 +113,6 @@ function HomePage() {
       // Fallback to localStorage
       const currentUser = authService.getCurrentUser();
       if (currentUser) {
-        console.log('[HomePage] Using localStorage fallback after error');
         setUser(currentUser);
         loadDashboardData(currentUser);
       } else {

@@ -17,7 +17,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 30px;
-  padding: 30px;
+  padding: 20px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-radius: 12px;
   color: white;
@@ -41,18 +41,23 @@
 
 .brm-back-button {
   padding: 10px 20px;
-  background: rgba(255, 255, 255, 0.2);
+  background-color: rgba(255, 255, 255, 0.2);
   color: white;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: none;
   border-radius: 8px;
   cursor: pointer;
   font-size: 14px;
-  transition: all 0.3s ease;
+  font-weight: 600;
+  transition: all 0.2s;
+  white-space: nowrap;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .brm-back-button:hover {
-  background: rgba(255, 255, 255, 0.3);
-  transform: translateY(-2px);
+  background-color: rgba(255, 255, 255, 0.3);
 }
 
 /* Tabs */
@@ -361,7 +366,7 @@
 .brm-action-buttons-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0;
   align-items: stretch;
 }
 
@@ -369,8 +374,9 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 4px 0;
-  border-bottom: 1px solid #eee;
+  padding: 8px 0;
+  min-height: 60px;
+  border-bottom: 1px solid #f0f0f0;
 }
 
 .brm-action-row:last-child {
@@ -396,17 +402,38 @@
 
 .brm-venue-item {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 8px;
-  background: #f8f9fa;
-  border-radius: 6px;
-  border-left: 3px solid #667eea;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
+  min-height: 60px;
+}
+
+.brm-venue-item:last-child {
+  border-bottom: none;
 }
 
 .brm-venue-item .brm-venue-info {
-  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.brm-venue-name {
+  font-weight: 600;
+  color: #333;
+  font-size: 15px;
+}
+
+.brm-venue-code {
+  background: #667eea;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  display: inline-block;
+  width: fit-content;
 }
 
 .brm-venue-time {
@@ -414,6 +441,28 @@
   color: #666;
   margin-top: 4px;
   font-style: italic;
+}
+
+/* Quantity Column */
+.brm-quantity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.brm-quantity-row {
+  padding: 8px 0;
+  border-bottom: 1px solid #f0f0f0;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15px;
+  color: #333;
+}
+
+.brm-quantity-row:last-child {
+  border-bottom: none;
 }
 
 .brm-action-buttons button {

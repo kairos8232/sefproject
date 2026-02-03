@@ -12,13 +12,11 @@ function ProtectedRoute({ children }) {
     
     const checkAuth = async () => {
       try {
-        console.log('[ProtectedRoute] Starting authentication check...');
         
         // Check authentication status
         const hasToken = authService.isAuthenticated();
         
         if (!hasToken) {
-          console.log('[ProtectedRoute] No token found, redirecting to login');
           if (isMounted) {
             authService.clearSession(false); // Don't mark as expired, just clear
             // Use navigate instead of Navigate component
@@ -33,7 +31,6 @@ function ProtectedRoute({ children }) {
         const isExpired = authService.isTokenExpired();
         
         if (!isExpired) {
-          console.log('[ProtectedRoute] Token valid, allowing access');
           if (isMounted) {
             setIsAllowed(true);
           }
@@ -41,9 +38,7 @@ function ProtectedRoute({ children }) {
         }
 
         // Token is expired, try to refresh silently
-        console.log('[ProtectedRoute] Token expired, attempting silent refresh...');
         const refreshed = await authService.refreshAccessToken();
-        console.log('[ProtectedRoute] Refresh result:', refreshed);
         
         if (isMounted) {
           if (refreshed) {

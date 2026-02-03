@@ -119,17 +119,17 @@ function EditProfilePage() {
     <div className="epp-container">
       <div className="epp-layout">
         {/* Left Panel - User Profile (Same as HomePage) */}
-        <div className="epp-user-panel">
-          <div className="epp-user-card">
-            <div className="epp-user-avatar">
+        <div className="user-panel">
+          <div className="user-card">
+            <div className="user-avatar">
               {user?.name?.charAt(0).toUpperCase()}
             </div>
-            <div className="epp-user-info">
+            <div className="user-info">
               <h2>{user?.name}</h2>
-              <div className="epp-user-role">
+              <div className="user-email">{user?.staff_id || 'N/A'}</div>
+              <div className="user-role">
                 {user?.faculty ? `${user.faculty.code} ${getRoleDisplayName(user?.role).toUpperCase()}` : getRoleDisplayName(user?.role).toUpperCase()}
               </div>
-              <div className="epp-user-email">{user?.staff_id || 'N/A'}</div>
             </div> 
           </div>
         </div>

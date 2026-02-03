@@ -228,19 +228,6 @@ function MyResourceRequestsPage() {
     }
   };
 
-  const getCategoryLabel = (category) => {
-    const labels = {
-      audio_visual: 'Audio/Visual',
-      furniture: 'Furniture',
-      it_equipment: 'IT Equipment',
-      catering: 'Catering',
-      other: 'Other'
-    };
-    // Handle category as object or string
-    const categoryValue = typeof category === 'object' ? category?.code || category?.name : category;
-    return labels[categoryValue] || categoryValue || 'Unknown';
-  };
-
   const groupedRequests = useMemo(() => {
     const groups = {};
     requests.forEach(r => {
