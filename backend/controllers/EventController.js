@@ -317,6 +317,14 @@ class EventController {
       // Create event
       const newEvent = await Event.create(eventData);
 
+      // Auto-register organizer as participant
+      try {
+        const Participation = require('../models/Participation');
+        await Participation.register(newEvent.id, userId);
+      } catch (registrationError) {
+        console.error('Failed to auto-register organizer:', registrationError);
+      }
+
       res.status(201).json({
         success: true,
         message: 'Event created successfully',

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import eventService from '../services/eventService';
 import participationService from '../services/participationService';
+import invitationService from '../services/invitationService';
 import authService from '../services/authService';
 import { formatDateTime } from '../utils/dateUtils';
 import './EventsPage.css';
@@ -14,6 +15,7 @@ function EventsPage() {
   const [events, setEvents] = useState([]);
   const [allEvents, setAllEvents] = useState([]); // Store all events for client-side filtering
   const [myParticipations, setMyParticipations] = useState([]); // Store user's registrations
+  const [myInvitations, setMyInvitations] = useState([]); // Store user's invitations
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [filter] = useState(location.state?.filter || 'all');
@@ -57,6 +59,14 @@ function EventsPage() {
         // If user is not logged in or error fetching participations, set empty array
         setMyParticipations([]);
       }
+
+      // Fetch user's invitations for invite-only visibility
+      try {
+        const invitations = await invitationService.getUserInvitations();
+        setMyInvitations(invitations || []);
+      } catch (err) {
+        setMyInvitations([]);
+      }
     } catch (err) {
       setError(err);
     } finally {
@@ -98,6 +108,11 @@ function EventsPage() {
   useEffect(() => {
     const applyFilter = () => {
       let filtered = [...allEvents];
+      const currentUserId = currentUser?.id;
+      const registeredEventIds = myParticipations.map(p => p.event_id);
+      const acceptedInvitationEventIds = myInvitations
+        .filter(inv => inv.status === 'accepted')
+        .map(inv => inv.event_id);
       
       // Filter by approved venue bookings for students only
       // Admins, event organizers, and faculty managers can see all events
@@ -109,6 +124,14 @@ function EventsPage() {
         });
       }
       
+      // Restrict invite-only events to accepted/registered users or organizer/admin
+      filtered = filtered.filter(e => {
+        if (e.visibility !== 'inviteonly') return true;
+        if (isAdmin) return true;
+        if (currentUserId && e.organizer_id === currentUserId) return true;
+        return registeredEventIds.includes(e.id) || acceptedInvitationEventIds.includes(e.id);
+      });
+
       // Apply search filter (event name)
       if (searchQuery.trim()) {
         filtered = filtered.filter(e => 
@@ -193,12 +216,10 @@ function EventsPage() {
       
       // Apply My Registrations filter (checkbox)
       if (showMyRegistrations) {
-        const registeredEventIds = myParticipations.map(p => p.event_id);
         filtered = filtered.filter(e => registeredEventIds.includes(e.id));
       }
 
       // Apply My Events filter (dropdown) - 3 options
-      const currentUserId = currentUser?.id;
       if (myEventsFilter === 'only' && currentUserId) {
         // Show only events created by current user
         filtered = filtered.filter(e => e.organizer_id === currentUserId);
@@ -217,7 +238,7 @@ function EventsPage() {
     };
     
     applyFilter();
-  }, [allEvents, userRole, filter, myParticipations, statusFilter, eventTypeFilter, searchQuery, visibilityFilter, periodFilter, customStartDate, customEndDate, showMyRegistrations, myEventsFilter, registrationFilter, currentUser?.id]);
+  }, [allEvents, userRole, filter, myParticipations, myInvitations, statusFilter, eventTypeFilter, searchQuery, visibilityFilter, periodFilter, customStartDate, customEndDate, showMyRegistrations, myEventsFilter, registrationFilter, currentUser?.id, isAdmin]);
 
   const handleEventClick = useCallback((eventId) => {
     navigate(`/events/${eventId}`, { state: { fromEventsPage: true, filter } });

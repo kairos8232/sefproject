@@ -239,6 +239,7 @@ CREATE TABLE event_invitations (
   event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   invited_by UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE, -- Who sent the invitation
+  invitation_message TEXT, -- Optional message from organizer
   status VARCHAR(50) NOT NULL DEFAULT 'pending', -- 'pending', 'accepted', 'declined'
   invited_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   responded_at TIMESTAMP WITH TIME ZONE,
@@ -309,6 +310,7 @@ CREATE TABLE event_registration_responses (
   field_id UUID NOT NULL REFERENCES event_registration_fields(id) ON DELETE CASCADE,
   response_value TEXT, -- For text, textarea, number, email, phone, date - stored as text
   response_values JSONB, -- For checkbox (multiple selections) - array of strings
+  response_note TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(participation_id, field_id) -- One response per field per participation
@@ -665,7 +667,7 @@ INSERT INTO users (id, email, name, password, role, status, staff_id) VALUES
   ('11111111-1111-1111-1111-111111111111', 'john.student@student.edu', 'John Student', '$2a$10$g2ALFzfYf4jpTmp7bCIzd.5cael8S5xBTGOn8FEyda1Bnt/.ebzV2', 'student', 'active', 'S001'),
   ('22222222-2222-2222-2222-222222222222', 'admin@university.edu', 'System Administrator', '$2a$10$g2ALFzfYf4jpTmp7bCIzd.5cael8S5xBTGOn8FEyda1Bnt/.ebzV2', 'administrator', 'active', 'ADM001'),
   ('33333333-3333-3333-3333-333333333333', 'sarah.organizer@university.edu', 'Sarah Organizer', '$2a$10$g2ALFzfYf4jpTmp7bCIzd.5cael8S5xBTGOn8FEyda1Bnt/.ebzV2', 'event_organizer', 'active', 'EO001'),
-  ('44444444-4444-4444-4444-444444444444', 'blocked.user@student.edu', 'Blocked User', '$2a$10$g2ALFzfYf4jpTmp7bCIzd.5cael8S5xBTGOn8FEyda1Bnt/.ebzV2', 'student', 'blocked', 'S002'),
+  ('44444444-4444-4444-4444-444444444444', 'blocked.user@student.edu', 'Blocked User', '$2a$10$g2ALFzfYf4jpTmp7bCIzd.5cael8S5xBTGOn8FEyda1Bnt/.ebzV2', 'student', 'inactive', 'S002'),
   ('55555555-5555-5555-5555-555555555555', 'inactive.user@student.edu', 'Inactive User', '$2a$10$g2ALFzfYf4jpTmp7bCIzd.5cael8S5xBTGOn8FEyda1Bnt/.ebzV2', 'student', 'inactive', 'S003'),
   ('66666666-6666-6666-6666-666666666666', 'alice.wong@fci.edu', 'Dr. Alice Wong', '$2a$10$g2ALFzfYf4jpTmp7bCIzd.5cael8S5xBTGOn8FEyda1Bnt/.ebzV2', 'faculty_staff', 'active', 'FM001'),
   ('77777777-7777-7777-7777-777777777777', 'david.tan@fci.edu', 'Dr. David Tan', '$2a$10$g2ALFzfYf4jpTmp7bCIzd.5cael8S5xBTGOn8FEyda1Bnt/.ebzV2', 'faculty_staff', 'active', 'FM002'),
@@ -700,8 +702,8 @@ CREATE INDEX idx_users_faculty_id ON users(faculty_id);
 
 -- Update users with faculty assignments
 UPDATE users SET faculty_id = 'f1f1f1f1-f1f1-f1f1-f1f1-f1f1f1f1f1f1' WHERE id IN ('66666666-6666-6666-6666-666666666666', '77777777-7777-7777-7777-777777777777', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'ffffffff-ffff-ffff-ffff-ffffffffffff');
-UPDATE users SET faculty_id = 'f2f2f2f2-f2f2-f2f2-f2f2-f2f2f2f2f2f2' WHERE id IN ('88888888-8888-8888-8888-888888888888', 'cccccccc-cccc-cccc-cccc-cccccccccccc');
-UPDATE users SET faculty_id = 'f3f3f3f3-f3f3-f3f3-f3f3-f3f3f3f3f3f3' WHERE id IN ('99999999-9999-9999-9999-999999999999', 'dddddddd-dddd-dddd-dddd-dddddddddddd', '10101010-1010-1010-1010-101010101010');
+UPDATE users SET faculty_id = 'f2f2f2f2-f2f2-f2f2-f2f2-f2f2f2f2f2f2' WHERE id IN ('11111111-1111-1111-1111-111111111111', '88888888-8888-8888-8888-888888888888', 'cccccccc-cccc-cccc-cccc-cccccccccccc');
+UPDATE users SET faculty_id = 'f3f3f3f3-f3f3-f3f3-f3f3-f3f3f3f3f3f3' WHERE id IN ('99999999-9999-9999-9999-999999999999', 'dddddddd-dddd-dddd-dddd-dddddddddddd', '10101010-1010-1010-1010-101010101010', '30303030-3030-3030-3030-303030303030');
 UPDATE users SET faculty_id = 'f4f4f4f4-f4f4-f4f4-f4f4-f4f4f4f4f4f4' WHERE id IN ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', '20202020-2020-2020-2020-202020202020');
 
 -- Sample Venues Data (using explicit IDs and references)
@@ -2617,7 +2619,7 @@ VALUES (
   '33333333-3333-3333-3333-333333333333',
   'Annual Tech Summit 2026',
   'Multi-day technology conference with keynotes, workshops, and networking sessions requiring coordination across multiple venues and resources',
-  'public',
+  'campuswide',
   'conference',
   'upcoming',
   'open',
@@ -2901,6 +2903,399 @@ VALUES (
   'pending',
   CURRENT_TIMESTAMP - INTERVAL '5 days'
 );
+
+-- ========================================
+-- February 2026 Sample Data (Feb 1–15)
+-- Includes invitations, participation, custom form fields, and responses
+-- ========================================
+
+-- Events in early February
+INSERT INTO events (id, organizer_id, event_name, description, visibility, event_type, status, registration_status, expected_attendees, registration_limit, start_datetime, end_datetime, created_at)
+VALUES
+  (
+    'f2026000-0000-0000-0000-000000000001',
+    '33333333-3333-3333-3333-333333333333',
+    'February Open Day 2026',
+    'Campus-wide open day with talks and tours for prospective students.',
+    'campuswide',
+    'seminar',
+    'upcoming',
+    'open',
+    200,
+    250,
+    '2026-02-03 09:00:00+08',
+    '2026-02-03 16:30:00+08',
+    '2026-01-20 10:00:00+08'
+  ),
+  (
+    'f2026000-0000-0000-0000-000000000002',
+    '66666666-6666-6666-6666-666666666666',
+    'FCI Research Meetup (Invite Only)',
+    'Closed-door research sharing session for invited participants.',
+    'inviteonly',
+    'workshop',
+    'upcoming',
+    'open',
+    40,
+    50,
+    '2026-02-07 14:00:00+08',
+    '2026-02-07 17:30:00+08',
+    '2026-01-22 09:00:00+08'
+  ),
+  (
+    'f2026000-0000-0000-0000-000000000003',
+    'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    'Media Production Workshop',
+    'Hands-on media production workshop with equipment demos.',
+    'campuswide',
+    'workshop',
+    'upcoming',
+    'open',
+    60,
+    80,
+    '2026-02-12 10:00:00+08',
+    '2026-02-12 15:30:00+08',
+    '2026-01-25 11:30:00+08'
+  ),
+  (
+    'f2026000-0000-0000-0000-000000000004',
+    '33333333-3333-3333-3333-333333333333',
+    'Sarah Organizer February Bootcamp',
+    'Multi-day bootcamp led by Sarah Organizer from Feb 4–8.',
+    'campuswide',
+    'workshop',
+    'upcoming',
+    'open',
+    120,
+    150,
+    '2026-02-04 09:00:00+08',
+    '2026-02-08 17:00:00+08',
+    '2026-01-26 10:00:00+08'
+  );
+
+-- Venue booking for Sarah Organizer February Bootcamp
+INSERT INTO venue_bookings (id, event_id, venue_id, requester_user_id, requested_start_datetime, requested_end_datetime, approved_start_datetime, approved_end_datetime, setup_time, teardown_time, status, approved_user_id, approved_at, expected_attendees, remarks)
+VALUES (
+  'f2026b00-0000-0000-0000-000000000004',
+  'f2026000-0000-0000-0000-000000000004',
+  'b7a5e8f7-7777-7777-7777-777777777777',
+  '33333333-3333-3333-3333-333333333333',
+  '2026-02-04 09:00:00+08',
+  '2026-02-08 17:00:00+08',
+  '2026-02-04 09:00:00+08',
+  '2026-02-08 17:00:00+08',
+  60,
+  30,
+  'approved',
+  '66666666-6666-6666-6666-666666666666',
+  '2026-01-27 10:00:00+08',
+  120,
+  'Bootcamp sessions and hands-on labs'
+);
+
+-- Resource requests for Sarah Organizer February Bootcamp
+INSERT INTO resource_requests (id, event_id, venue_booking_id, resource_id, requester_user_id, requested_quantity, usage_start_datetime, usage_end_datetime, status, approved_by, approved_at, created_at)
+VALUES
+  (
+    'f2026e00-0000-0000-0000-000000000004',
+    'f2026000-0000-0000-0000-000000000004',
+    'f2026b00-0000-0000-0000-000000000004',
+    (SELECT id FROM resource_types WHERE code = 'PROJ-LCD' LIMIT 1),
+    '33333333-3333-3333-3333-333333333333',
+    2,
+    '2026-02-04 09:00:00+08',
+    '2026-02-08 17:00:00+08',
+    'approved',
+    '66666666-6666-6666-6666-666666666666',
+    '2026-01-27 12:00:00+08',
+    '2026-01-27 09:00:00+08'
+  ),
+  (
+    'f2026e00-0000-0000-0000-000000000005',
+    'f2026000-0000-0000-0000-000000000004',
+    'f2026b00-0000-0000-0000-000000000004',
+    (SELECT id FROM resource_types WHERE code = 'MIC-WL' LIMIT 1),
+    '33333333-3333-3333-3333-333333333333',
+    4,
+    '2026-02-04 09:00:00+08',
+    '2026-02-08 17:00:00+08',
+    'approved',
+    '66666666-6666-6666-6666-666666666666',
+    '2026-01-27 12:00:00+08',
+    '2026-01-27 09:00:00+08'
+  );
+
+-- Participants for Sarah Organizer February Bootcamp
+INSERT INTO event_participation (id, event_id, user_id, status, registered_at)
+VALUES (
+  'f2026d00-0000-0000-0000-000000000005',
+  'f2026000-0000-0000-0000-000000000004',
+  'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+  'registered',
+  '2026-01-28 10:00:00+08'
+);
+
+-- Custom registration fields for Sarah Organizer February Bootcamp
+INSERT INTO event_registration_fields (event_id, field_type, label, help_text, is_required, options, order_index)
+VALUES
+  (
+    'f2026000-0000-0000-0000-000000000004',
+    'dropdown',
+    'Experience Level',
+    'Select your current experience level',
+    true,
+    '["Beginner", "Intermediate", "Advanced"]'::jsonb,
+    0
+  ),
+  (
+    'f2026000-0000-0000-0000-000000000004',
+    'textarea',
+    'Learning Goals',
+    'What do you hope to learn from this bootcamp?',
+    false,
+    NULL,
+    1
+  );
+
+-- Responses to custom registration fields
+INSERT INTO event_registration_responses (participation_id, field_id, response_value, response_note)
+VALUES
+  (
+    'f2026d00-0000-0000-0000-000000000005',
+    (SELECT id FROM event_registration_fields WHERE event_id = 'f2026000-0000-0000-0000-000000000004' AND label = 'Experience Level' LIMIT 1),
+    'Intermediate',
+    NULL
+  ),
+  (
+    'f2026d00-0000-0000-0000-000000000005',
+    (SELECT id FROM event_registration_fields WHERE event_id = 'f2026000-0000-0000-0000-000000000004' AND label = 'Learning Goals' LIMIT 1),
+    'Build stronger fundamentals and complete a mini-project by the end.',
+    NULL
+  );
+
+-- Venue bookings for February events
+INSERT INTO venue_bookings (id, event_id, venue_id, requester_user_id, requested_start_datetime, requested_end_datetime, approved_start_datetime, approved_end_datetime, setup_time, teardown_time, status, approved_user_id, approved_at, expected_attendees, remarks)
+VALUES
+  (
+    'f2026b00-0000-0000-0000-000000000001',
+    'f2026000-0000-0000-0000-000000000001',
+    'b1a5e8f1-1111-1111-1111-111111111111',
+    '33333333-3333-3333-3333-333333333333',
+    '2026-02-03 09:00:00+08',
+    '2026-02-03 16:30:00+08',
+    '2026-02-03 09:00:00+08',
+    '2026-02-03 16:30:00+08',
+    45,
+    30,
+    'approved',
+    '66666666-6666-6666-6666-666666666666',
+    '2026-01-25 09:00:00+08',
+    200,
+    'Open day talks and guided tour briefing'
+  ),
+  (
+    'f2026b00-0000-0000-0000-000000000002',
+    'f2026000-0000-0000-0000-000000000002',
+    'b7a5e8f7-7777-7777-7777-777777777777',
+    '66666666-6666-6666-6666-666666666666',
+    '2026-02-07 14:00:00+08',
+    '2026-02-07 17:30:00+08',
+    '2026-02-07 14:00:00+08',
+    '2026-02-07 17:30:00+08',
+    30,
+    20,
+    'approved',
+    '77777777-7777-7777-7777-777777777777',
+    '2026-01-26 13:00:00+08',
+    40,
+    'Invite-only research sharing session'
+  ),
+  (
+    'f2026b00-0000-0000-0000-000000000003',
+    'f2026000-0000-0000-0000-000000000003',
+    'b5a5e8f5-5555-5555-5555-555555555555',
+    'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    '2026-02-12 10:00:00+08',
+    '2026-02-12 15:30:00+08',
+    NULL,
+    NULL,
+    30,
+    15,
+    'pending',
+    NULL,
+    NULL,
+    60,
+    'Media production demo and hands-on practice'
+  );
+
+-- Invitations for the invite-only research meetup
+INSERT INTO event_invitations (id, event_id, user_id, invited_by, invitation_message, status, invited_at, responded_at)
+VALUES
+  (
+    'f2026c00-0000-0000-0000-000000000001',
+    'f2026000-0000-0000-0000-000000000002',
+    'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+    '66666666-6666-6666-6666-666666666666',
+    'You are invited to share your research progress and join the discussion.',
+    'accepted',
+    '2026-01-24 10:00:00+08',
+    '2026-01-26 09:30:00+08'
+  ),
+  (
+    'f2026c00-0000-0000-0000-000000000002',
+    'f2026000-0000-0000-0000-000000000002',
+    'cccccccc-cccc-cccc-cccc-cccccccccccc',
+    '66666666-6666-6666-6666-666666666666',
+    'Limited seats available. Please RSVP by Feb 1.',
+    'pending',
+    '2026-01-24 10:00:00+08',
+    NULL
+  ),
+  (
+    'f2026c00-0000-0000-0000-000000000003',
+    'f2026000-0000-0000-0000-000000000002',
+    'ffffffff-ffff-ffff-ffff-ffffffffffff',
+    '66666666-6666-6666-6666-666666666666',
+    'Please bring a short abstract of your current project.',
+    'declined',
+    '2026-01-24 10:00:00+08',
+    '2026-01-27 15:00:00+08'
+  );
+
+-- Participants for February events
+INSERT INTO event_participation (id, event_id, user_id, status, registered_at, check_in_datetime)
+VALUES
+  (
+    'f2026d00-0000-0000-0000-000000000001',
+    'f2026000-0000-0000-0000-000000000001',
+    '11111111-1111-1111-1111-111111111111',
+    'registered',
+    '2026-01-28 09:00:00+08',
+    NULL
+  ),
+  (
+    'f2026d00-0000-0000-0000-000000000002',
+    'f2026000-0000-0000-0000-000000000001',
+    'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+    'registered',
+    '2026-01-29 10:00:00+08',
+    NULL
+  ),
+  (
+    'f2026d00-0000-0000-0000-000000000003',
+    'f2026000-0000-0000-0000-000000000002',
+    'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+    'attended',
+    '2026-01-26 11:00:00+08',
+    '2026-02-07 13:50:00+08'
+  ),
+  (
+    'f2026d00-0000-0000-0000-000000000004',
+    'f2026000-0000-0000-0000-000000000003',
+    'dddddddd-dddd-dddd-dddd-dddddddddddd',
+    'registered',
+    '2026-01-30 14:00:00+08',
+    NULL
+  );
+
+-- Custom registration fields for the invite-only meetup
+INSERT INTO event_registration_fields (event_id, field_type, label, help_text, is_required, options, order_index)
+VALUES
+  (
+    'f2026000-0000-0000-0000-000000000002',
+    'text',
+    'Research Topic',
+    'Brief title of your current research focus',
+    true,
+    NULL,
+    0
+  ),
+  (
+    'f2026000-0000-0000-0000-000000000002',
+    'dropdown',
+    'Session Preference',
+    'Choose your preferred discussion session',
+    true,
+    '["AI & ML", "Cybersecurity", "Data Systems", "Software Engineering"]'::jsonb,
+    1
+  ),
+  (
+    'f2026000-0000-0000-0000-000000000002',
+    'textarea',
+    'Discussion Goals',
+    'What do you want feedback on?',
+    false,
+    NULL,
+    2
+  );
+
+-- Responses to custom registration fields
+INSERT INTO event_registration_responses (participation_id, field_id, response_value, response_note)
+VALUES
+  (
+    'f2026d00-0000-0000-0000-000000000003',
+    (SELECT id FROM event_registration_fields WHERE event_id = 'f2026000-0000-0000-0000-000000000002' AND label = 'Research Topic' LIMIT 1),
+    'Edge AI for IoT Devices',
+    'Looking for feedback on deployment constraints'
+  ),
+  (
+    'f2026d00-0000-0000-0000-000000000003',
+    (SELECT id FROM event_registration_fields WHERE event_id = 'f2026000-0000-0000-0000-000000000002' AND label = 'Session Preference' LIMIT 1),
+    'AI & ML',
+    NULL
+  ),
+  (
+    'f2026d00-0000-0000-0000-000000000003',
+    (SELECT id FROM event_registration_fields WHERE event_id = 'f2026000-0000-0000-0000-000000000002' AND label = 'Discussion Goals' LIMIT 1),
+    'Need advice on evaluation metrics and dataset selection.',
+    NULL
+  );
+
+-- Resource requests for February events
+INSERT INTO resource_requests (id, event_id, venue_booking_id, resource_id, requester_user_id, requested_quantity, usage_start_datetime, usage_end_datetime, status, approved_by, approved_at, created_at)
+VALUES
+  (
+    'f2026e00-0000-0000-0000-000000000001',
+    'f2026000-0000-0000-0000-000000000001',
+    'f2026b00-0000-0000-0000-000000000001',
+    (SELECT id FROM resource_types WHERE code = 'PROJ-LCD' LIMIT 1),
+    '33333333-3333-3333-3333-333333333333',
+    2,
+    '2026-02-03 09:00:00+08',
+    '2026-02-03 16:30:00+08',
+    'approved',
+    '66666666-6666-6666-6666-666666666666',
+    '2026-01-26 09:30:00+08',
+    '2026-01-25 14:00:00+08'
+  ),
+  (
+    'f2026e00-0000-0000-0000-000000000002',
+    'f2026000-0000-0000-0000-000000000002',
+    'f2026b00-0000-0000-0000-000000000002',
+    (SELECT id FROM resource_types WHERE code = 'MIC-WL' LIMIT 1),
+    '66666666-6666-6666-6666-666666666666',
+    4,
+    '2026-02-07 14:00:00+08',
+    '2026-02-07 17:30:00+08',
+    'approved',
+    '77777777-7777-7777-7777-777777777777',
+    '2026-01-26 12:00:00+08',
+    '2026-01-25 10:00:00+08'
+  ),
+  (
+    'f2026e00-0000-0000-0000-000000000003',
+    'f2026000-0000-0000-0000-000000000003',
+    'f2026b00-0000-0000-0000-000000000003',
+    (SELECT id FROM resource_types WHERE code = 'CHAIR-FOLD' LIMIT 1),
+    'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    60,
+    '2026-02-12 10:00:00+08',
+    '2026-02-12 15:30:00+08',
+    'pending',
+    NULL,
+    NULL,
+    '2026-01-27 09:00:00+08'
+  );
 
 -- ========================================
 -- End of Sample Data

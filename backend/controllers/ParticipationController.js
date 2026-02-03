@@ -1,5 +1,6 @@
 const Participation = require('../models/Participation');
 const Event = require('../models/Event');
+const EventInvitation = require('../models/EventInvitation');
 
 class ParticipationController {
   // Register for an event
@@ -131,7 +132,7 @@ class ParticipationController {
     try {
       const { eventId } = req.params;
       const userId = req.user.userId;
-      const registeredCount = await Participation.getEventParticipationCount(eventId, 'registered');
+      let registeredCount = await Participation.getEventParticipationCount(eventId, 'registered');
 
       // Get event with booking info for capacity
       const event = await Event.getById(eventId);
@@ -149,6 +150,12 @@ class ParticipationController {
         }
       }
       
+      // For invite-only events, count accepted invitations as participants
+      if (event?.visibility === 'inviteonly') {
+        const acceptedCount = await EventInvitation.getCountByStatus(eventId, 'accepted');
+        registeredCount = acceptedCount;
+      }
+
       // Get user's participation status
       const participation = await Participation.getUserEventParticipation(eventId, userId);
       const isRegistered = participation && participation.status === 'registered';

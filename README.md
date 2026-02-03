@@ -56,14 +56,15 @@ If you're joining the team, you need to decrypt the environment files:
 1. Create a new project at [Supabase](https://supabase.com)
 
 2. Go to **SQL Editor** and run the entire `database/schema.sql` file
-   - This creates all tables: users, sessions, faculties, venues, events, venue_bookings
-   - Includes sample data for testing
+   - This creates all tables (users, sessions, faculties, venues, events, venue_bookings, event_invitations, event_participation, event_registration_fields/responses, resource_types/requests, etc.)
+   - Includes sample data for testing (events, invitations, participations, custom forms, resources)
 
 3. The schema automatically handles:
    - Row Level Security (RLS) policies
    - Indexes for performance
    - Sample users with different roles
-   - Sample events and venue bookings
+   - Sample events, venue bookings, resource requests
+   - Sample invitations, participations, and custom registration forms
 
 ### Step 2: Backend Setup
 
@@ -125,123 +126,59 @@ Browser opens at http://localhost:3000
 
 All accounts use password: **password123**
 
-### By Role:
-
-**👨‍🎓 Students:**
-- `john.student@student.edu` (no faculty)
-- `emily.tan@student.edu` (Faculty of Computing and Informatics)
-- `michael.kumar@student.edu` (Faculty of Management)
-- `lisa.chong@student.edu` (Faculty of Business)
-- `david.lim@student.edu` (Faculty of Applied Communication)
-
-**🎪 Event Organizers:**
-- `sarah.organizer@university.edu`
-
-**👔 Faculty Staff:**
-- `alice.wong@fci.edu` (Faculty of Computing and Informatics)
-- `robert.chen@fom.edu` (Faculty of Management)
-- `maria.garcia@fob.edu` (Faculty of Business)
-- `james.lee@fac.edu` (Faculty of Applied Communication)
-
-**🔑 Administrators:**
-- `admin@university.edu`
-
-**⚠️ Special Status (for testing errors):**
-- `blocked.user@student.edu` - Account blocked
-- `inactive.user@student.edu` - Account inactive
-
-## 📁 Project Structure
-
-```
-sefproject/
-├── backend/
-│   ├── controllers/
-│   │   ├── AuthController.js      # Login, logout, session management
-│   │   └── EventController.js     # Event browsing
-│   ├── models/
-│   │   ├── User.js                # User database operations
-│   │   ├── Session.js             # Session management
-│   │   └── Event.js               # Event queries
-│   ├── routes/
-│   │   ├── authRoutes.js
-│   │   └── eventRoutes.js
-│   └── server.js
-│
-├── frontend/
-│   ├── src/
-│   │   ├── pages/
-│   │   │   ├── LoginPage.js       # Login interface
-│   │   │   ├── HomePage.js        # Dashboard
-│   │   │   ├── EventsPage.js      # Browse events with filters
-│   │   │   └── EventDetailsPage.js # Event details
-│   │   ├── services/
-│   │   │   ├── authService.js     # Auth API calls
-│   │   │   └── eventService.js    # Event API calls
-│   │   └── App.js
-│
-└── database/
-    └── schema.sql                 # Complete database schema
-```
+| Email | Name | Role | Faculty | Staff ID |
+|-------|------|------|---------|----------|
+| `john.student@student.edu` | John Student | Student | Management | S001 |
+| `emily.tan@student.edu` | Emily Tan | Student | Computing and Informatics | S004 |
+| `michael.kumar@student.edu` | Michael Kumar | Student | Management | S005 |
+| `lisa.chong@student.edu` | Lisa Chong | Student | Business | S006 |
+| `david.lim@student.edu` | David Lim | Student | Applied Communication | S007 |
+| `amy.chen@student.edu` | Amy Chen | Student | Computing and Informatics | S008 |
+| `ryan.tan@student.edu` | Ryan Tan | Student | Business | S009 |
+| `olivia.lee@student.edu` | Olivia Lee | Student | Applied Communication | S010 |
+| `kevin.wong@student.edu` | Kevin Wong | Student | Business | S011 |
+| `sarah.organizer@university.edu` | Sarah Organizer | Event Organizer | *(no faculty)* | EO001 |
+| `alice.wong@fci.edu` | Dr. Alice Wong | Faculty Staff | Computing and Informatics | FM001 |
+| `robert.chen@fom.edu` | Dr. Robert Chen | Faculty Staff | Management | FM003 |
+| `maria.garcia@fob.edu` | Dr. Maria Garcia | Faculty Staff | Business | FM004 |
+| `james.lee@fac.edu` | Dr. James Lee | Faculty Staff | Applied Communication | FM005 |
+| `admin@university.edu` | System Administrator | Administrator | *(no faculty)* | ADM001 |
+| `blocked.user@student.edu` | Blocked User | Student | *(inactive)* | S002 |
+| `inactive.user@student.edu` | Inactive User | Student | *(inactive)* | S003 |
 
 ## 🎯 Features Implemented
 
-- ✅ **UC-01**: User Login with role-based access
-- ✅ **UC-02**: User Logout with session cleanup
-- ✅ **UC-03**: Browse Events with filtering (status, visibility)
-- ✅ Session expiration handling
-- ✅ Protected routes
-- ✅ Database schema with 6 tables and relationships
+### Core Features
+- ✅ **User Authentication**: Login/logout with JWT and bcrypt, role-based access control
+- ✅ **Session Management**: Sliding window sessions (15-min expiry, auto-extends on activity)
+- ✅ **Event Management**: Create, browse, edit, cancel events with multiple types and statuses
+- ✅ **Event Visibility Rules**: Campus-wide, faculty-only, and invite-only access control
+- ✅ **Event Invitations**: Send, accept, decline invitations with messages and response notes
+- ✅ **Participant Registration**: Track registrations with capacity limits and check-in status
+- ✅ **Custom Registration Forms**: Add custom fields to events and collect participant responses
+- ✅ **Venue Booking Management**: Request, approve, decline venue bookings with time slots
+- ✅ **Resource Requests**: Request equipment/resources for events (projectors, mics, etc.)
+- ✅ **Event Feedback**: Faculty staff can provide feedback on completed events
+- ✅ **Profile Management**: Users can edit profile information and view their details
+- ✅ **Faculty Management**: Organize users by faculties/departments
 
-## 🎫 Event Visibility Rules
+### 🎫 Event Visibility Rules
 
-The system has three visibility levels that control who can see and access events:
+The system implements three visibility levels:
 
-### 🌐 Campus-wide (`campuswide`)
-**Who can see:** All logged-in users regardless of role or faculty
-- Students from any faculty
-- Event organizers
-- Faculty staff
-- Administrators
+| Visibility | Who Can See | Access Rule | Use Cases |
+|------------|-------------|-------------|-----------|
+| **🌐 Campus-wide** | All logged-in users | No restrictions | Sports day, career fairs, orientation, general campus events |
+| **🏫 Faculty Only** | Same faculty members only + admins | `user.faculty_id === event_organizer.faculty_id` | Department workshops, faculty seminars, internal meetings |
+| **💌 Invite Only** | Invited users only + organizer + admins | Must have accepted invitation record | Private meetings, VIP events, exclusive networking |
 
-**Use cases:** General campus events, sports day, orientation, career fairs
-
----
-
-### 🏫 Faculty Only (`facultyonly`)
-**Who can see:** Only users belonging to the **same faculty** as the event organizer
-- If event organizer is from Faculty of Computing and Informatics (FCI):
-  - ✅ Students with `faculty_id = FCI`
-  - ✅ Faculty staff with `faculty_id = FCI`
-  - ❌ Students/managers from other faculties
-
-**Access rule:** `user.faculty_id === event_organizer.faculty_id`
-
-**Use cases:** Faculty-specific workshops, department meetings, internal seminars
-
-**Note:** Event organizers and administrators can see all faculty-only events for management purposes
-
----
-
-### 💌 Invite Only (`inviteonly`)
-**Who can see:** Only specifically invited users (requires `event_invitations` table)
-- Event organizer explicitly invites users by their user ID
-- Invitation record must exist: `event_invitations.event_id = event.id AND event_invitations.user_id = current_user.id`
-
-**Access rule:** Must have invitation record in database
-
-**Use cases:** Private meetings, VIP alumni meetups, exclusive networking events, closed workshops
-
-**Special access:** Event organizer and administrators can always see their own invite-only events
-
----
-
-### 📋 Summary Table
-
-| Visibility | Students | Event Organizers | Faculty Staff | Administrators |
-|------------|----------|------------------|------------------|----------------|
-| Campus-wide | ✅ All | ✅ All | ✅ All | ✅ All |
-| Faculty Only | ✅ Same faculty only | ✅ Same faculty + view all | ✅ Same faculty only | ✅ All |
-| Invite Only | ✅ If invited | ✅ Own events + if invited | ✅ If invited | ✅ All |
+**Key Rules:**
+- Event organizers can see all their own events regardless of visibility
+- Administrators can see all events across all visibility levels
+- Faculty-only events are visible only to users in the same faculty as the organizer
+- Invite-only events require an accepted invitation to appear in event listings
+- Participant counts for invite-only events reflect accepted invitations only
+- Event organizers are automatically registered as participants when creating events
 
 ## 👥 Team Collaboration (For Team Lead)
 
