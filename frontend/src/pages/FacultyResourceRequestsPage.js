@@ -72,8 +72,12 @@ const FacultyResourceRequestsPage = () => {
 
     try {
       setProcessing(true);
-      await resourceRequestService.approve(selectedRequest.id, approvalNotes || null);
-      showSuccess('Resource request approved successfully');
+      // If selectedRequest is an array (group), approve all
+      const requests = Array.isArray(selectedRequest) ? selectedRequest : [selectedRequest];
+      for (const req of requests) {
+        await resourceRequestService.approve(req.id, approvalNotes || null);
+      }
+      showSuccess(`${requests.length} resource request(s) approved successfully`);
       closeModal();
       loadRequests();
     } catch (err) {
@@ -96,8 +100,12 @@ const FacultyResourceRequestsPage = () => {
 
     try {
       setProcessing(true);
-      await resourceRequestService.reject(selectedRequest.id, rejectionReason);
-      showSuccess('Resource request rejected');
+      // If selectedRequest is an array (group), reject all
+      const requests = Array.isArray(selectedRequest) ? selectedRequest : [selectedRequest];
+      for (const req of requests) {
+        await resourceRequestService.reject(req.id, rejectionReason);
+      }
+      showSuccess(`${requests.length} resource request(s) rejected`);
       closeModal();
       loadRequests();
     } catch (err) {
@@ -127,6 +135,10 @@ const FacultyResourceRequestsPage = () => {
     setIsRejecting(false);
     setApprovalNotes('');
     setRejectionReason('');
+  };
+
+  const handleViewDetails = (request) => {
+    navigate(`/resource-requests/${request[0].id}`, { state: { fromResourceRequests: true } });
   };
 
   const getStatusBadgeClass = (status) => {
@@ -222,7 +234,7 @@ const FacultyResourceRequestsPage = () => {
         <div className="frrp-no-data">No resource requests found.</div>
       ) : (
         <>
-          <div className="frrp-count">
+          <div className="fbrp-count">
             Showing {groupedRequests.length} group{groupedRequests.length !== 1 ? 's' : ''}
           </div>
           <div className="frrp-table-container">
@@ -299,32 +311,33 @@ const FacultyResourceRequestsPage = () => {
                           {groupStatus}
                         </span>
                       </td>
-                      <td>
-                        <div className="frrp-actions-list">
-                          {group.map(request => (
-                            <div key={request.id} className="frrp-action-row">
-                              {request.status === 'pending' ? (
-                                <div className="frrp-action-buttons">
-                                  <button
-                                    onClick={() => openApproveModal(request)}
-                                    className="frrp-btn-approve"
-                                    title={`Approve ${request.resource?.name || 'request'}`}
-                                  >
-                                    ✅
-                                  </button>
-                                  <button
-                                    onClick={() => openRejectModal(request)}
-                                    className="frrp-btn-reject"
-                                    title={`Reject ${request.resource?.name || 'request'}`}
-                                  >
-                                    ❌
-                                  </button>
-                                </div>
-                              ) : (
-                                <span className="frrp-action-placeholder">—</span>
-                              )}
-                            </div>
-                          ))}
+                      <td className="frrp-actions-cell">
+                        <div className="frrp-actions-row">
+                          <button
+                            className="frrp-action-button frrp-view-button"
+                            onClick={() => handleViewDetails(group)}
+                            title="View Request Details"
+                          >
+                            👁️
+                          </button>
+                          {groupStatus === 'pending' && (
+                            <>
+                              <button
+                                className="frrp-action-button frrp-approve-button"
+                                onClick={() => openApproveModal(group)}
+                                title={`Approve all resources in this group`}
+                              >
+                                ✅
+                              </button>
+                              <button
+                                className="frrp-action-button frrp-reject-button"
+                                onClick={() => openRejectModal(group)}
+                                title={`Reject all resources in this group`}
+                              >
+                                ❌
+                              </button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -347,10 +360,25 @@ const FacultyResourceRequestsPage = () => {
 
             <div className="frrp-modal-content">
               <div className="frrp-modal-info">
-                <p><strong>Event:</strong> {selectedRequest.event?.event_name}</p>
-                <p><strong>Resource:</strong> {selectedRequest.resource?.name} ({selectedRequest.resource?.code})</p>
-                <p><strong>Quantity:</strong> {selectedRequest.requested_quantity} {selectedRequest.resource?.unit}</p>
-                <p><strong>Requester:</strong> {selectedRequest.requester?.name}</p>
+                <p><strong>Event:</strong> {Array.isArray(selectedRequest) ? selectedRequest[0]?.event?.event_name : selectedRequest?.event?.event_name}</p>
+                {Array.isArray(selectedRequest) ? (
+                  <>
+                    <p><strong>Resources in this group:</strong></p>
+                    <ul style={{ marginLeft: '20px' }}>
+                      {selectedRequest.map((req, idx) => (
+                        <li key={req.id}>
+                          {idx + 1}. {req.resource?.name} ({req.resource?.code}) - {req.requested_quantity} {req.resource?.unit}
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                ) : (
+                  <>
+                    <p><strong>Resource:</strong> {selectedRequest?.resource?.name} ({selectedRequest?.resource?.code})</p>
+                    <p><strong>Quantity:</strong> {selectedRequest?.requested_quantity} {selectedRequest?.resource?.unit}</p>
+                  </>
+                )}
+                <p><strong>Requester:</strong> {Array.isArray(selectedRequest) ? selectedRequest[0]?.requester?.name : selectedRequest?.requester?.name}</p>
               </div>
 
               {isRejecting ? (

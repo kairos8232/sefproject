@@ -154,6 +154,48 @@
   gap: 20px;
 }
 
+/* Venue List */
+.vbd-venue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.vbd-venue-row {
+  display: flex;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+  min-height: 60px;
+  align-items: center;
+}
+
+.vbd-venue-row:last-child {
+  border-bottom: none;
+}
+
+.vbd-venue-info {
+  flex: 1;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.vbd-venue-name {
+  font-weight: 600;
+  color: #333;
+  font-size: 15px;
+}
+
+.vbd-venue-code {
+  background-color: #e7f3ff;
+  color: #0066cc;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 .vbd-detail-item {
   display: flex;
   flex-direction: column;

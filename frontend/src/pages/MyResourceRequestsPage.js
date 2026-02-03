@@ -363,8 +363,8 @@ function MyResourceRequestsPage() {
         </div>
       ) : (
         <>
-          <div className="mrr-requests-count">
-            Showing {groupedRequests.length} package{groupedRequests.length !== 1 ? 's' : ''}
+          <div className="fbrp-count">
+            Showing {groupedRequests.length} group{groupedRequests.length !== 1 ? 's' : ''}
           </div>
           <div className="mrr-requests-table-container">
             <table className="mrr-requests-table">
@@ -372,6 +372,7 @@ function MyResourceRequestsPage() {
                 <tr>
                   <th>Event</th>
                   <th>Resources</th>
+                  <th>Quantity</th>
                   <th>Date & Time</th>
                   <th>Status</th>
                   <th>Actions</th>
@@ -395,18 +396,26 @@ function MyResourceRequestsPage() {
                           : first.venue_booking?.venue || 'Unknown Venue'}
                       </div>
                     </td>
-                    <td className="mrr-resource-cell">
+                    <td className="mrr-resources-cell">
                       <div className="mrr-resource-list">
                         {group.map((request, idx) => (
                           <div key={request.id} className="mrr-resource-row">
-                            <div>
-                              <div className="mrr-resource-name">{idx + 1}. {request.resource?.name}</div>
-                              <span className="mrr-resource-category">{getCategoryLabel(request.resource?.category)}</span>
-                              <div className="mrr-resource-qty"><strong>{request.requested_quantity}</strong> {typeof request.resource?.unit === 'object' ? request.resource?.unit?.name || 'units' : request.resource?.unit || 'units'}</div>
+                            <div className="mrr-resource-info">
+                              <div>
+                                <div className="mrr-resource-name">{idx + 1}. {request.resource?.name}</div>
+                                <div className="mrr-resource-code">{request.resource?.code || 'N/A'}</div>
+                              </div>
                             </div>
-                            <span className={`mrr-status-badge ${getStatusBadgeClass(request.status)}`}>
-                              {request.status}
-                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="mrr-quantity-cell">
+                      <div className="mrr-quantity-list">
+                        {group.map((request) => (
+                          <div key={request.id} className="mrr-quantity-row">
+                            <strong>{request.requested_quantity}</strong>
+                            <span>{typeof request.resource?.unit === 'object' ? request.resource?.unit?.name || 'units' : request.resource?.unit || 'units'}</span>
                           </div>
                         ))}
                       </div>

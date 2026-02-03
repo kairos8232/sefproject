@@ -290,67 +290,109 @@ class Event {
   // Get events with venue bookings in a specific faculty
   static async getFacultyEvents(facultyId, filters = {}) {
     try {
+      // First, get all venues for this faculty
+      const { data: venues, error: venueError } = await supabase
+        .from('venues')
+        .select('id')
+        .eq('faculty_id', facultyId);
+
+      if (venueError) throw venueError;
+      if (!venues || venues.length === 0) {
+        return [];
+      }
+
+      const venueIds = venues.map(v => v.id);
+
+      // Determine which booking statuses to filter by
+      let bookingStatuses = ['approved']; // Default: only approved
+      if (filters.booking_status) {
+        bookingStatuses = [filters.booking_status]; // Override with specific status
+      }
+
       let query = supabase
-        .from('events')
+        .from('venue_bookings')
         .select(`
-          *,
-          organizer:organizer_id (
+          event_id,
+          id,
+          status,
+          requested_start_datetime,
+          requested_end_datetime,
+          approved_start_datetime,
+          approved_end_datetime,
+          setup_time,
+          teardown_time,
+          expected_attendees,
+          venue:venue_id (
             id,
-            email,
+            code,
             name,
-            role
+            location,
+            capacity,
+            faculty_id
           ),
-          venue_bookings!inner (
-            id,
-            status,
-            requested_start_datetime,
-            requested_end_datetime,
-            approved_start_datetime,
-            approved_end_datetime,
-            setup_time,
-            teardown_time,
-            expected_attendees,
-            venue:venue_id (
+          event:event_id (
+            *,
+            organizer:organizer_id (
               id,
-              code,
+              email,
               name,
-              location,
-              capacity,
-              faculty_id
+              role
             )
           )
         `)
-        .eq('venue_bookings.venue.faculty_id', facultyId);
+        .in('venue_id', venueIds)
+        .in('status', bookingStatuses);
 
       // Filter by event status
       if (filters.status) {
-        query = query.eq('status', filters.status);
+        query = query.eq('event.status', filters.status);
       }
 
       // Filter by venue
       if (filters.venue_id) {
-        query = query.eq('venue_bookings.venue_id', filters.venue_id);
-      }
-
-      // Filter by booking status
-      if (filters.booking_status) {
-        query = query.eq('venue_bookings.status', filters.booking_status);
+        query = query.eq('venue_id', filters.venue_id);
       }
 
       // Filter by date range
       if (filters.start_date) {
-        query = query.gte('start_datetime', filters.start_date);
+        query = query.gte('event.start_datetime', filters.start_date);
       }
       if (filters.end_date) {
-        query = query.lte('start_datetime', filters.end_date);
+        query = query.lte('event.start_datetime', filters.end_date);
       }
 
-      query = query.order('start_datetime', { ascending: false });
+      query = query.order('requested_start_datetime', { ascending: false });
 
       const { data, error } = await query;
 
       if (error) throw error;
-      return data || [];
+      
+      // Transform the response to return events with venue_bookings
+      const events = {};
+      (data || []).forEach(booking => {
+        const eventId = booking.event_id;
+        if (!events[eventId]) {
+          events[eventId] = {
+            ...booking.event,
+            venue_bookings: []
+          };
+        }
+        const bookingWithVenue = {
+          id: booking.id,
+          status: booking.status,
+          requested_start_datetime: booking.requested_start_datetime,
+          requested_end_datetime: booking.requested_end_datetime,
+          approved_start_datetime: booking.approved_start_datetime,
+          approved_end_datetime: booking.approved_end_datetime,
+          setup_time: booking.setup_time,
+          teardown_time: booking.teardown_time,
+          expected_attendees: booking.expected_attendees,
+          venue: booking.venue
+        };
+        events[eventId].venue_bookings.push(bookingWithVenue);
+      });
+      
+      return Object.values(events);
     } catch (error) {
       console.error('Error fetching faculty events:', error);
       throw error;
@@ -412,12 +454,23 @@ class Event {
         throw eventError;
       }
 
-      // Verify the event is in this faculty's venues
+      if (!event) {
+        console.error('Event not found:', eventId);
+        return null;
+      }
+
+      // Verify the event has an APPROVED booking in this faculty's venues
       const hasFacultyVenue = event.venue_bookings?.some(
-        booking => booking.venue?.faculty_id === facultyId
+        booking => booking.venue?.faculty_id === facultyId && booking.status === 'approved'
       );
 
       if (!hasFacultyVenue) {
+        console.error(`Event ${eventId} has no approved bookings in faculty ${facultyId}`);
+        console.error('Venue bookings:', event.venue_bookings?.map(b => ({
+          id: b.id,
+          status: b.status,
+          venue_faculty_id: b.venue?.faculty_id
+        })));
         return null;
       }
 

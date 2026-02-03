@@ -32,6 +32,14 @@ function EventsPage() {
 
   const userRole = currentUser?.role;
 
+  // Helper function to format venue names
+  const getVenueDisplay = (event) => {
+    const approvedBookings = event.venue_bookings?.filter(b => b.status === 'approved') || [];
+    if (approvedBookings.length === 0) return 'TBA';
+    if (approvedBookings.length === 1) return approvedBookings[0].venue?.name || 'TBA';
+    return `${approvedBookings[0].venue?.name || 'TBA'}, and more`;
+  };
+
   const loadEvents = useCallback(async () => {
     try {
       setLoading(true);
@@ -388,6 +396,9 @@ function EventsPage() {
                 <p>
                   <strong>Start:</strong> {formatDateTime(event.start_datetime)}
                   <span className={`ep-event-status-badge ${event.status}`}>{event.status}</span>
+                </p>
+                <p>
+                  <strong>Venue:</strong> {getVenueDisplay(event)}
                 </p>
                 <p>
                   <strong>Visibility:</strong> {formatVisibility(event.visibility, event)}

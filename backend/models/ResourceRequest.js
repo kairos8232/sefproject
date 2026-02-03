@@ -11,7 +11,7 @@ class ResourceRequest {
           event:events(id, event_name, start_datetime, end_datetime, organizer_id),
           venue_booking:venue_bookings(id, venue:venues(name, code)),
           resource:resource_types(id, name, code, unit, category:resource_categories(name)),
-          requester:users!requester_user_id(id, name, email),
+          requester:users!requester_user_id(id, name, email, role),
           approver:users!approved_by(id, name, email)
         `)
         .order('created_at', { ascending: false });

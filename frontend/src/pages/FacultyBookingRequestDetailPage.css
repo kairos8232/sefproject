@@ -375,6 +375,7 @@
 
 .fbrd-btn-approve,
 .fbrd-btn-reject {
+  width: 100%;
   padding: 12px 30px;
   border: none;
   border-radius: 8px;

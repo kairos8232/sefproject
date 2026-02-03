@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { authFetch } from '../services/apiClient';
-import { toDateTimeLocalInput } from '../utils/dateUtils';
 import { useToast } from '../contexts/ToastContext';
 import './FacultyBookingRequestDetailPage.css';
 
@@ -18,9 +17,6 @@ const FacultyBookingRequestDetailPage = () => {
   const [isRejecting, setIsRejecting] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
   const [approvalNotes, setApprovalNotes] = useState('');
-  const [adjustTime, setAdjustTime] = useState(false);
-  const [adjustedStartTime, setAdjustedStartTime] = useState('');
-  const [adjustedEndTime, setAdjustedEndTime] = useState('');
 
   const fetchBookingDetails = useCallback(async () => {
     document.title = 'Booking Request Details - CESMS';
@@ -47,8 +43,6 @@ const FacultyBookingRequestDetailPage = () => {
       }
 
       setBooking(data.booking);
-      setAdjustedStartTime(data.booking.requested_start_datetime);
-      setAdjustedEndTime(data.booking.requested_end_datetime);
     } catch (err) {
       setError(err.message);
       toast.showError(err.message);
@@ -64,22 +58,12 @@ const FacultyBookingRequestDetailPage = () => {
   const handleApprove = async (e) => {
     e.preventDefault();
     
-    if (adjustTime && (!adjustedStartTime || !adjustedEndTime)) {
-      toast.showError('Please provide adjusted start and end times');
-      return;
-    }
-
     try {
       setProcessing(true);
       setError(null);
       const requestBody = {
         approval_notes: approvalNotes || undefined
       };
-
-      if (adjustTime) {
-        requestBody.adjusted_start_datetime = adjustedStartTime;
-        requestBody.adjusted_end_datetime = adjustedEndTime;
-      }
 
       const response = await authFetch(`/venue-bookings/${id}/approve-request`, {
         method: 'POST',
@@ -434,41 +418,6 @@ const FacultyBookingRequestDetailPage = () => {
               <form onSubmit={handleApprove} className="fbrd-action-form">
                 <h3>Approve Booking Request</h3>
                 
-                <div className="fbrd-form-group checkbox-group">
-                  <label className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={adjustTime}
-                      onChange={(e) => setAdjustTime(e.target.checked)}
-                    /> Adjust requested time
-                  </label>
-                </div>
-
-                {adjustTime && (
-                  <div className="fbrd-time-adjustment">
-                    <div className="fbrd-form-row">
-                      <div className="fbrd-form-group">
-                        <label>Adjusted Start Date & Time *</label>
-                        <input
-                          type="datetime-local"
-                          value={toDateTimeLocalInput(adjustedStartTime)}
-                          onChange={(e) => setAdjustedStartTime(e.target.value)}
-                          required={adjustTime}
-                        />
-                      </div>
-                      <div className="fbrd-form-group">
-                        <label>Adjusted End Date & Time *</label>
-                        <input
-                          type="datetime-local"
-                          value={toDateTimeLocalInput(adjustedEndTime)}
-                          onChange={(e) => setAdjustedEndTime(e.target.value)}
-                          required={adjustTime}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
                 <div className="fbrd-form-group">
                   <label>Approval Notes (Optional)</label>
                   <textarea

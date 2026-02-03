@@ -138,6 +138,15 @@
   border-color: #667eea;
 }
 
+/* Count */
+.fbrp-count {
+  text-align: right;
+  margin-bottom: 15px;
+  color: #666;
+  font-size: 14px;
+  font-weight: 500;
+}
+
 /* Table Container */
 .fbrp-bookings-table-container {
   background: white;
@@ -252,6 +261,26 @@
   font-size: 11px;
   font-weight: 600;
   display: inline-block;
+  width: fit-content;
+}
+
+/* Venue List - Synchronized rows */
+.fbrp-venue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.fbrp-venue-row {
+  min-height: 60px;
+  padding: 8px 0;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.fbrp-venue-row:last-child {
+  border-bottom: none;
 }
 
 /* Requester Info */
@@ -328,6 +357,12 @@
   white-space: nowrap;
 }
 
+.fbrp-actions-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
 .fbrp-action-button {
   padding: 6px 10px;
   border: none;
@@ -348,6 +383,22 @@
 
 .fbrp-view-button:hover {
   background-color: #cce5ff;
+}
+
+.fbrp-approve-button {
+  background-color: #d4edda;
+}
+
+.fbrp-approve-button:hover {
+  background-color: #c3e6cb;
+}
+
+.fbrp-reject-button {
+  background-color: #f8d7da;
+}
+
+.fbrp-reject-button:hover {
+  background-color: #f5c6cb;
 }
 
 /* Buttons */

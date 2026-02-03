@@ -293,8 +293,8 @@ function MyVenueRequestsPage() {
         </div>
       ) : (
         <>
-          <div className="mvr-bookings-count">
-              Showing {groupedBookings.length} package{groupedBookings.length !== 1 ? 's' : ''}
+          <div className="fbrp-count">
+            Showing {groupedBookings.length} group{groupedBookings.length !== 1 ? 's' : ''}
           </div>
           <div className="mvr-bookings-table-container">
           <table className="mvr-bookings-table">
@@ -337,9 +337,6 @@ function MyVenueRequestsPage() {
                               <div className="mvr-venue-name">{idx + 1}. {booking.venue?.name || 'N/A'}</div>
                               <div className="mvr-venue-code">{booking.venue?.code || ''}</div>
                             </div>
-                            <span className={`mvr-status-badge ${getStatusBadgeClass(booking.status)}`}>
-                              {booking.status}
-                            </span>
                           </div>
                         ))}
                       </div>

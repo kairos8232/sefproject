@@ -178,6 +178,28 @@ const FacultyBookingRequestsPage = () => {
     navigate(`/faculty/bookings/${booking.id}`);
   };
 
+  const openApproveModal = (booking) => {
+    setSelectedBooking(booking);
+    setIsRejecting(false);
+    setApprovalNotes('');
+    setRejectionReason('');
+    setAdjustTime(false);
+    setAdjustedStartTime('');
+    setAdjustedEndTime('');
+    setShowModal(true);
+  };
+
+  const openRejectModal = (booking) => {
+    setSelectedBooking(booking);
+    setIsRejecting(true);
+    setRejectionReason('');
+    setApprovalNotes('');
+    setAdjustTime(false);
+    setAdjustedStartTime('');
+    setAdjustedEndTime('');
+    setShowModal(true);
+  };
+
   const handleApprove = async () => {
     if (!selectedBooking) return;
 
@@ -460,7 +482,11 @@ const FacultyBookingRequestsPage = () => {
       ) : bookings.length === 0 ? (
         <div className="no-data">No booking requests found</div>
       ) : (
-        <div className="fbrp-bookings-table-container">
+        <>
+          <div className="fbrp-count">
+            Showing {groupedBookings.length} group{groupedBookings.length !== 1 ? 's' : ''}
+          </div>
+          <div className="fbrp-bookings-table-container">
           <table className="fbrp-bookings-table">
             <thead>
               <tr>
@@ -504,11 +530,13 @@ const FacultyBookingRequestsPage = () => {
                       </div>
                     </td>
                     <td>
-                      <div className="fbrp-venue-info">
+                      <div className="fbrp-venue-list">
                         {group.map((booking, idx) => (
-                          <div key={booking.id} className="fbrp-venue-name">
-                            {idx + 1}. {booking.venue?.name || 'N/A'}
-                            {booking.venue?.code ? ` (${booking.venue.code})` : ''}
+                          <div key={booking.id} className="fbrp-venue-row">
+                            <div className="fbrp-venue-info">
+                              <div className="fbrp-venue-name">{idx + 1}. {booking.venue?.name || 'N/A'}</div>
+                              <div className="fbrp-venue-code">{booking.venue?.code || ''}</div>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -530,15 +558,33 @@ const FacultyBookingRequestsPage = () => {
                     <td className="fbrp-submitted-cell">{formatDateTime(first.created_at)}</td>
                     <td className="fbrp-actions-cell">
                       {group.map(booking => (
-                        <button 
-                          key={booking.id}
-                          className="fbrp-action-button fbrp-view-button"
-                          onClick={() => handleViewDetails(booking)}
-                          title={`View ${booking.venue?.name || 'Details'}`}
-                          style={{ marginBottom: '6px' }}
-                        >
-                          👁️
-                        </button>
+                        <div key={booking.id} className="fbrp-actions-row">
+                          <button 
+                            className="fbrp-action-button fbrp-view-button"
+                            onClick={() => handleViewDetails(booking)}
+                            title={`View ${booking.venue?.name || 'Details'}`}
+                          >
+                            👁️
+                          </button>
+                          {booking.status === 'pending' && (
+                            <>
+                              <button
+                                className="fbrp-action-button fbrp-approve-button"
+                                onClick={() => openApproveModal(booking)}
+                                title={`Approve ${booking.venue?.name || 'booking'}`}
+                              >
+                                ✅
+                              </button>
+                              <button
+                                className="fbrp-action-button fbrp-reject-button"
+                                onClick={() => openRejectModal(booking)}
+                                title={`Reject ${booking.venue?.name || 'booking'}`}
+                              >
+                                ❌
+                              </button>
+                            </>
+                          )}
+                        </div>
                       ))}
                     </td>
                   </tr>
@@ -547,6 +593,7 @@ const FacultyBookingRequestsPage = () => {
             </tbody>
           </table>
         </div>
+        </>
       )}
 
       {/* Detail Modal */}

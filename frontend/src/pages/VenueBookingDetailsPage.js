@@ -9,6 +9,7 @@ function VenueBookingDetailsPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const [booking, setBooking] = useState(null);
+  const [groupedBookings, setGroupedBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -23,6 +24,39 @@ function VenueBookingDetailsPage() {
       setError('');
       const result = await venueBookingService.getBookingById(id);
       setBooking(result.booking);
+      
+      // If this booking has a package_id, fetch all bookings with that package
+      if (result.booking?.package_id) {
+        try {
+          const allResult = await venueBookingService.getAllBookings();
+          const grouped = allResult.bookings?.filter(b => b.package_id === result.booking.package_id && b.status === 'approved') || [result.booking];
+          setGroupedBookings(grouped);
+        } catch (err) {
+          // If getAllBookings fails, try getBookingsByEvent or just show the single booking
+          if (result.booking?.event_id) {
+            try {
+              const eventResult = await venueBookingService.getBookingsByEvent(result.booking.event_id);
+              const grouped = eventResult.bookings?.filter(b => b.package_id === result.booking.package_id && b.status === 'approved') || [result.booking];
+              setGroupedBookings(grouped);
+            } catch (err2) {
+              setGroupedBookings([result.booking]);
+            }
+          } else {
+            setGroupedBookings([result.booking]);
+          }
+        }
+      } else if (result.booking?.event_id) {
+        // If no package_id but has event_id, fetch all approved bookings for that event
+        try {
+          const eventResult = await venueBookingService.getBookingsByEvent(result.booking.event_id);
+          const grouped = eventResult.bookings?.filter(b => b.status === 'approved') || [result.booking];
+          setGroupedBookings(grouped);
+        } catch (err) {
+          setGroupedBookings([result.booking]);
+        }
+      } else {
+        setGroupedBookings([result.booking]);
+      }
     } catch (err) {
       console.error('Load booking error:', err);
       setError(err.response?.data?.error || 'Failed to load booking details');
@@ -145,28 +179,41 @@ function VenueBookingDetailsPage() {
         {/* Venue Information */}
         <div className="vbd-details-section">
           <h2>Venue Information</h2>
-          <div className="vbd-details-grid">
-            <div className="vbd-detail-item">
-              <span className="vbd-detail-label">Venue Name:</span>
-              <span className="vbd-detail-value">{booking.venue?.name || 'N/A'}</span>
+          {groupedBookings.length > 1 ? (
+            <div className="vbd-venue-list">
+              {groupedBookings.map((b, idx) => (
+                <div key={idx} className="vbd-venue-row">
+                  <div className="vbd-venue-info">
+                    <div className="vbd-venue-name">{idx + 1}. {b.venue?.name || 'N/A'}</div>
+                    <div className="vbd-venue-code">{b.venue?.code || 'N/A'}</div>
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="vbd-detail-item">
-              <span className="vbd-detail-label">Venue Code:</span>
-              <span className="vbd-detail-value">{booking.venue?.code || 'N/A'}</span>
+          ) : (
+            <div className="vbd-details-grid">
+              <div className="vbd-detail-item">
+                <span className="vbd-detail-label">Venue Name:</span>
+                <span className="vbd-detail-value">{booking.venue?.name || 'N/A'}</span>
+              </div>
+              <div className="vbd-detail-item">
+                <span className="vbd-detail-label">Venue Code:</span>
+                <span className="vbd-detail-value">{booking.venue?.code || 'N/A'}</span>
+              </div>
+              <div className="vbd-detail-item">
+                <span className="vbd-detail-label">Location:</span>
+                <span className="vbd-detail-value">{booking.venue?.location || 'N/A'}</span>
+              </div>
+              <div className="vbd-detail-item">
+                <span className="vbd-detail-label">Faculty:</span>
+                <span className="vbd-detail-value">{booking.venue?.faculty?.name || 'N/A'}</span>
+              </div>
+              <div className="vbd-detail-item">
+                <span className="vbd-detail-label">Capacity:</span>
+                <span className="vbd-detail-value">{booking.venue?.capacity || 'N/A'} people</span>
+              </div>
             </div>
-            <div className="vbd-detail-item">
-              <span className="vbd-detail-label">Location:</span>
-              <span className="vbd-detail-value">{booking.venue?.location || 'N/A'}</span>
-            </div>
-            <div className="vbd-detail-item">
-              <span className="vbd-detail-label">Faculty:</span>
-              <span className="vbd-detail-value">{booking.venue?.faculty?.name || 'N/A'}</span>
-            </div>
-            <div className="vbd-detail-item">
-              <span className="vbd-detail-label">Capacity:</span>
-              <span className="vbd-detail-value">{booking.venue?.capacity || 'N/A'} people</span>
-            </div>
-          </div>
+          )}
         </div>
 
         {/* Booking Details */}

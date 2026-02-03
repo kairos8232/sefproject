@@ -596,6 +596,7 @@ class EventController {
       const eventDetails = await Event.getFacultyEventDetails(id, facultyId);
 
       if (!eventDetails) {
+        console.error(`Event ${id} not found or not authorized for faculty ${facultyId}`);
         return res.status(404).json({ 
           error: 'Can only provide feedback for events in your faculty venues' 
         });
