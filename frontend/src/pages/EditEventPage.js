@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import eventService from '../services/eventService';
 import authService from '../services/authService';
+import { authFetch } from '../services/apiClient';
 import { toDateTimeLocalInput, fromDateTimeLocalInput } from '../utils/dateUtils';
 import { useToast } from '../contexts/ToastContext';
 import './EditEventPage.css';
@@ -32,6 +33,22 @@ function EditEventPage() {
 
   // Check if user can change visibility (only event_organizer and administrator)
   const canChangeVisibility = user.role === 'event_organizer' || user.role === 'administrator';
+  
+  // Check if user has a faculty (can only use Faculty Only visibility if they do)
+  const userHasFaculty = user.faculty_id != null;
+  
+  // Filter visibility options based on user's faculty
+  const availableVisibilityOptions = visibilityOptions.filter(option => {
+    // Always allow Campus Wide and Invite Only
+    if (option.value === 'campuswide' || option.value === 'inviteonly') {
+      return true;
+    }
+    // Only allow Faculty Only if user has a faculty
+    if (option.value === 'facultyonly') {
+      return userHasFaculty;
+    }
+    return true;
+  });
 
   const [formData, setFormData] = useState({
     event_name: '',
@@ -48,6 +65,7 @@ function EditEventPage() {
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [hasApprovedBookings, setHasApprovedBookings] = useState(false);
 
   const loadEvent = useCallback(async () => {
     try {
@@ -69,14 +87,48 @@ function EditEventPage() {
         return;
       }
 
+      // Check for approved/pending venue bookings and resource requests
+      try {
+        // Check venue bookings
+        const venueBResponse = await authFetch(`/venue-bookings/event/${id}`);
+        const venueBData = await venueBResponse.json();
+        const hasBlockedVenueBookings = venueBData.bookings?.some(
+          b => b.status === 'approved' || b.status === 'pending'
+        );
+
+        // Check resource requests
+        const resourceRResponse = await authFetch(`/resource-requests/event/${id}`);
+        const resourceRData = await resourceRResponse.json();
+        const hasBlockedResourceRequests = resourceRData.requests?.some(
+          r => r.status === 'approved' || r.status === 'pending'
+        );
+
+        if (hasBlockedVenueBookings || hasBlockedResourceRequests) {
+          setHasApprovedBookings(true);
+          
+          const blockedItems = [];
+          if (hasBlockedVenueBookings) blockedItems.push('venue booking');
+          if (hasBlockedResourceRequests) blockedItems.push('resource request');
+        }
+      } catch (error) {
+        console.error('Error checking bookings/requests:', error);
+        // Continue even if this check fails
+      }
+
       // Check if event_type is a custom type
       const standardTypes = eventTypes.map(t => t.value);
       const isCustomType = !standardTypes.includes(event.event_type);
 
+      // If event visibility is 'facultyonly' but user has no faculty, reset to 'campuswide'
+      let eventVisibility = event.visibility;
+      if (event.visibility === 'facultyonly' && !userHasFaculty) {
+        eventVisibility = 'campuswide';
+      }
+
       setFormData({
         event_name: event.event_name,
         description: event.description || '',
-        visibility: event.visibility,
+        visibility: eventVisibility,
         event_type: isCustomType ? 'other' : event.event_type,
         expected_attendees: event.expected_attendees || '',
         registration_limit: event.registration_limit || '',
@@ -93,7 +145,7 @@ function EditEventPage() {
       showError(error || 'Failed to load event');
       navigate('/my-events');
     }
-  }, [id, user.id, navigate, showError]);
+  }, [id, user.id, userHasFaculty, navigate, showError]);
 
   useEffect(() => {
     document.title = 'Edit Event - CESMS';
@@ -275,8 +327,7 @@ function EditEventPage() {
         </div>
 
         <div className="ee-form-section">
-          <h2>Date & Time</h2>
-          
+          <h2>Date & Time</h2>       
           <div className="ee-form-row">
             <div className="ee-form-group">
               <label htmlFor="start_datetime">
@@ -288,9 +339,17 @@ function EditEventPage() {
                 name="start_datetime"
                 value={formData.start_datetime}
                 onChange={handleChange}
+                disabled={hasApprovedBookings}
+                title={hasApprovedBookings ? 'Cannot modify: pending or approved booking/request exists' : ''}
                 className={errors.start_datetime ? 'ee-error' : ''}
+                style={hasApprovedBookings ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
               />
               {errors.start_datetime && <span className="ee-error-message">{errors.start_datetime}</span>}
+              {hasApprovedBookings && (
+                <span style={{ fontSize: '12px', color: '#856404', marginTop: '4px', display: 'block' }}>
+                  This field is locked due to pending or approved bookings.
+                </span>
+              )}
             </div>
 
             <div className="ee-form-group">
@@ -303,9 +362,17 @@ function EditEventPage() {
                 name="end_datetime"
                 value={formData.end_datetime}
                 onChange={handleChange}
+                disabled={hasApprovedBookings}
+                title={hasApprovedBookings ? 'Cannot modify: pending or approved booking/request exists' : ''}
                 className={errors.end_datetime ? 'ee-error' : ''}
+                style={hasApprovedBookings ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
               />
               {errors.end_datetime && <span className="ee-error-message">{errors.end_datetime}</span>}
+              {hasApprovedBookings && (
+                <span style={{ fontSize: '12px', color: '#856404', marginTop: '4px', display: 'block' }}>
+                  This field is locked due to pending or approved bookings.
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -322,13 +389,21 @@ function EditEventPage() {
                 name="expected_attendees"
                 value={formData.expected_attendees}
                 onChange={handleChange}
+                disabled={hasApprovedBookings}
+                title={hasApprovedBookings ? 'Cannot modify: pending or approved booking/request exists' : ''}
                 min="1"
                 required
                 placeholder="Enter expected number of attendees"
+                style={hasApprovedBookings ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
               />
               <span className="ee-helper-text">
                 This helps filter suitable venues when booking. Required for venue booking.
               </span>
+              {hasApprovedBookings && (
+                <span style={{ fontSize: '12px', color: '#856404', marginTop: '4px', display: 'block' }}>
+                  This field is locked due to pending or approved bookings.
+                </span>
+              )}
             </div>
 
             {formData.visibility !== 'inviteonly' && (
@@ -340,12 +415,20 @@ function EditEventPage() {
                   name="registration_limit"
                   value={formData.registration_limit}
                   onChange={handleChange}
+                  disabled={hasApprovedBookings}
+                  title={hasApprovedBookings ? 'Cannot modify: pending or approved booking/request exists' : ''}
                   min="1"
                   placeholder="Leave empty to use venue capacity"
+                  style={hasApprovedBookings ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
                 />
                 <span className="ee-helper-text">
                   Maximum number of participants allowed to register. If left empty, the system will use the venue's capacity from your booking request.
                 </span>
+                {hasApprovedBookings && (
+                  <span style={{ fontSize: '12px', color: '#856404', marginTop: '4px', display: 'block' }}>
+                    This field is locked due to pending or approved bookings.
+                  </span>
+                )}
               </div>
             )}
             
@@ -377,7 +460,7 @@ function EditEventPage() {
                 value={formData.visibility}
                 onChange={handleChange}
               >
-                {visibilityOptions.map(option => (
+                {availableVisibilityOptions.map(option => (
                   <option key={option.value} value={option.value}>
                     {option.label}
                   </option>
