@@ -738,7 +738,7 @@ class ResourceRequestController {
         }
 
         // Check if resource exists
-        const resource = await ResourceType.getById(item.resource_id);
+        const resource = await ResourceType.findById(item.resource_id);
         if (!resource || resource.status !== 'active') {
           return res.status(404).json({ error: `Resource ${item.resource_id} not found or inactive` });
         }

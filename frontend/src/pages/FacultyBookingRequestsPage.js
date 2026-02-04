@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authFetch } from '../services/apiClient';
+import authService from '../services/authService';
 import { useToast } from '../contexts/ToastContext';
 import './FacultyBookingRequestsPage.css';
 
@@ -18,6 +19,10 @@ const FacultyBookingRequestsPage = () => {
   const [adjustedStartTime, setAdjustedStartTime] = useState('');
   const [adjustedEndTime, setAdjustedEndTime] = useState('');
   const [processing, setProcessing] = useState(false);
+
+  // Get current user ID
+  const user = authService.getCurrentUser();
+  const currentUserId = user?.id;
 
   // Filters
   const [statusFilter, setStatusFilter] = useState('pending');
@@ -624,7 +629,7 @@ const FacultyBookingRequestsPage = () => {
                 )}
                 <div className="detail-row">
                   <label>Organizer:</label>
-                  <span>{selectedBooking.event?.organizer?.name} ({selectedBooking.event?.organizer?.email})</span>
+                  <span>{selectedBooking.event?.organizer?.name || selectedBooking.event?.organizer?.email || 'N/A'}</span>
                 </div>
               </div>
 
@@ -640,7 +645,7 @@ const FacultyBookingRequestsPage = () => {
                 </div>
                 <div className="detail-row">
                   <label>Role:</label>
-                  <span className="fbrp-role-badge">{selectedBooking.requester?.role || 'N/A'}</span>
+                  <span>{selectedBooking.requester?.role?.replace('_', ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') || 'N/A'}</span>
                 </div>
               </div>
 
@@ -727,41 +732,9 @@ const FacultyBookingRequestsPage = () => {
                 </div>
               )}
 
-              {selectedBooking.status === 'pending' && !isRejecting && (
+              {selectedBooking.status === 'pending' && !isRejecting && selectedBooking.requester_id !== currentUserId && (
                 <div className="detail-section action-section">
-                  <h3>Approve with Adjustments</h3>
-                  
-                  <div className="checkbox-group">
-                    <label>
-                      <input 
-                        type="checkbox" 
-                        checked={adjustTime}
-                        onChange={(e) => setAdjustTime(e.target.checked)}
-                      />
-                      Adjust time
-                    </label>
-                  </div>
-
-                  {adjustTime && (
-                    <div className="time-adjustment">
-                      <div className="input-group">
-                        <label>Start Time:</label>
-                        <input 
-                          type="datetime-local"
-                          value={adjustedStartTime}
-                          onChange={(e) => setAdjustedStartTime(e.target.value)}
-                        />
-                      </div>
-                      <div className="input-group">
-                        <label>End Time:</label>
-                        <input 
-                          type="datetime-local"
-                          value={adjustedEndTime}
-                          onChange={(e) => setAdjustedEndTime(e.target.value)}
-                        />
-                      </div>
-                    </div>
-                  )}
+                  <h3>Approve Booking</h3>
 
                   <div className="input-group">
                     <label>Approval Notes (optional):</label>
@@ -827,6 +800,12 @@ const FacultyBookingRequestsPage = () => {
               {selectedBooking.status !== 'pending' && (
                 <div className="info-message">
                   ℹ️ This booking has already been {selectedBooking.status}
+                </div>
+              )}
+
+              {selectedBooking.status === 'pending' && selectedBooking.requester_id === currentUserId && (
+                <div className="info-message">
+                  ℹ️ You cannot approve or reject your own booking request
                 </div>
               )}
             </div>

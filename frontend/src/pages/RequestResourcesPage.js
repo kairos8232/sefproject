@@ -213,7 +213,7 @@ function RequestResourcesPage() {
                   >
                     <div className="resource-header">
                       <h3>{resource.name}</h3>
-                      <span className="resource-category">{getCategoryLabel(resource.category)}</span>
+                      <span className="resource-category">{getCategoryLabel(resource.category_code)}</span>
                     </div>
                     <div className="resource-details">
                       {resource.description && <p>{resource.description}</p>}
