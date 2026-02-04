@@ -53,6 +53,14 @@ class UserController {
         });
       }
 
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ 
+          message: 'Please enter a valid email address (e.g., user@example.com)' 
+        });
+      }
+
       // Validate role
       const validRoles = ['student', 'event_organizer', 'administrator', 'faculty_staff'];
       if (!validRoles.includes(role)) {
@@ -124,8 +132,16 @@ class UserController {
         return res.status(404).json({ message: 'User not found' });
       }
 
-      // If email is being changed, check for duplicates
+      // If email is being changed, validate and check for duplicates
       if (email && email !== existingUser.email) {
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+          return res.status(400).json({ 
+            message: 'Please enter a valid email address (e.g., user@example.com)' 
+          });
+        }
+
         const duplicateUser = await User.findByEmail(email);
         if (duplicateUser) {
           return res.status(400).json({ 

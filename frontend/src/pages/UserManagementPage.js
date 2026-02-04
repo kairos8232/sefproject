@@ -161,6 +161,13 @@ function UserManagementPage() {
   const handleCreateUser = async (e) => {
     e.preventDefault();
     try {
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        showError('Please enter a valid email address (e.g., user@example.com)');
+        return;
+      }
+
       // Validate faculty requirement
       if ((formData.role === 'student' || formData.role === 'faculty_staff') && !formData.faculty_id) {
         showError('Faculty is required for students and faculty staff.');
@@ -190,6 +197,13 @@ function UserManagementPage() {
   const handleEditUser = async (e) => {
     e.preventDefault();
     try {
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        showError('Please enter a valid email address (e.g., user@example.com)');
+        return;
+      }
+
       // Validate faculty requirement for current role
       if ((formData.role === 'student' || formData.role === 'faculty_staff') && !formData.faculty_id) {
         showError('Faculty is required for students and faculty staff.');
@@ -510,6 +524,7 @@ function UserManagementPage() {
                   value={formData.staff_id || ''}
                   onChange={(e) => setFormData({ ...formData, staff_id: e.target.value })}
                   required
+                  maxLength="10"
                 />
               </div>
 
@@ -602,6 +617,7 @@ function UserManagementPage() {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   required
+                  maxLength="50"
                 />
               </div>
 
@@ -622,6 +638,7 @@ function UserManagementPage() {
                   value={formData.staff_id || ''}
                   onChange={(e) => setFormData({ ...formData, staff_id: e.target.value })}
                   required
+                  maxLength="10"
                 />
               </div>
 

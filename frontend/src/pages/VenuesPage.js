@@ -278,10 +278,10 @@ const VenuesPage = () => {
                   value={formData.code}
                   onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
                   required
-                  maxLength="20"
+                  maxLength="10"
                   placeholder="LT-FCI-01"
-                  pattern="[A-Z0-9-]{2,20}"
-                  title="2-20 uppercase alphanumeric characters (hyphens allowed)"
+                  pattern="[A-Z0-9-]{2,10}"
+                  title="2-10 uppercase alphanumeric characters (hyphens allowed)"
                 />
               </div>
 
@@ -292,6 +292,7 @@ const VenuesPage = () => {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   required
+                  maxLength="50"
                   placeholder="Lecture Theatre 1"
                 />
               </div>
@@ -359,9 +360,9 @@ const VenuesPage = () => {
                   value={formData.code}
                   onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
                   required
-                  maxLength="20"
-                  pattern="[A-Z0-9-]{2,20}"
-                  title="2-20 uppercase alphanumeric characters (hyphens allowed)"
+                  maxLength="10"
+                  pattern="[A-Z0-9-]{2,10}"
+                  title="2-10 uppercase alphanumeric characters (hyphens allowed)"
                 />
               </div>
 
@@ -372,6 +373,7 @@ const VenuesPage = () => {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   required
+                  maxLength="50"
                 />
               </div>
 

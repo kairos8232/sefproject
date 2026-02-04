@@ -54,7 +54,6 @@ const ResourceCataloguePage = () => {
     name: '',
     description: '',
     total_quantity: 0,
-    available_quantity: 0,
     unit: '',
     notes: ''
   });
@@ -206,7 +205,7 @@ const ResourceCataloguePage = () => {
         name: '',
         description: '',
         total_quantity: 0,
-        available_quantity: 0,
+
         unit: '',
         notes: ''
       });
@@ -225,7 +224,6 @@ const ResourceCataloguePage = () => {
       name: type.name,
       description: type.description || '',
       total_quantity: type.total_quantity,
-      available_quantity: type.available_quantity,
       unit: type.unit || '',
       notes: type.notes || ''
     });
@@ -245,7 +243,6 @@ const ResourceCataloguePage = () => {
         name: '',
         description: '',
         total_quantity: 0,
-        available_quantity: 0,
         unit: '',
         notes: ''
       });
@@ -438,7 +435,6 @@ const ResourceCataloguePage = () => {
                     name: '',
                     description: '',
                     total_quantity: 0,
-                    available_quantity: 0,
                     unit: '',
                     notes: ''
                   });
@@ -608,6 +604,7 @@ const ResourceCataloguePage = () => {
                   onChange={(e) => setCategoryFormData({ ...categoryFormData, name: e.target.value })}
                   placeholder="e.g., Audio Visual Equipment"
                   required
+                  maxLength="50"
                 />
               </div>
               <div className="rcp-form-group">
@@ -657,6 +654,7 @@ const ResourceCataloguePage = () => {
                   value={categoryFormData.name}
                   onChange={(e) => setCategoryFormData({ ...categoryFormData, name: e.target.value })}
                   required
+                  maxLength="50"
                 />
               </div>
               <div className="rcp-form-group">
@@ -709,9 +707,9 @@ const ResourceCataloguePage = () => {
                   onChange={(e) => setTypeFormData({ ...typeFormData, code: e.target.value.toUpperCase() })}
                   placeholder="e.g., PROJ-HD, MIC-WL"
                   required
-                  maxLength={20}
+                  maxLength="10"
                 />
-                <small>2-20 uppercase alphanumeric characters (hyphens allowed)</small>
+                <small>2-10 uppercase alphanumeric characters (hyphens allowed)</small>
               </div>
               <div className="rcp-form-group">
                 <label>Resource Name *</label>
@@ -721,6 +719,7 @@ const ResourceCataloguePage = () => {
                   onChange={(e) => setTypeFormData({ ...typeFormData, name: e.target.value })}
                   placeholder="e.g., HD Projector, Wireless Microphone"
                   required
+                  maxLength="50"
                 />
               </div>
               <div className="rcp-form-group">
@@ -740,17 +739,6 @@ const ResourceCataloguePage = () => {
                     value={typeFormData.total_quantity}
                     onChange={(e) => setTypeFormData({ ...typeFormData, total_quantity: parseInt(e.target.value) })}
                     min="0"
-                    required
-                  />
-                </div>
-                <div className="rcp-form-group">
-                  <label>Available Quantity *</label>
-                  <input
-                    type="number"
-                    value={typeFormData.available_quantity}
-                    onChange={(e) => setTypeFormData({ ...typeFormData, available_quantity: parseInt(e.target.value) })}
-                    min="0"
-                    max={typeFormData.total_quantity}
                     required
                   />
                 </div>
@@ -814,7 +802,7 @@ const ResourceCataloguePage = () => {
                   value={typeFormData.code}
                   onChange={(e) => setTypeFormData({ ...typeFormData, code: e.target.value.toUpperCase() })}
                   required
-                  maxLength={20}
+                  maxLength="10"
                 />
               </div>
               <div className="rcp-form-group">
@@ -824,6 +812,7 @@ const ResourceCataloguePage = () => {
                   value={typeFormData.name}
                   onChange={(e) => setTypeFormData({ ...typeFormData, name: e.target.value })}
                   required
+                  maxLength="50"
                 />
               </div>
               <div className="rcp-form-group">
@@ -842,17 +831,6 @@ const ResourceCataloguePage = () => {
                     value={typeFormData.total_quantity}
                     onChange={(e) => setTypeFormData({ ...typeFormData, total_quantity: parseInt(e.target.value) })}
                     min="0"
-                    required
-                  />
-                </div>
-                <div className="rcp-form-group">
-                  <label>Available Quantity *</label>
-                  <input
-                    type="number"
-                    value={typeFormData.available_quantity}
-                    onChange={(e) => setTypeFormData({ ...typeFormData, available_quantity: parseInt(e.target.value) })}
-                    min="0"
-                    max={typeFormData.total_quantity}
                     required
                   />
                 </div>

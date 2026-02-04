@@ -234,6 +234,7 @@ const FacultiesPage = () => {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   required
+                  maxLength="50"
                   placeholder="Faculty of Computing and Informatics"
                 />
               </div>
@@ -287,6 +288,7 @@ const FacultiesPage = () => {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   required
+                  maxLength="50"
                 />
               </div>
 
