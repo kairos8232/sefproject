@@ -209,8 +209,31 @@ function CustomRegistrationFormPage() {
           setParticipationId(finalParticipationId);
         } catch (regError) {
           console.error('[CustomRegistrationForm] Registration error:', regError);
-          const errorMsg = regError?.response?.data?.error || regError?.message || 'Failed to register for event. Please try again.';
-          showError(errorMsg);
+          
+          // Extract error message - handle both string and object errors
+          let errorMsg;
+          if (typeof regError === 'string') {
+            errorMsg = regError;
+          } else {
+            errorMsg = regError?.response?.data?.error || regError?.message || 'Failed to register for event. Please try again.';
+          }
+          
+          const errorLower = errorMsg.toLowerCase();
+          
+          // Display specific error messages
+          if (errorLower.includes('full') || errorLower.includes('capacity')) {
+            showError('🚫 Event is Full - Registration capacity has been reached.');
+          } else if (errorLower.includes('conflict')) {
+            showError('⚠️ Time Conflict - You have another event at the same time.');
+          } else if (errorLower.includes('closed')) {
+            showError('🔒 Registration Closed - This event is no longer accepting registrations.');
+          } else if (errorLower.includes('completed') || errorLower.includes('cancelled')) {
+            showError('❌ Cannot register for completed or cancelled events.');
+          } else if (errorLower.includes('already registered')) {
+            showError('✓ You are already registered for this event.');
+          } else {
+            showError(errorMsg);
+          }
           setSubmitting(false);
           return;
         }

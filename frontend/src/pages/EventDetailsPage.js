@@ -117,11 +117,34 @@ function EventDetailsPage() {
         setActionLoading(false);
       }
     } catch (err) {
-      // Check if event is full
-      if (err && typeof err === 'string' && err.toLowerCase().includes('full')) {
-        showError('This event is full. Registration capacity has been reached.');
+      // Debug: Log the actual error to understand its structure
+      console.log('[EventDetailsPage] Registration error:', err);
+      console.log('[EventDetailsPage] Error type:', typeof err);
+      console.log('[EventDetailsPage] Error string:', String(err));
+      
+      // Extract error message - handle both string and object errors
+      let errorMessage;
+      if (typeof err === 'string') {
+        errorMessage = err;
       } else {
-        showError(err || 'Failed to register for event');
+        errorMessage = err?.response?.data?.error || err?.message || 'Failed to register for event';
+      }
+      
+      const errorLower = errorMessage.toLowerCase();
+      
+      // Display specific error messages
+      if (errorLower.includes('full') || errorLower.includes('capacity')) {
+        showError('🚫 Event is Full - Registration capacity has been reached.');
+      } else if (errorLower.includes('conflict')) {
+        showError('⚠️ Time Conflict - You have another event at the same time.');
+      } else if (errorLower.includes('closed')) {
+        showError('🔒 Registration Closed - This event is no longer accepting registrations.');
+      } else if (errorLower.includes('completed') || errorLower.includes('cancelled')) {
+        showError('❌ Cannot register for completed or cancelled events');
+      } else if (errorLower.includes('already registered')) {
+        showError('✓ You are already registered for this event.');
+      } else {
+        showError(errorMessage);
       }
       setActionLoading(false);
     }
@@ -436,8 +459,8 @@ function EventDetailsPage() {
           </div>
         )}
 
-        {/* Participation Actions - Only show if NOT in management view, NOT administrator, and NOT event creator */}
-        {!isManagementView && (event.status === 'upcoming' || event.status === 'ongoing') && currentUser?.role !== 'administrator' && event.organizer_id !== userId && (
+        {/* Participation Actions - Only show for non-invite-only events */}
+        {event.visibility !== 'inviteonly' && !isManagementView && (event.status === 'upcoming' || event.status === 'ongoing') && currentUser?.role !== 'administrator' && event.organizer_id !== userId && (
           <div className="ed-participation-actions">
             {event.registration_status === 'closed' ? (
               <div className="ed-registration-closed">
