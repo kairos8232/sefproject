@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authFetch } from '../services/apiClient';
+import { useToast } from '../contexts/ToastContext';
 import './ReportsAnalyticsPage.css';
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
@@ -11,6 +12,7 @@ const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'
 
 function ReportsAnalyticsPage() {
   const navigate = useNavigate();
+  const { showError } = useToast();
   
   React.useEffect(() => {
     document.title = 'Reports & Analytics - CESMS';
@@ -115,6 +117,14 @@ function ReportsAnalyticsPage() {
         if (customStartDate && customEndDate) {
           startDate = new Date(customStartDate);
           endDate = new Date(customEndDate);
+          
+          // Check if start date is after end date
+          if (startDate > endDate) {
+            return { error: 'Start date cannot be after end date. Please select a valid date range.' };
+          }
+          
+          // Adjust end date to end of day (23:59:59.999) to include all events on that day
+          endDate.setHours(23, 59, 59, 999);
         } else {
           return null;
         }
@@ -135,8 +145,16 @@ function ReportsAnalyticsPage() {
     
     try {
       const dateValues = getDateRangeValues();
+      
+      // Check for date validation errors
+      if (dateValues && dateValues.error) {
+        showError(dateValues.error);
+        setLoading(false);
+        return;
+      }
+      
       if (!dateValues) {
-        setError('Please select a valid date range');
+        showError('Please select a valid date range');
         setLoading(false);
         return;
       }

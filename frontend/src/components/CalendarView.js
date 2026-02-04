@@ -26,18 +26,61 @@ const CalendarView = ({
   // Filter items by faculty (for venues) or category (for resources)
   let filteredItems = Array.isArray(items) ? items : [];
   
-  if (type === 'venue' && selectedFaculty) {
-    filteredItems = filteredItems.filter(item => item.faculty_id === selectedFaculty);
-  } else if (type === 'resource' && selectedCategory) {
-    filteredItems = filteredItems.filter(item => item.category_name === selectedCategory);
+  if (type === 'venue') {
+    // If selectedFaculty is empty string, show all venues; otherwise filter by faculty
+    if (selectedFaculty) {
+      filteredItems = filteredItems.filter(item => item.faculty_id === selectedFaculty);
+    }
+  } else if (type === 'resource') {
+    // If selectedCategory is empty string, show all resources; otherwise filter by category
+    if (selectedCategory) {
+      filteredItems = filteredItems.filter(item => item.category_name === selectedCategory);
+    }
   }
 
-  // Filter bookings by status
+  // Filter bookings by status and resource ID/category (for resource type)
+  let bookingsToDisplay = bookings;
+  
+  // For resource type, filter by category or selectedId
+  if (type === 'resource') {
+    console.log('🔍 RESOURCE FILTER DEBUG:', {
+      type,
+      selectedCategory,
+      selectedId,
+      totalItems: items.length,
+      totalBookings: bookings.length
+    });
+    
+    // Log all unique resource_ids in bookings
+    const bookingResourceIds = [...new Set(bookings.map(b => b.resource_id))];
+    console.log('📚 UNIQUE RESOURCE IDS IN BOOKINGS:', bookingResourceIds);
+    
+    if (selectedCategory) {
+      // If category selected, show bookings for ALL resources in that category
+      const categoryResourceIds = items
+        .filter(r => r.category_name === selectedCategory)
+        .map(r => r.id);
+      
+      console.log('📦 CATEGORY FILTER:', {
+        selectedCategory,
+        categoryResourceIds,
+        matchingItems: items.filter(r => r.category_name === selectedCategory)
+      });
+      
+      bookingsToDisplay = bookings.filter(b => categoryResourceIds.includes(b.resource_id));
+      console.log('📊 BOOKINGS AFTER CATEGORY FILTER:', bookingsToDisplay.length);
+    } else {
+      // If no category selected, show ALL bookings (from all resources)
+      console.log('✅ NO CATEGORY - SHOWING ALL BOOKINGS:', bookings.length);
+      bookingsToDisplay = bookings;
+    }
+  }
+  
   const filteredBookings = statusFilter === 'all' 
-    ? bookings 
+    ? bookingsToDisplay 
     : statusFilter === 'blocked'
     ? [] // Don't show bookings when 'blocked' filter is selected
-    : bookings.filter(b => b.status === statusFilter);
+    : bookingsToDisplay.filter(b => b.status === statusFilter);
 
   const getDaysInMonth = (date) => {
     const year = date.getFullYear();
@@ -236,15 +279,8 @@ const CalendarView = ({
               value={selectedCategory || ''} 
               onChange={(e) => {
                 const newCategory = e.target.value;
+                console.log('🏷️ CATEGORY CHANGED:', newCategory);
                 setSelectedCategory(newCategory);
-                if (Array.isArray(items)) {
-                  const categoryResources = newCategory 
-                    ? items.filter(r => r.category_name === newCategory)
-                    : items;
-                  if (categoryResources.length > 0) {
-                    setSelectedId(categoryResources[0].id);
-                  }
-                }
               }}
             >
               <option value="">All Categories</option>

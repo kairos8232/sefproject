@@ -150,11 +150,12 @@ const SystemConfigurationPage = () => {
               <div className="form-group">
                 <label>
                   Minimum Advance Booking Days *
-                  <span className="label-hint">Minimum notice required to book a venue</span>
+                  <span className="label-hint">Minimum notice required to book a venue (0-30 days)</span>
                 </label>
                 <input
                   type="number"
                   min="0"
+                  max="30"
                   value={formData.min_advance_booking_days}
                   onChange={(e) => setFormData({ ...formData, min_advance_booking_days: e.target.value })}
                   required
@@ -167,11 +168,12 @@ const SystemConfigurationPage = () => {
               <div className="form-group">
                 <label>
                   Maximum Advance Booking Days *
-                  <span className="label-hint">How far ahead bookings can be made</span>
+                  <span className="label-hint">How far ahead bookings can be made (1-365 days)</span>
                 </label>
                 <input
                   type="number"
                   min="1"
+                  max="365"
                   value={formData.max_advance_booking_days}
                   onChange={(e) => setFormData({ ...formData, max_advance_booking_days: e.target.value })}
                   required
@@ -184,11 +186,12 @@ const SystemConfigurationPage = () => {
               <div className="form-group">
                 <label>
                   Maximum Event Duration Days *
-                  <span className="label-hint">Maximum number of days an event can last</span>
+                  <span className="label-hint">Maximum number of days an event can last (1-14 days)</span>
                 </label>
                 <input
                   type="number"
                   min="1"
+                  max="14"
                   value={formData.max_event_duration_days}
                   onChange={(e) => setFormData({ ...formData, max_event_duration_days: e.target.value })}
                   required

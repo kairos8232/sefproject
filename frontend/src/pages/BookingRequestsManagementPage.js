@@ -53,6 +53,7 @@ const BookingRequestsManagementPage = () => {
 
   // Modal state
   const [selectedItem, setSelectedItem] = useState(null);
+  const [selectedPackageGroup, setSelectedPackageGroup] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [modalAction, setModalAction] = useState('');
   const [modalData, setModalData] = useState({});
@@ -110,26 +111,12 @@ const BookingRequestsManagementPage = () => {
   useEffect(() => {
     const loadVenuesAndResources = async () => {
       try {
-        if (!selectedFaculty && faculties.length > 0) {
-          setSelectedFaculty(faculties[0].id);
-        }
-        
         const venuesResponse = await authFetch('/venues');
         const venuesData = await venuesResponse.json();
         setVenues(venuesData.venues || []);
         if (venuesData.venues && venuesData.venues.length > 0 && !selectedVenue) {
-          // Set first venue of selected faculty as default
-          const currentFacultyId = selectedFaculty || (faculties.length > 0 ? faculties[0].id : null);
-          if (currentFacultyId) {
-            const facultyVenues = venuesData.venues.filter(v => v.faculty_id === currentFacultyId);
-            if (facultyVenues.length > 0) {
-              setSelectedVenue(facultyVenues[0].id);
-            } else {
-              setSelectedVenue(venuesData.venues[0].id);
-            }
-          } else {
-            setSelectedVenue(venuesData.venues[0].id);
-          }
+          // Set first venue as default (will filter by faculty in calendar)
+          setSelectedVenue(venuesData.venues[0].id);
         }
 
         const resourcesResponse = await authFetch('/resource-types');
@@ -168,8 +155,9 @@ const BookingRequestsManagementPage = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewMode, activeTab, loadVenueBookings, loadResourceRequests]);
 
-  const openModal = (item, action) => {
+  const openModal = (item, action, packageGroup = []) => {
     setSelectedItem(item);
+    setSelectedPackageGroup(packageGroup);
     setModalAction(action);
     setShowModal(true);
     
@@ -227,6 +215,7 @@ const BookingRequestsManagementPage = () => {
   const closeModal = () => {
     setShowModal(false);
     setSelectedItem(null);
+    setSelectedPackageGroup([]);
     setModalAction('');
     setModalData({});
   };
@@ -245,10 +234,15 @@ const BookingRequestsManagementPage = () => {
         if (submissionData.approved_end_datetime) {
           submissionData.approved_end_datetime = fromDateTimeLocalInput(submissionData.approved_end_datetime);
         }
-        await adminOverrideService.overrideVenueBooking(selectedItem.id, submissionData);
+        
+        // Apply action to all items in the package group
+        const itemsToUpdate = selectedPackageGroup.length > 0 ? selectedPackageGroup : [selectedItem];
+        for (const item of itemsToUpdate) {
+          await adminOverrideService.overrideVenueBooking(item.id, submissionData);
+        }
         
         const actionMsg = submissionData.action === 'approve' ? 'approved' : 'rejected';
-        showSuccess(`Venue booking ${actionMsg} successfully`);
+        showSuccess(`Venue booking package ${actionMsg} successfully`);
         loadVenueBookings();
       } else {
         if (submissionData.usage_start_datetime) {
@@ -257,10 +251,15 @@ const BookingRequestsManagementPage = () => {
         if (submissionData.usage_end_datetime) {
           submissionData.usage_end_datetime = fromDateTimeLocalInput(submissionData.usage_end_datetime);
         }
-        await adminOverrideService.overrideResourceRequest(selectedItem.id, submissionData);
+        
+        // Apply action to all items in the package group
+        const itemsToUpdate = selectedPackageGroup.length > 0 ? selectedPackageGroup : [selectedItem];
+        for (const item of itemsToUpdate) {
+          await adminOverrideService.overrideResourceRequest(item.id, submissionData);
+        }
         
         const actionMsg = submissionData.action === 'approve' ? 'approved' : 'rejected';
-        showSuccess(`Resource request ${actionMsg} successfully`);
+        showSuccess(`Resource request package ${actionMsg} successfully`);
         loadResourceRequests();
       }
       closeModal();
@@ -755,7 +754,7 @@ const BookingRequestsManagementPage = () => {
           ) : (
             <CalendarView
               type="resource"
-              bookings={resourceRequests.filter(r => r.resource_id === selectedResource)}
+              bookings={resourceRequests}
               venueBlocks={venueBlocks}
               faculties={faculties}
               selectedId={selectedResource}
@@ -791,12 +790,9 @@ const VenueBookingsTable = ({ bookings, onAction, getStatusBadgeClass }) => {
     return <div className="brm-no-data">No venue bookings found</div>;
   }
 
-  // Filter out cancelled bookings first to avoid confusion
-  const activeBookings = bookings.filter(b => b.status !== 'cancelled');
-
   // Group bookings by event_id
   const groupedByEvent = {};
-  activeBookings.forEach(booking => {
+  bookings.forEach(booking => {
     const eventId = booking.event_id;
     if (!groupedByEvent[eventId]) {
       groupedByEvent[eventId] = [];
@@ -911,21 +907,21 @@ const VenueBookingsTable = ({ bookings, onAction, getStatusBadgeClass }) => {
                 <div className="brm-action-buttons">
                   <button
                     className="brm-btn-approve"
-                    onClick={() => onAction(firstBooking, 'approve')}
+                    onClick={() => onAction(firstBooking, 'approve', group)}
                     title="Approve Package"
                   >
                     ✅
                   </button>
                   <button
                     className="brm-btn-reject"
-                    onClick={() => onAction(firstBooking, 'reject')}
+                    onClick={() => onAction(firstBooking, 'reject', group)}
                     title="Reject Package"
                   >
                     ❌
                   </button>
                   <button
                     className="brm-btn-modify"
-                    onClick={() => onAction(firstBooking, 'modify')}
+                    onClick={() => onAction(firstBooking, 'modify', group)}
                     title="Modify Package"
                   >
                     ✏️
@@ -946,12 +942,9 @@ const ResourceRequestsTable = ({ requests, onAction, getStatusBadgeClass }) => {
     return <div className="brm-no-data">No resource requests found</div>;
   }
 
-  // Filter out cancelled requests first to avoid confusion
-  const activeRequests = requests.filter(r => r.status !== 'cancelled');
-
   // Group requests by event_id
   const groupedByEvent = {};
-  activeRequests.forEach(request => {
+  requests.forEach(request => {
     const eventId = request.event_id;
     if (!groupedByEvent[eventId]) {
       groupedByEvent[eventId] = [];
@@ -1067,21 +1060,21 @@ const ResourceRequestsTable = ({ requests, onAction, getStatusBadgeClass }) => {
                 <div className="brm-action-buttons">
                   <button
                     className="brm-btn-approve"
-                    onClick={() => onAction(firstRequest, 'approve')}
+                    onClick={() => onAction(firstRequest, 'approve', group)}
                     title="Approve Package"
                   >
                     ✅
                   </button>
                   <button
                     className="brm-btn-reject"
-                    onClick={() => onAction(firstRequest, 'reject')}
+                    onClick={() => onAction(firstRequest, 'reject', group)}
                     title="Reject Package"
                   >
                     ❌
                   </button>
                   <button
                     className="brm-btn-modify"
-                    onClick={() => onAction(firstRequest, 'modify')}
+                    onClick={() => onAction(firstRequest, 'modify', group)}
                     title="Modify Package"
                   >
                     ✏️

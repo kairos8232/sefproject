@@ -196,6 +196,11 @@ const ResourceCataloguePage = () => {
   const handleCreateType = async (e) => {
     e.preventDefault();
     try {
+      if (!typeFormData.total_quantity || typeFormData.total_quantity < 1) {
+        showError('Total quantity must be at least 1');
+        return;
+      }
+
       await resourceTypeService.createType(typeFormData);
       showSuccess('Resource type created successfully!');
       setShowCreateTypeModal(false);
@@ -233,6 +238,11 @@ const ResourceCataloguePage = () => {
   const handleEditType = async (e) => {
     e.preventDefault();
     try {
+      if (!typeFormData.total_quantity || typeFormData.total_quantity < 1) {
+        showError('Total quantity must be at least 1');
+        return;
+      }
+
       await resourceTypeService.updateType(selectedType.id, typeFormData);
       showSuccess('Resource type updated successfully!');
       setShowEditTypeModal(false);
@@ -594,7 +604,7 @@ const ResourceCataloguePage = () => {
                   required
                   maxLength={10}
                 />
-                <small>2-10 uppercase alphanumeric characters</small>
+                <small>2-10 characters: letters A-Z and numbers 0-9 only</small>
               </div>
               <div className="rcp-form-group">
                 <label>Category Name *</label>
@@ -709,7 +719,7 @@ const ResourceCataloguePage = () => {
                   required
                   maxLength="10"
                 />
-                <small>2-10 uppercase alphanumeric characters (hyphens allowed)</small>
+                <small>2-10 characters: letters A-Z, numbers 0-9, and hyphens (-) only</small>
               </div>
               <div className="rcp-form-group">
                 <label>Resource Name *</label>
@@ -738,17 +748,18 @@ const ResourceCataloguePage = () => {
                     type="number"
                     value={typeFormData.total_quantity}
                     onChange={(e) => setTypeFormData({ ...typeFormData, total_quantity: parseInt(e.target.value) })}
-                    min="0"
+                    min="1"
                     required
                   />
                 </div>
                 <div className="rcp-form-group">
-                  <label>Unit</label>
+                  <label>Unit *</label>
                   <input
                     type="text"
                     value={typeFormData.unit}
                     onChange={(e) => setTypeFormData({ ...typeFormData, unit: e.target.value })}
                     placeholder="e.g., pieces, sets, units"
+                    required
                   />
                 </div>
               </div>
@@ -830,16 +841,17 @@ const ResourceCataloguePage = () => {
                     type="number"
                     value={typeFormData.total_quantity}
                     onChange={(e) => setTypeFormData({ ...typeFormData, total_quantity: parseInt(e.target.value) })}
-                    min="0"
+                    min="1"
                     required
                   />
                 </div>
                 <div className="rcp-form-group">
-                  <label>Unit</label>
+                  <label>Unit *</label>
                   <input
                     type="text"
                     value={typeFormData.unit}
                     onChange={(e) => setTypeFormData({ ...typeFormData, unit: e.target.value })}
+                    required
                   />
                 </div>
               </div>

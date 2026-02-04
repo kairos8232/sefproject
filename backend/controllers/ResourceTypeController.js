@@ -43,17 +43,17 @@ class ResourceTypeController {
         return res.status(400).json({ error: 'Category, code, and name are required' });
       }
 
-      // Validate code format (2-20 uppercase alphanumeric with hyphens)
-      const codeRegex = /^[A-Z0-9-]{2,20}$/;
+      // Validate code format (2-10 uppercase alphanumeric with hyphens)
+      const codeRegex = /^[A-Z0-9-]{2,10}$/;
       if (!codeRegex.test(code)) {
         return res.status(400).json({
-          error: 'Code must be 2-20 uppercase alphanumeric characters (hyphens allowed)'
+          error: 'Code must be 2-10 characters: letters A-Z, numbers 0-9, and hyphens (-) only'
         });
       }
 
       // Validate quantities
-      if (total_quantity !== undefined && total_quantity < 0) {
-        return res.status(400).json({ error: 'Total quantity cannot be negative' });
+      if (total_quantity !== undefined && total_quantity < 1) {
+        return res.status(400).json({ error: 'Total quantity must be at least 1' });
       }
 
       // Validate unit contains only letters, spaces, and hyphens (no numbers)
@@ -119,16 +119,16 @@ class ResourceTypeController {
       }
 
       // Validate code format
-      const codeRegex = /^[A-Z0-9-]{2,20}$/;
+      const codeRegex = /^[A-Z0-9-]{2,10}$/;
       if (!codeRegex.test(code)) {
         return res.status(400).json({
-          error: 'Code must be 2-20 uppercase alphanumeric characters (hyphens allowed)'
+          error: 'Code must be 2-10 characters: letters A-Z, numbers 0-9, and hyphens (-) only'
         });
       }
 
       // Validate quantities
-      if (total_quantity < 0) {
-        return res.status(400).json({ error: 'Total quantity cannot be negative' });
+      if (total_quantity < 1) {
+        return res.status(400).json({ error: 'Total quantity must be at least 1' });
       }
 
       // Check if resource type exists

@@ -819,11 +819,21 @@ class VenueBookingController {
         }
 
         // Check venue capacity if expected_attendees provided (required rule)
+        // For package bookings, sum capacity of all venues for the same event
         if (expected_attendees) {
-          const venue = await Venue.getById(finalVenueId);
-          if (venue && venue.capacity < expected_attendees) {
+          const eventId = booking.event_id;
+          const eventBookings = await VenueBooking.getByEventId(eventId);
+          
+          // Sum capacity of all venues in this event's booking package
+          let totalCapacity = 0;
+          for (const b of eventBookings) {
+            const v = await Venue.getById(b.venue_id);
+            if (v) totalCapacity += v.capacity;
+          }
+          
+          if (totalCapacity < expected_attendees) {
             return res.status(400).json({ 
-              error: `Venue capacity (${venue.capacity}) is insufficient for expected attendees (${expected_attendees})` 
+              error: `Total package capacity (${totalCapacity}) is insufficient for expected attendees (${expected_attendees}). Need ${expected_attendees - totalCapacity} more capacity.` 
             });
           }
         }
