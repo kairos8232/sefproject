@@ -325,10 +325,15 @@ function FacultyEventsPage() {
                     const approvedBookings = (event.venue_bookings || []).filter(b => b.status === 'approved');
                     const booking = approvedBookings[0]; // For other data like dates
                     
+                    // Get start/end datetime from booking or event fallback
+                    const startDateTime = booking?.approved_start_datetime || booking?.requested_start_datetime || event.start_datetime;
+                    const endDateTime = booking?.approved_end_datetime || booking?.requested_end_datetime || event.end_datetime;
+                    const attendees = booking?.expected_attendees || event.expected_attendees || 'N/A';
+                    
                     return (
                       <tr key={event.id}>
                         <td>
-                          <div className="fep-event-name">{event.event_name}</div>
+                          <div className="fep-event-name">{event.event_name || 'Untitled Event'}</div>
                           {event.description && (
                             <div className="fep-event-description">
                               {event.description.substring(0, 50)}
@@ -367,14 +372,18 @@ function FacultyEventsPage() {
                         </td>
                         <td>
                           <div className="fep-datetime-cell">
-                            <div>{formatDateTime(booking?.approved_start_datetime || booking?.requested_start_datetime || event.start_datetime)}</div>
-                            <div className="fep-datetime-to">to</div>
-                            <div>{formatDateTime(booking?.approved_end_datetime || booking?.requested_end_datetime || event.end_datetime)}</div>
+                            <div>{startDateTime ? formatDateTime(startDateTime) : 'N/A'}</div>
+                            {startDateTime && (
+                              <>
+                                <div className="fep-datetime-to">to</div>
+                                <div>{endDateTime ? formatDateTime(endDateTime) : 'N/A'}</div>
+                              </>
+                            )}
                           </div>
                         </td>
                         <td>{getStatusBadge(event.status)}</td>
                         <td className="fep-text-center">
-                          {booking?.expected_attendees || 'N/A'}
+                          {attendees}
                         </td>
                         <td>
                           <div className="fep-action-buttons">

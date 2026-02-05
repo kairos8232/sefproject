@@ -300,7 +300,7 @@ function VenueBookingPage() {
               </div>
 
               <div className="form-group">
-                <label htmlFor="setup_time">Setup Time (minutes)</label>
+                <label htmlFor="setup_time">Setup Time (minutes, max 1 day)</label>
                 <input
                   type="number"
                   id="setup_time"
@@ -308,12 +308,13 @@ function VenueBookingPage() {
                   value={formData.setup_time}
                   onChange={handleInputChange}
                   min="0"
+                  max="1440"
                   placeholder="e.g., 30"
                 />
               </div>
 
               <div className="form-group">
-                <label htmlFor="teardown_time">Teardown Time (minutes)</label>
+                <label htmlFor="teardown_time">Teardown Time (minutes, max 1 day)</label>
                 <input
                   type="number"
                   id="teardown_time"
@@ -321,6 +322,7 @@ function VenueBookingPage() {
                   value={formData.teardown_time}
                   onChange={handleInputChange}
                   min="0"
+                  max="1440"
                   placeholder="e.g., 30"
                 />
               </div>

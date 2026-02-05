@@ -100,16 +100,17 @@ const SessionTimeoutModal = ({ onExtendSession, onLogout }) => {
 
   // Update last activity time and refresh token if needed
   const updateActivity = useCallback(() => {
+    // If warning modal is visible, don't auto-dismiss on activity.
+    // User must explicitly choose Stay Logged In or Logout.
+    if (showModal) {
+      return;
+    }
+
     const now = Date.now();
     lastActivityRef.current = now;
-    
+
     // Refresh token silently if needed
     refreshTokenSilently();
-    
-    // Hide modal if it's showing (user is active)
-    if (showModal) {
-      setShowModal(false);
-    }
   }, [showModal, refreshTokenSilently]);
 
   const setupTimeouts = useCallback(() => {

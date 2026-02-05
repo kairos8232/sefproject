@@ -370,6 +370,12 @@ class Event {
       // Transform the response to return events with venue_bookings
       const events = {};
       (data || []).forEach(booking => {
+        // Skip if event is null (event was deleted)
+        if (!booking.event) {
+          console.warn(`Skipping booking ${booking.id} with null event`);
+          return;
+        }
+        
         const eventId = booking.event_id;
         if (!events[eventId]) {
           events[eventId] = {

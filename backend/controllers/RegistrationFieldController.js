@@ -21,8 +21,8 @@ class RegistrationFieldController {
 
       const fields = await RegistrationField.getByEventId(eventId);
       
-      // Check if event has registrations (to determine if fields can be edited)
-      const hasRegistrations = await RegistrationField.eventHasRegistrations(eventId);
+      // Check if event has registrations (exclude organizer) to determine if fields can be edited
+      const hasRegistrations = await RegistrationField.eventHasRegistrations(eventId, event.organizer_id);
 
       res.json({ 
         fields,
@@ -88,8 +88,8 @@ class RegistrationFieldController {
         return res.status(403).json({ error: 'Not authorized to modify this event' });
       }
 
-      // Check if event has registrations
-      const hasRegistrations = await RegistrationField.eventHasRegistrations(eventId);
+      // Check if event has registrations (exclude organizer)
+      const hasRegistrations = await RegistrationField.eventHasRegistrations(eventId, event.organizer_id);
       if (hasRegistrations) {
         return res.status(400).json({ error: 'Cannot add fields after participants have registered' });
       }
@@ -127,7 +127,7 @@ class RegistrationFieldController {
       }
 
       // Check if event has registrations
-      const hasRegistrations = await RegistrationField.eventHasRegistrations(eventId);
+      const hasRegistrations = await RegistrationField.eventHasRegistrations(eventId, event.organizer_id);
       if (hasRegistrations) {
         return res.status(400).json({ error: 'Cannot edit fields after participants have registered' });
       }
@@ -172,7 +172,7 @@ class RegistrationFieldController {
       }
 
       // Check if event has registrations
-      const hasRegistrations = await RegistrationField.eventHasRegistrations(eventId);
+      const hasRegistrations = await RegistrationField.eventHasRegistrations(eventId, event.organizer_id);
       if (hasRegistrations) {
         return res.status(400).json({ error: 'Cannot delete fields after participants have registered' });
       }

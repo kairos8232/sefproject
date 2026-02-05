@@ -537,7 +537,7 @@ class EventController {
         end_date
       });
 
-      // Enrich events with user feedback
+      // Enrich events with user feedback and calculated status
       const userId = req.user.userId;
       const EventFeedback = require('../models/EventFeedback');
       
@@ -547,12 +547,14 @@ class EventController {
             const feedback = await EventFeedback.getUserFeedbackForEvent(userId, event.id);
             return {
               ...event,
+              status: this.calculateEventStatus(event),
               user_feedback: feedback || null
             };
           } catch (err) {
             console.error(`[Event ${event.id}] Error fetching feedback:`, err);
             return {
               ...event,
+              status: this.calculateEventStatus(event),
               user_feedback: null
             };
           }
@@ -609,6 +611,9 @@ class EventController {
           error: 'Can only provide feedback for events in your faculty venues' 
         });
       }
+
+      // Calculate and update event status based on current time
+      eventDetails.status = this.calculateEventStatus(eventDetails);
 
       res.json({
         success: true,

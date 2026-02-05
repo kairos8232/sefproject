@@ -122,15 +122,25 @@ class RegistrationField {
   }
 
   // Check if event has any registrations
-  static async eventHasRegistrations(eventId) {
+  static async eventHasRegistrations(eventId, organizerId = null) {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('event_participation')
-        .select('id')
+        .select('id, user_id')
         .eq('event_id', eventId)
-        .limit(1);
+        .neq('status', 'cancelled'); // Exclude cancelled participations
+
+      const { data, error } = await query;
 
       if (error) throw error;
+      
+      // If organizer ID is provided, exclude organizer's participation from count
+      // Only count "real" registrations (other participants)
+      if (organizerId && data) {
+        const nonOrganizerParticipations = data.filter(p => p.user_id !== organizerId);
+        return nonOrganizerParticipations.length > 0;
+      }
+      
       return data && data.length > 0;
     } catch (error) {
       console.error('Error checking event registrations:', error);
