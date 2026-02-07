@@ -55,10 +55,6 @@ function VenueBookingPage() {
     loadFaculties();
   }, []);
 
-  if (!event) {
-    return null;
-  }
-
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -68,7 +64,9 @@ function VenueBookingPage() {
   };
 
   const handleSearchVenues = async (e) => {
-    e.preventDefault();
+    if (e?.preventDefault) {
+      e.preventDefault();
+    }
     setAvailableVenues([]);
     setSelectedVenues([]);
     setSearchPerformed(false);
@@ -117,6 +115,17 @@ function VenueBookingPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (event?.start_datetime && event?.end_datetime) {
+      handleSearchVenues();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.faculty_filter]);
+
+  if (!event) {
+    return null;
+  }
 
   const handleVenueToggle = (venue) => {
     setSelectedVenues(prev => {
@@ -205,10 +214,6 @@ function VenueBookingPage() {
             </select>
           </div>
 
-          <button onClick={handleSearchVenues} className="search-button" disabled={loading}>
-            {loading ? 'Loading Venues...' : 'Search Venues'}
-          </button>
-
           {loading ? (
             <div className="loading">Loading venues...</div>
           ) : searchPerformed && availableVenues.length === 0 ? (
@@ -236,7 +241,7 @@ function VenueBookingPage() {
                       <p><strong>Capacity:</strong> {venue.capacity || 'N/A'} people</p>
                     </div>
                     {isSelected && (
-                      <div className="selected-badge">✓ Selected</div>
+                      <div className="selected-badge">Selected</div>
                     )}
                   </div>
                 );

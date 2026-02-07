@@ -435,6 +435,22 @@
   background: #f5c6cb;
 }
 
+.frrp-btn-confirm-reject {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.frrp-btn-confirm-reject:hover:not(:disabled) {
+  background: #c82333;
+}
+
 .frrp-btn-cancel {
   background: #6c757d;
   color: white;
@@ -529,9 +545,87 @@ button:disabled {
   margin-bottom: 20px;
 }
 
+.frrp-detail-section {
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.frrp-detail-section:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.frrp-detail-section h3 {
+  font-size: 16px;
+  color: #333;
+  margin: 0 0 12px 0;
+  font-weight: 600;
+}
+
+.frrp-detail-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.frrp-detail-row label {
+  min-width: 140px;
+  font-weight: 500;
+  color: #555;
+}
+
+.frrp-detail-row span {
+  color: #333;
+  flex: 1;
+}
+
 .frrp-modal-info p {
   margin: 8px 0;
   font-size: 14px;
+}
+
+.frrp-modal-resource-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.frrp-modal-resource-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.frrp-modal-resource-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.frrp-modal-resource-name {
+  font-weight: 600;
+  color: #333;
+}
+
+.frrp-modal-resource-code {
+  font-size: 0.85rem;
+  color: #667eea;
+  font-weight: 600;
+}
+
+.frrp-modal-resource-qty {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  color: #333;
+  font-size: 0.9rem;
 }
 
 .frrp-form-group {

@@ -1,23 +1,24 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getBlockedSlots, createBlock, updateBlock, deleteBlock } from '../services/venueAvailabilityService';
 import { toDateTimeLocalInput, fromDateTimeLocalInput, formatDateTime } from '../utils/dateUtils';
 import apiClient from '../services/apiClient';
+import { useToast } from '../contexts/ToastContext';
 import './VenueAvailabilityPage.css';
 
 function VenueAvailabilityPage() {
   const navigate = useNavigate();
+  const { showSuccess, showError } = useToast();
   const [venues, setVenues] = useState([]);
   const [blocks, setBlocks] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [selectedVenue, setSelectedVenue] = useState(null);
   const [editingBlock, setEditingBlock] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [showBlocksList, setShowBlocksList] = useState(true);
+  const formRef = useRef(null);
   
   // Form states
   const [formData, setFormData] = useState({
@@ -40,16 +41,15 @@ function VenueAvailabilityPage() {
   const loadBlocks = useCallback(async () => {
     try {
       setLoading(true);
-      setError('');
       const response = await getBlockedSlots();
       setBlocks(response.blocks || []);
     } catch (err) {
       console.error('Error loading blocks:', err);
-      setError(err.response?.data?.error || 'Failed to load blocked time slots');
+      showError(err.response?.data?.error || 'Failed to load blocked time slots');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [showError]);
 
   const loadBookings = useCallback(async () => {
     try {
@@ -92,12 +92,9 @@ function VenueAvailabilityPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!selectedVenue) {
-      setError('Please select a venue first');
+      showError('Please select a venue first');
       return;
     }
-    
-    setError('');
-    setSuccess('');
 
     try {
       const blockData = {
@@ -109,12 +106,10 @@ function VenueAvailabilityPage() {
 
       if (editingBlock) {
         await updateBlock(editingBlock.id, blockData);
-        setSuccess('Time slot updated successfully');
-        setTimeout(() => setSuccess(''), 3000);
+        showSuccess('Time slot updated successfully');
       } else {
         await createBlock(blockData);
-        setSuccess('Time slot blocked successfully');
-        setTimeout(() => setSuccess(''), 3000);
+        showSuccess('Time slot blocked successfully');
       }
       
       // Reset form
@@ -126,7 +121,7 @@ function VenueAvailabilityPage() {
       setEditingBlock(null);
       loadBlocks();
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to save blocked time slot');
+      showError(err.response?.data?.error || 'Failed to save blocked time slot');
     }
   };
 
@@ -137,6 +132,9 @@ function VenueAvailabilityPage() {
       blocked_end_datetime: toDateTimeLocalInput(block.blocked_end_datetime),
       reason: block.reason || ''
     });
+    setTimeout(() => {
+      formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 0);
   };
 
   const handleDelete = async (blockId) => {
@@ -145,14 +143,11 @@ function VenueAvailabilityPage() {
     }
 
     try {
-      setError('');
-      setSuccess('');
       await deleteBlock(blockId);
-      setSuccess('Blocked time slot removed successfully');
-      setTimeout(() => setSuccess(''), 3000);
+      showSuccess('Blocked time slot removed successfully');
       loadBlocks();
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to remove blocked time slot');
+      showError(err.response?.data?.error || 'Failed to remove blocked time slot');
     }
   };
 
@@ -163,7 +158,6 @@ function VenueAvailabilityPage() {
       reason: ''
     });
     setEditingBlock(null);
-    setError('');
   };
 
   const filteredVenues = venues.filter(venue =>
@@ -257,10 +251,6 @@ function VenueAvailabilityPage() {
         </button>
       </div>
 
-      {/* Success/Error Messages */}
-      {success && <div className="success-message">{success}</div>}
-      {error && <div className="error-message">{error}</div>}
-
       <div className="availability-container">
         {/* Left Side: Venue Selection */}
         <div className="venue-selection-section">
@@ -309,7 +299,7 @@ function VenueAvailabilityPage() {
           ) : (
             <>
               {/* Block Form */}
-              <div className="block-form">
+              <div className="block-form" ref={formRef}>
                 <h2>{editingBlock ? 'Edit' : 'Create'} Blocked Time Slot</h2>
                 <form onSubmit={handleSubmit}>
                   <div className="form-row">

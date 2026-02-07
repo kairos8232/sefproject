@@ -360,25 +360,52 @@ const FacultyResourceRequestsPage = () => {
 
             <div className="frrp-modal-content">
               <div className="frrp-modal-info">
-                <p><strong>Event:</strong> {Array.isArray(selectedRequest) ? selectedRequest[0]?.event?.event_name : selectedRequest?.event?.event_name}</p>
-                {Array.isArray(selectedRequest) ? (
-                  <>
-                    <p><strong>Resources in this group:</strong></p>
-                    <ul style={{ marginLeft: '20px' }}>
+                <div className="frrp-detail-section">
+                  <h3>Request Details</h3>
+                  <div className="frrp-detail-row">
+                    <label>Event:</label>
+                    <span>{Array.isArray(selectedRequest) ? selectedRequest[0]?.event?.event_name : selectedRequest?.event?.event_name}</span>
+                  </div>
+                  <div className="frrp-detail-row">
+                    <label>Requester:</label>
+                    <span>{Array.isArray(selectedRequest) ? selectedRequest[0]?.requester?.name : selectedRequest?.requester?.name}</span>
+                  </div>
+                </div>
+
+                <div className="frrp-detail-section">
+                  <h3>Resources</h3>
+                  {Array.isArray(selectedRequest) ? (
+                    <div className="frrp-modal-resource-list">
                       {selectedRequest.map((req, idx) => (
-                        <li key={req.id}>
-                          {idx + 1}. {req.resource?.name} ({req.resource?.code}) - {req.requested_quantity} {req.resource?.unit}
-                        </li>
+                        <div key={req.id} className="frrp-modal-resource-row">
+                          <div className="frrp-modal-resource-info">
+                            <div className="frrp-modal-resource-name">
+                              {idx + 1}. {req.resource?.name}
+                            </div>
+                            <div className="frrp-modal-resource-code">
+                              {req.resource?.code}
+                            </div>
+                          </div>
+                          <div className="frrp-modal-resource-qty">
+                            <strong>{req.requested_quantity}</strong>
+                            <span>{req.resource?.unit}</span>
+                          </div>
+                        </div>
                       ))}
-                    </ul>
-                  </>
-                ) : (
-                  <>
-                    <p><strong>Resource:</strong> {selectedRequest?.resource?.name} ({selectedRequest?.resource?.code})</p>
-                    <p><strong>Quantity:</strong> {selectedRequest?.requested_quantity} {selectedRequest?.resource?.unit}</p>
-                  </>
-                )}
-                <p><strong>Requester:</strong> {Array.isArray(selectedRequest) ? selectedRequest[0]?.requester?.name : selectedRequest?.requester?.name}</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="frrp-detail-row">
+                        <label>Resource:</label>
+                        <span>{selectedRequest?.resource?.name} ({selectedRequest?.resource?.code})</span>
+                      </div>
+                      <div className="frrp-detail-row">
+                        <label>Quantity:</label>
+                        <span>{selectedRequest?.requested_quantity} {selectedRequest?.resource?.unit}</span>
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
 
               {isRejecting ? (

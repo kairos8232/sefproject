@@ -184,8 +184,8 @@ class VenueAvailabilityController {
         });
       }
 
-      // Get the existing block
-      const existingBlocks = await VenueAvailability.getBlockedSlots(null);
+      // Get the existing block within the faculty
+      const existingBlocks = await VenueAvailability.getFacultyBlockedSlots(facultyId);
       const existingBlock = existingBlocks.find(b => b.id === id);
 
       if (!existingBlock) {

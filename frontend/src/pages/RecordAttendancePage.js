@@ -238,10 +238,10 @@ const RecordAttendancePage = () => {
         </div>
         <div className="ra-bulk-actions">
           <button onClick={handleSelectAll} className="ra-btn-select-all">
-            ✓ Select All
+            Select All
           </button>
           <button onClick={handleDeselectAll} className="ra-btn-deselect-all">
-            ✗ Deselect All
+            Deselect All
           </button>
         </div>
       </div>
@@ -314,7 +314,7 @@ const RecordAttendancePage = () => {
             className="ra-btn-save"
             disabled={saving}
           >
-            {saving ? 'Saving...' : '💾 Save Attendance'}
+            {saving ? 'Saving...' : 'Save Attendance'}
           </button>
         </div>
       )}

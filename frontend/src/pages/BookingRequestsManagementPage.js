@@ -779,18 +779,20 @@ const VenueBookingsTable = ({ bookings, onAction, getStatusBadgeClass }) => {
     return <div className="brm-no-data">No venue bookings found</div>;
   }
 
-  // Group bookings by event_id
-  const groupedByEvent = {};
+  // Group bookings by package_id or by event_id + requested time window
+  const groupedByKey = {};
   bookings.forEach(booking => {
-    const eventId = booking.event_id;
-    if (!groupedByEvent[eventId]) {
-      groupedByEvent[eventId] = [];
+    const key = booking.package_id
+      ? `pkg:${booking.package_id}`
+      : `evt:${booking.event_id}:${booking.requested_start_datetime}:${booking.requested_end_datetime}`;
+    if (!groupedByKey[key]) {
+      groupedByKey[key] = [];
     }
-    groupedByEvent[eventId].push(booking);
+    groupedByKey[key].push(booking);
   });
 
   // Convert to array of groups
-  const eventGroups = Object.values(groupedByEvent);
+  const eventGroups = Object.values(groupedByKey);
 
   return (
     <div className="brm-table-container">

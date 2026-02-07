@@ -232,7 +232,7 @@ function RequestResourcesPage() {
                       )}
                     </div>
                     {isSelected && (
-                      <div className="selected-badge">✓ Selected</div>
+                      <div className="selected-badge">Selected</div>
                     )}
                     {resource.availableQuantity === 0 && (
                       <div className="unavailable-badge">Unavailable</div>

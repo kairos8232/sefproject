@@ -740,7 +740,7 @@ const FacultyBookingRequestsPage = () => {
                 </div>
               )}
 
-              {selectedBooking.status === 'pending' && !isRejecting && selectedBooking.requester_id !== currentUserId && (
+              {selectedBooking.status === 'pending' && !isRejecting && (selectedBooking.requester_id || selectedBooking.requester_user_id) !== currentUserId && (
                 <div className="detail-section action-section">
                   <h3>Approve Booking</h3>
 
@@ -761,13 +761,6 @@ const FacultyBookingRequestsPage = () => {
                       disabled={processing}
                     >
                       {processing ? 'Processing...' : '✅ Approve'}
-                    </button>
-                    <button 
-                      className="btn-reject"
-                      onClick={() => setIsRejecting(true)}
-                      disabled={processing}
-                    >
-                      ❌ Reject
                     </button>
                   </div>
                 </div>
@@ -811,7 +804,7 @@ const FacultyBookingRequestsPage = () => {
                 </div>
               )}
 
-              {selectedBooking.status === 'pending' && selectedBooking.requester_id === currentUserId && (
+              {selectedBooking.status === 'pending' && (selectedBooking.requester_id || selectedBooking.requester_user_id) === currentUserId && (
                 <div className="info-message">
                   ℹ️ You cannot approve or reject your own booking request
                 </div>
