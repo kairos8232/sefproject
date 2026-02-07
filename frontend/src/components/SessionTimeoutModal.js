@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import authService from '../services/authService';
+import { useToast } from '../contexts/ToastContext';
 import './SessionTimeoutModal.css';
 
 // Constants - defined outside component to avoid recreating on each render
@@ -9,6 +10,7 @@ const TOKEN_EXPIRY_WARNING_BUFFER = 5 * 60 * 1000; // Show warning 5 minutes bef
 const ACTIVITY_CHECK_INTERVAL = 30 * 1000; // Check every 30 seconds
 
 const SessionTimeoutModal = ({ onExtendSession, onLogout }) => {
+  const { showSuccess } = useToast();
   const [showModal, setShowModal] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(0);
   const warningTimeoutRef = useRef(null);
@@ -113,52 +115,72 @@ const SessionTimeoutModal = ({ onExtendSession, onLogout }) => {
     refreshTokenSilently();
   }, [showModal, refreshTokenSilently]);
 
-  const setupTimeouts = useCallback(() => {
+  const setupTimeouts = useCallback((options = { resetActivity: false }) => {
     clearTimeouts();
-    
+
     const now = Date.now();
-    lastActivityRef.current = now;
+    if (options.resetActivity || !lastActivityRef.current) {
+      lastActivityRef.current = now;
+    }
+
+
+    const timeSinceLastActivity = now - lastActivityRef.current;
+
+    if (timeSinceLastActivity >= IDLE_LOGOUT_TIME) {
+      handleAutoLogout();
+      return;
+    }
+
+    if (timeSinceLastActivity >= IDLE_WARNING_TIME) {
+      setShowModal(true);
+      const remainingTime = IDLE_LOGOUT_TIME - timeSinceLastActivity;
+      setTimeRemaining(Math.floor(remainingTime / 1000));
+    }
+
+    const warningDelay = Math.max(IDLE_WARNING_TIME - timeSinceLastActivity, 0);
+    const logoutDelay = Math.max(IDLE_LOGOUT_TIME - timeSinceLastActivity, 0);
 
     // Warning timeout: show warning after IDLE_WARNING_TIME of inactivity
     warningTimeoutRef.current = setTimeout(() => {
-      const timeSinceLastActivity = Date.now() - lastActivityRef.current;
-      if (timeSinceLastActivity >= IDLE_WARNING_TIME) {
+      const idleDuration = Date.now() - lastActivityRef.current;
+      if (idleDuration >= IDLE_WARNING_TIME) {
         setShowModal(true);
-        const warningDuration = (IDLE_LOGOUT_TIME - IDLE_WARNING_TIME) / 1000;
-        setTimeRemaining(Math.floor(warningDuration));
+        const remaining = IDLE_LOGOUT_TIME - idleDuration;
+        setTimeRemaining(Math.floor(remaining / 1000));
       }
-    }, IDLE_WARNING_TIME);
+    }, warningDelay);
 
     // Logout timeout: auto-logout after IDLE_LOGOUT_TIME of inactivity
     logoutTimeoutRef.current = setTimeout(() => {
-      const timeSinceLastActivity = Date.now() - lastActivityRef.current;
-      if (timeSinceLastActivity >= IDLE_LOGOUT_TIME) {
+      const idleDuration = Date.now() - lastActivityRef.current;
+      if (idleDuration >= IDLE_LOGOUT_TIME) {
         handleAutoLogout();
       }
-    }, IDLE_LOGOUT_TIME);
+    }, logoutDelay);
 
     // Periodic check: verify idle time and adjust warnings
     activityCheckIntervalRef.current = setInterval(() => {
-      const timeSinceLastActivity = Date.now() - lastActivityRef.current;
-      
+      const idleDuration = Date.now() - lastActivityRef.current;
+
       // First, check if token is expiring
       if (checkTokenExpiry()) {
         return; // Token expiry modal is now showing or logout happened
       }
-      
+
+
       // If modal is showing but user became active, hide it
-      if (timeSinceLastActivity < IDLE_WARNING_TIME && showModal) {
+      if (idleDuration < IDLE_WARNING_TIME && showModal) {
         setShowModal(false);
       }
-      
+
       // If idle time exceeded logout threshold, auto-logout
-      if (timeSinceLastActivity >= IDLE_LOGOUT_TIME) {
+      if (idleDuration >= IDLE_LOGOUT_TIME) {
         handleAutoLogout();
-      } 
+      }
       // If idle time reached warning threshold, show popup
-      else if (timeSinceLastActivity >= IDLE_WARNING_TIME && !showModal) {
+      else if (idleDuration >= IDLE_WARNING_TIME && !showModal) {
         setShowModal(true);
-        const remainingTime = IDLE_LOGOUT_TIME - timeSinceLastActivity;
+        const remainingTime = IDLE_LOGOUT_TIME - idleDuration;
         setTimeRemaining(Math.floor(remainingTime / 1000));
       }
     }, ACTIVITY_CHECK_INTERVAL);
@@ -170,7 +192,7 @@ const SessionTimeoutModal = ({ onExtendSession, onLogout }) => {
       setShowModal(false);
       // Update activity time and reset timeouts
       lastActivityRef.current = Date.now();
-      setupTimeouts();
+      setupTimeouts({ resetActivity: true });
     } catch (err) {
       console.error('Failed to extend session:', err);
       handleAutoLogout();
@@ -179,6 +201,7 @@ const SessionTimeoutModal = ({ onExtendSession, onLogout }) => {
 
   const handleLogoutClick = () => {
     setShowModal(false);
+    showSuccess('Logged out successfully');
     onLogout();
   };
 
@@ -227,12 +250,11 @@ const SessionTimeoutModal = ({ onExtendSession, onLogout }) => {
       return;
     }
 
-    setupTimeouts();
+    setupTimeouts({ resetActivity: true });
 
     // Listen for token updates
     const handleStorageChange = (e) => {
       if (e.key === 'token') {
-        lastActivityRef.current = Date.now();
         setupTimeouts();
       }
     };
@@ -241,7 +263,6 @@ const SessionTimeoutModal = ({ onExtendSession, onLogout }) => {
 
     // Also listen for custom event when token is updated
     const handleTokenUpdate = () => {
-      lastActivityRef.current = Date.now();
       setupTimeouts();
     };
     window.addEventListener('tokenUpdated', handleTokenUpdate);
