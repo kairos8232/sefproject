@@ -58,6 +58,51 @@ const FacultyVenueManagementPage = () => {
     capacity: ''
   });
 
+  const resetFacultyForm = () => {
+    setFacultyFormData({ code: '', name: '', description: '' });
+  };
+
+  const openCreateFacultyModal = () => {
+    resetFacultyForm();
+    setSelectedFaculty(null);
+    setShowCreateFacultyModal(true);
+  };
+
+  const closeCreateFacultyModal = () => {
+    setShowCreateFacultyModal(false);
+    resetFacultyForm();
+  };
+
+  const closeEditFacultyModal = () => {
+    setShowEditFacultyModal(false);
+    setSelectedFaculty(null);
+    resetFacultyForm();
+  };
+
+  const resetVenueForm = () => {
+    setVenueFormData({ faculty_id: '', code: '', name: '', location: '', capacity: '' });
+  };
+
+  const openCreateVenueModal = () => {
+    resetVenueForm();
+    setSelectedVenue(null);
+    if (selectedFacultyId) {
+      setVenueFormData((prev) => ({ ...prev, faculty_id: selectedFacultyId }));
+    }
+    setShowCreateVenueModal(true);
+  };
+
+  const closeCreateVenueModal = () => {
+    setShowCreateVenueModal(false);
+    resetVenueForm();
+  };
+
+  const closeEditVenueModal = () => {
+    setShowEditVenueModal(false);
+    setSelectedVenue(null);
+    resetVenueForm();
+  };
+
   useEffect(() => {
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -177,9 +222,7 @@ const FacultyVenueManagementPage = () => {
     try {
       await facultyService.updateFaculty(selectedFaculty.id, facultyFormData);
       showSuccess('Faculty updated successfully!');
-      setShowEditFacultyModal(false);
-      setSelectedFaculty(null);
-      setFacultyFormData({ code: '', name: '', description: '' });
+      closeEditFacultyModal();
       loadData();
     } catch (err) {
       console.error('Error updating faculty:', err);
@@ -205,8 +248,7 @@ const FacultyVenueManagementPage = () => {
     try {
       await venueService.createVenue(venueFormData);
       showSuccess('Venue created successfully!');
-      setShowCreateVenueModal(false);
-      setVenueFormData({ faculty_id: '', code: '', name: '', location: '', capacity: '' });
+      closeCreateVenueModal();
       loadData();
     } catch (err) {
       console.error('Error creating venue:', err);
@@ -231,9 +273,7 @@ const FacultyVenueManagementPage = () => {
     try {
       await venueService.updateVenue(selectedVenue.id, venueFormData);
       showSuccess('Venue updated successfully!');
-      setShowEditVenueModal(false);
-      setSelectedVenue(null);
-      setVenueFormData({ faculty_id: '', code: '', name: '', location: '', capacity: '' });
+      closeEditVenueModal();
       loadData();
     } catch (err) {
       console.error('Error updating venue:', err);
@@ -326,7 +366,7 @@ const FacultyVenueManagementPage = () => {
             <div className="header-actions">
               <button 
                 className="fvm-btn fvm-btn-primary"
-                onClick={() => setShowCreateFacultyModal(true)}
+                onClick={openCreateFacultyModal}
               >
                 ➕ Create Faculty
               </button>
@@ -424,12 +464,7 @@ const FacultyVenueManagementPage = () => {
               )}
               <button 
                 className="fvm-btn fvm-btn-primary"
-                onClick={() => {
-                  if (selectedFacultyId) {
-                    setVenueFormData({ ...venueFormData, faculty_id: selectedFacultyId });
-                  }
-                  setShowCreateVenueModal(true);
-                }}
+                onClick={openCreateVenueModal}
               >
                 ➕ Create Venue
               </button>
@@ -547,7 +582,7 @@ const FacultyVenueManagementPage = () => {
 
       {/* Create Faculty Modal */}
       {showCreateFacultyModal && (
-        <div className="modal-overlay" onClick={() => setShowCreateFacultyModal(false)}>
+        <div className="modal-overlay" onClick={closeCreateFacultyModal}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <h2>Create New Faculty</h2>
             <form onSubmit={handleCreateFaculty}>
@@ -587,7 +622,7 @@ const FacultyVenueManagementPage = () => {
               </div>
 
               <div className="modal-actions">
-                <button type="button" className="btn-cancel" onClick={() => setShowCreateFacultyModal(false)}>
+                <button type="button" className="btn-cancel" onClick={closeCreateFacultyModal}>
                   Cancel
                 </button>
                 <button type="submit" className="btn-submit">
@@ -601,7 +636,7 @@ const FacultyVenueManagementPage = () => {
 
       {/* Edit Faculty Modal */}
       {showEditFacultyModal && selectedFaculty && (
-        <div className="modal-overlay" onClick={() => setShowEditFacultyModal(false)}>
+        <div className="modal-overlay" onClick={closeEditFacultyModal}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <h2>Edit Faculty</h2>
             <form onSubmit={handleEditFaculty}>
@@ -638,7 +673,7 @@ const FacultyVenueManagementPage = () => {
               </div>
 
               <div className="modal-actions">
-                <button type="button" className="btn-cancel" onClick={() => setShowEditFacultyModal(false)}>
+                <button type="button" className="btn-cancel" onClick={closeEditFacultyModal}>
                   Cancel
                 </button>
                 <button type="submit" className="btn-submit">
@@ -652,7 +687,7 @@ const FacultyVenueManagementPage = () => {
 
       {/* Create Venue Modal */}
       {showCreateVenueModal && (
-        <div className="modal-overlay" onClick={() => setShowCreateVenueModal(false)}>
+        <div className="modal-overlay" onClick={closeCreateVenueModal}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <h2>Create New Venue</h2>
             <form onSubmit={handleCreateVenue}>
@@ -719,7 +754,7 @@ const FacultyVenueManagementPage = () => {
               </div>
 
               <div className="modal-actions">
-                <button type="button" className="btn-cancel" onClick={() => setShowCreateVenueModal(false)}>
+                <button type="button" className="btn-cancel" onClick={closeCreateVenueModal}>
                   Cancel
                 </button>
                 <button type="submit" className="btn-submit">
@@ -733,7 +768,7 @@ const FacultyVenueManagementPage = () => {
 
       {/* Edit Venue Modal */}
       {showEditVenueModal && selectedVenue && (
-        <div className="modal-overlay" onClick={() => setShowEditVenueModal(false)}>
+        <div className="modal-overlay" onClick={closeEditVenueModal}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
             <h2>Edit Venue</h2>
             <form onSubmit={handleEditVenue}>
@@ -796,7 +831,7 @@ const FacultyVenueManagementPage = () => {
               </div>
 
               <div className="modal-actions">
-                <button type="button" className="btn-cancel" onClick={() => setShowEditVenueModal(false)}>
+                <button type="button" className="btn-cancel" onClick={closeEditVenueModal}>
                   Cancel
                 </button>
                 <button type="submit" className="btn-submit">

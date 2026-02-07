@@ -58,6 +58,60 @@ const ResourceCataloguePage = () => {
     notes: ''
   });
 
+  const resetCategoryForm = () => {
+    setCategoryFormData({ code: '', name: '', description: '' });
+  };
+
+  const openCreateCategoryModal = () => {
+    resetCategoryForm();
+    setSelectedCategory(null);
+    setShowCreateCategoryModal(true);
+  };
+
+  const closeCreateCategoryModal = () => {
+    setShowCreateCategoryModal(false);
+    resetCategoryForm();
+  };
+
+  const closeEditCategoryModal = () => {
+    setShowEditCategoryModal(false);
+    setSelectedCategory(null);
+    resetCategoryForm();
+  };
+
+  const resetTypeForm = () => {
+    setTypeFormData({
+      category_id: '',
+      code: '',
+      name: '',
+      description: '',
+      total_quantity: 0,
+      unit: '',
+      notes: ''
+    });
+  };
+
+  const openCreateTypeModal = () => {
+    resetTypeForm();
+    setSelectedType(null);
+    setTypeFormData((prev) => ({
+      ...prev,
+      category_id: selectedCategoryId || ''
+    }));
+    setShowCreateTypeModal(true);
+  };
+
+  const closeCreateTypeModal = () => {
+    setShowCreateTypeModal(false);
+    resetTypeForm();
+  };
+
+  const closeEditTypeModal = () => {
+    setShowEditTypeModal(false);
+    setSelectedType(null);
+    resetTypeForm();
+  };
+
   useEffect(() => {
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -139,8 +193,7 @@ const ResourceCataloguePage = () => {
     try {
       await resourceCategoryService.createCategory(categoryFormData);
       showSuccess('Category created successfully!');
-      setShowCreateCategoryModal(false);
-      setCategoryFormData({ code: '', name: '', description: '' });
+      closeCreateCategoryModal();
       loadData();
     } catch (err) {
       console.error('Error creating category:', err);
@@ -163,9 +216,7 @@ const ResourceCataloguePage = () => {
     try {
       await resourceCategoryService.updateCategory(selectedCategory.id, categoryFormData);
       showSuccess('Category updated successfully!');
-      setShowEditCategoryModal(false);
-      setSelectedCategory(null);
-      setCategoryFormData({ code: '', name: '', description: '' });
+      closeEditCategoryModal();
       loadData();
     } catch (err) {
       console.error('Error updating category:', err);
@@ -203,17 +254,7 @@ const ResourceCataloguePage = () => {
 
       await resourceTypeService.createType(typeFormData);
       showSuccess('Resource type created successfully!');
-      setShowCreateTypeModal(false);
-      setTypeFormData({
-        category_id: '',
-        code: '',
-        name: '',
-        description: '',
-        total_quantity: 0,
-
-        unit: '',
-        notes: ''
-      });
+      closeCreateTypeModal();
       loadData();
     } catch (err) {
       console.error('Error creating resource type:', err);
@@ -245,17 +286,7 @@ const ResourceCataloguePage = () => {
 
       await resourceTypeService.updateType(selectedType.id, typeFormData);
       showSuccess('Resource type updated successfully!');
-      setShowEditTypeModal(false);
-      setSelectedType(null);
-      setTypeFormData({
-        category_id: '',
-        code: '',
-        name: '',
-        description: '',
-        total_quantity: 0,
-        unit: '',
-        notes: ''
-      });
+      closeEditTypeModal();
       loadData();
     } catch (err) {
       console.error('Error updating resource type:', err);
@@ -346,7 +377,7 @@ const ResourceCataloguePage = () => {
             <div className="rcp-header-actions">
               <button 
                 className="rcp-btn rcp-btn-primary"
-                onClick={() => setShowCreateCategoryModal(true)}
+                onClick={openCreateCategoryModal}
               >
                 + New
               </button>
@@ -438,18 +469,7 @@ const ResourceCataloguePage = () => {
             <div className="rcp-header-actions">
               <button 
                 className="rcp-btn rcp-btn-primary"
-                onClick={() => {
-                  setTypeFormData({
-                    category_id: selectedCategoryId || '',
-                    code: '',
-                    name: '',
-                    description: '',
-                    total_quantity: 0,
-                    unit: '',
-                    notes: ''
-                  });
-                  setShowCreateTypeModal(true);
-                }}
+                onClick={openCreateTypeModal}
               >
                 + New Type
               </button>
@@ -590,7 +610,7 @@ const ResourceCataloguePage = () => {
       {/* Category Create Modal */}
       {/* ======================================== */}
       {showCreateCategoryModal && (
-        <div className="rcp-modal-overlay" onClick={() => setShowCreateCategoryModal(false)}>
+        <div className="rcp-modal-overlay" onClick={closeCreateCategoryModal}>
           <div className="rcp-modal-content" onClick={(e) => e.stopPropagation()}>
             <h2>Create New Category</h2>
             <form onSubmit={handleCreateCategory}>
@@ -627,7 +647,7 @@ const ResourceCataloguePage = () => {
                 />
               </div>
               <div className="rcp-modal-actions">
-                <button type="button" className="rcp-btn rcp-btn-secondary" onClick={() => setShowCreateCategoryModal(false)}>
+                <button type="button" className="rcp-btn rcp-btn-secondary" onClick={closeCreateCategoryModal}>
                   Cancel
                 </button>
                 <button type="submit" className="rcp-btn rcp-btn-primary">
@@ -643,7 +663,7 @@ const ResourceCataloguePage = () => {
       {/* Category Edit Modal */}
       {/* ======================================== */}
       {showEditCategoryModal && (
-        <div className="rcp-modal-overlay" onClick={() => setShowEditCategoryModal(false)}>
+        <div className="rcp-modal-overlay" onClick={closeEditCategoryModal}>
           <div className="rcp-modal-content" onClick={(e) => e.stopPropagation()}>
             <h2>Edit Category</h2>
             <form onSubmit={handleEditCategory}>
@@ -676,7 +696,7 @@ const ResourceCataloguePage = () => {
                 />
               </div>
               <div className="rcp-modal-actions">
-                <button type="button" className="rcp-btn rcp-btn-secondary" onClick={() => setShowEditCategoryModal(false)}>
+                <button type="button" className="rcp-btn rcp-btn-secondary" onClick={closeEditCategoryModal}>
                   Cancel
                 </button>
                 <button type="submit" className="rcp-btn rcp-btn-primary">
@@ -692,7 +712,7 @@ const ResourceCataloguePage = () => {
       {/* Type Create Modal */}
       {/* ======================================== */}
       {showCreateTypeModal && (
-        <div className="rcp-modal-overlay" onClick={() => setShowCreateTypeModal(false)}>
+        <div className="rcp-modal-overlay" onClick={closeCreateTypeModal}>
           <div className="rcp-modal-content" onClick={(e) => e.stopPropagation()}>
             <h2>Create New Resource Type</h2>
             <form onSubmit={handleCreateType}>
@@ -773,7 +793,7 @@ const ResourceCataloguePage = () => {
                 />
               </div>
               <div className="rcp-modal-actions">
-                <button type="button" className="rcp-btn rcp-btn-secondary" onClick={() => setShowCreateTypeModal(false)}>
+                <button type="button" className="rcp-btn rcp-btn-secondary" onClick={closeCreateTypeModal}>
                   Cancel
                 </button>
                 <button type="submit" className="rcp-btn rcp-btn-primary">
@@ -789,7 +809,7 @@ const ResourceCataloguePage = () => {
       {/* Type Edit Modal */}
       {/* ======================================== */}
       {showEditTypeModal && (
-        <div className="rcp-modal-overlay" onClick={() => setShowEditTypeModal(false)}>
+        <div className="rcp-modal-overlay" onClick={closeEditTypeModal}>
           <div className="rcp-modal-content" onClick={(e) => e.stopPropagation()}>
             <h2>Edit Resource Type</h2>
             <form onSubmit={handleEditType}>
@@ -864,7 +884,7 @@ const ResourceCataloguePage = () => {
                 />
               </div>
               <div className="rcp-modal-actions">
-                <button type="button" className="rcp-btn rcp-btn-secondary" onClick={() => setShowEditTypeModal(false)}>
+                <button type="button" className="rcp-btn rcp-btn-secondary" onClick={closeEditTypeModal}>
                   Cancel
                 </button>
                 <button type="submit" className="rcp-btn rcp-btn-primary">

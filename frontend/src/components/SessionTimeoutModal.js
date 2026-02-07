@@ -4,8 +4,8 @@ import { useToast } from '../contexts/ToastContext';
 import './SessionTimeoutModal.css';
 
 // Constants - defined outside component to avoid recreating on each render
-const IDLE_WARNING_TIME = 2 * 60 * 1000; // 13 minutes of idle time before warning
-const IDLE_LOGOUT_TIME = 4 * 60 * 1000; // 15 minutes of idle time before logout
+const IDLE_WARNING_TIME = 13 * 60 * 1000; // 13 minutes of idle time before warning
+const IDLE_LOGOUT_TIME = 15 * 60 * 1000; // 15 minutes of idle time before logout
 const TOKEN_EXPIRY_WARNING_BUFFER = 5 * 60 * 1000; // Show warning 5 minutes before token expires
 const ACTIVITY_CHECK_INTERVAL = 30 * 1000; // Check every 30 seconds
 
