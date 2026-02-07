@@ -212,6 +212,14 @@ function ResourceRequestDetailsPage() {
                     <div className="rrd-resource-name">{idx + 1}. {req.resource?.name || 'N/A'}</div>
                     <div className="rrd-resource-code">{req.resource?.code || 'N/A'}</div>
                   </div>
+                  <div className="rrd-resource-qty">
+                    <strong>{req.requested_quantity}</strong>
+                    <span>
+                      {typeof req.resource?.unit === 'object'
+                        ? req.resource?.unit?.name || 'units'
+                        : req.resource?.unit || 'units'}
+                    </span>
+                  </div>
                 </div>
               ))}
             </div>

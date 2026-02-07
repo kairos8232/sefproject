@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getFacultyEventById } from '../services/facultyEventService';
 import { createFeedback, updateFeedback, getUserFeedbackForEvent } from '../services/feedbackService';
@@ -9,6 +9,7 @@ const FacultyProvideFeedbackPage = () => {
   const { eventId } = useParams();
   const navigate = useNavigate();
   const { showSuccess, showError } = useToast();
+  const notFoundShownRef = useRef(false);
   
   const [event, setEvent] = useState(null);
   const [existingFeedback, setExistingFeedback] = useState(null);
@@ -185,9 +186,12 @@ const FacultyProvideFeedbackPage = () => {
   }
 
   if (!event) {
+    if (!notFoundShownRef.current) {
+      showError('Event not found');
+      notFoundShownRef.current = true;
+    }
     return (
       <div className="faculty-events-page">
-        <div className="error-message">Event not found</div>
         <button onClick={() => navigate('/faculty-events')} className="back-button">
           Back to Events
         </button>

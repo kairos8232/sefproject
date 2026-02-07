@@ -19,6 +19,7 @@ const FacultyBookingRequestsPage = () => {
   const [adjustedStartTime, setAdjustedStartTime] = useState('');
   const [adjustedEndTime, setAdjustedEndTime] = useState('');
   const [processing, setProcessing] = useState(false);
+  const [selectedPackageGroup, setSelectedPackageGroup] = useState([]);
 
   // Get current user ID
   const user = authService.getCurrentUser();
@@ -183,8 +184,9 @@ const FacultyBookingRequestsPage = () => {
     navigate(`/faculty/bookings/${booking.id}`);
   };
 
-  const openApproveModal = (booking) => {
+  const openApproveModal = (booking, packageGroup = []) => {
     setSelectedBooking(booking);
+    setSelectedPackageGroup(packageGroup);
     setIsRejecting(false);
     setApprovalNotes('');
     setRejectionReason('');
@@ -194,8 +196,9 @@ const FacultyBookingRequestsPage = () => {
     setShowModal(true);
   };
 
-  const openRejectModal = (booking) => {
+  const openRejectModal = (booking, packageGroup = []) => {
     setSelectedBooking(booking);
+    setSelectedPackageGroup(packageGroup);
     setIsRejecting(true);
     setRejectionReason('');
     setApprovalNotes('');
@@ -220,21 +223,24 @@ const FacultyBookingRequestsPage = () => {
         requestBody.approved_end_datetime = adjustedEndTime;
       }
 
-      const response = await authFetch(`/venue-bookings/${selectedBooking.id}/approve-request`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(requestBody)
-      });
+      const targets = selectedPackageGroup.length > 0 ? selectedPackageGroup : [selectedBooking];
+      for (const booking of targets) {
+        const response = await authFetch(`/venue-bookings/${booking.id}/approve-request`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(requestBody)
+        });
 
-      const data = await response.json();
+        const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to approve booking');
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to approve booking');
+        }
       }
 
-      showSuccess('Booking request approved successfully');
+      showSuccess(selectedPackageGroup.length > 0 ? 'Booking package approved successfully' : 'Booking request approved successfully');
       
       closeModal();
       fetchBookings();
@@ -258,21 +264,24 @@ const FacultyBookingRequestsPage = () => {
 
     try {
       setProcessing(true);
-      const response = await authFetch(`/venue-bookings/${selectedBooking.id}/reject-request`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ rejection_reason: rejectionReason })
-      });
+      const targets = selectedPackageGroup.length > 0 ? selectedPackageGroup : [selectedBooking];
+      for (const booking of targets) {
+        const response = await authFetch(`/venue-bookings/${booking.id}/reject-request`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ rejection_reason: rejectionReason })
+        });
 
-      const data = await response.json();
+        const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to reject booking');
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to reject booking');
+        }
       }
 
-      showSuccess('Booking request rejected');
+      showSuccess(selectedPackageGroup.length > 0 ? 'Booking package rejected' : 'Booking request rejected');
       
       closeModal();
       fetchBookings();
@@ -286,6 +295,7 @@ const FacultyBookingRequestsPage = () => {
   const closeModal = () => {
     setShowModal(false);
     setSelectedBooking(null);
+    setSelectedPackageGroup([]);
     setIsRejecting(false);
     setRejectionReason('');
     setApprovalNotes('');
@@ -562,35 +572,33 @@ const FacultyBookingRequestsPage = () => {
                     </td>
                     <td className="fbrp-submitted-cell">{formatDateTime(first.created_at)}</td>
                     <td className="fbrp-actions-cell">
-                      {group.map(booking => (
-                        <div key={booking.id} className="fbrp-actions-row">
-                          <button 
-                            className="fbrp-action-button fbrp-view-button"
-                            onClick={() => handleViewDetails(booking)}
-                            title={`View ${booking.venue?.name || 'Details'}`}
-                          >
-                            👁️
-                          </button>
-                          {booking.status === 'pending' && (
-                            <>
-                              <button
-                                className="fbrp-action-button fbrp-approve-button"
-                                onClick={() => openApproveModal(booking)}
-                                title={`Approve ${booking.venue?.name || 'booking'}`}
-                              >
-                                ✅
-                              </button>
-                              <button
-                                className="fbrp-action-button fbrp-reject-button"
-                                onClick={() => openRejectModal(booking)}
-                                title={`Reject ${booking.venue?.name || 'booking'}`}
-                              >
-                                ❌
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      ))}
+                      <div className="fbrp-actions-row">
+                        <button
+                          className="fbrp-action-button fbrp-view-button"
+                          onClick={() => handleViewDetails(first)}
+                          title="View Package"
+                        >
+                          👁️
+                        </button>
+                        {groupStatus === 'pending' && (
+                          <>
+                            <button
+                              className="fbrp-action-button fbrp-approve-button"
+                              onClick={() => openApproveModal(first, group)}
+                              title="Approve Package"
+                            >
+                              ✅
+                            </button>
+                            <button
+                              className="fbrp-action-button fbrp-reject-button"
+                              onClick={() => openRejectModal(first, group)}
+                              title="Reject Package"
+                            >
+                              ❌
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );

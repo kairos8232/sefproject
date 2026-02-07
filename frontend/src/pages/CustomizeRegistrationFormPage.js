@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import registrationFieldService from '../services/registrationFieldService';
 import eventService from '../services/eventService';
@@ -23,6 +23,7 @@ function CustomizeRegistrationFormPage() {
   const navigate = useNavigate();
   const { showSuccess, showError } = useToast();
   const currentUser = authService.getCurrentUser();
+  const accessDeniedShownRef = useRef(false);
   
   const [event, setEvent] = useState(null);
   const [fields, setFields] = useState([]);
@@ -267,11 +268,12 @@ function CustomizeRegistrationFormPage() {
 
   // Restrict access to event_organizer role only
   if (currentUser?.role !== 'event_organizer' && currentUser?.role !== 'administrator') {
+    if (!accessDeniedShownRef.current) {
+      showError('Access denied. Only event organizers and administrators can customize registration forms.');
+      accessDeniedShownRef.current = true;
+    }
     return (
       <div className="crf-customize-form-page">
-        <div className="crf-error-message">
-          Access denied. Only event organizers and administrators can customize registration forms.
-        </div>
         <button onClick={() => navigate('/my-events')} className="crf-back-button" style={{ marginTop: '20px' }}>
           Back to My Events
         </button>

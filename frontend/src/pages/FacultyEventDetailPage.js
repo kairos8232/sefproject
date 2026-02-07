@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getFacultyEventById } from '../services/facultyEventService';
 import { getFeedbacksForEvent } from '../services/feedbackService';
@@ -13,6 +13,7 @@ function FacultyEventDetailPage() {
   const [event, setEvent] = useState(null);
   const [feedbacks, setFeedbacks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const notFoundShownRef = useRef(false);
 
   const loadEventDetails = useCallback(async () => {
     try {
@@ -65,6 +66,10 @@ function FacultyEventDetailPage() {
   }
 
   if (!event) {
+    if (!notFoundShownRef.current) {
+      showError('Event not found');
+      notFoundShownRef.current = true;
+    }
     return (
       <div className="faculty-event-detail-page">
         <div className="page-header">
@@ -76,7 +81,6 @@ function FacultyEventDetailPage() {
             Back to Faculty Events
           </button>
         </div>
-        <div className="error-message">Event not found</div>
       </div>
     );
   }

@@ -10,7 +10,7 @@ function VenueBookingPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const event = location.state?.event;
-  const { showSuccess } = useToast();
+  const { showSuccess, showError } = useToast();
 
   const [formData, setFormData] = useState({
     requested_start_datetime: event ? toDateTimeLocalInput(event.start_datetime) : '',
@@ -26,7 +26,6 @@ function VenueBookingPage() {
   const [faculties, setFaculties] = useState([]);
   const [selectedVenues, setSelectedVenues] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
   const [searchPerformed, setSearchPerformed] = useState(false);
 
   // Redirect if no event provided
@@ -70,14 +69,13 @@ function VenueBookingPage() {
 
   const handleSearchVenues = async (e) => {
     e.preventDefault();
-    setError('');
     setAvailableVenues([]);
     setSelectedVenues([]);
     setSearchPerformed(false);
 
     // Validation
     if (!formData.requested_start_datetime || !formData.requested_end_datetime) {
-      setError('Please provide both start and end datetime');
+      showError('Please provide both start and end datetime');
       return;
     }
 
@@ -85,7 +83,7 @@ function VenueBookingPage() {
     const endTime = new Date(formData.requested_end_datetime);
 
     if (endTime <= startTime) {
-      setError('End datetime must be after start datetime');
+      showError('End datetime must be after start datetime');
       return;
     }
 
@@ -114,7 +112,7 @@ function VenueBookingPage() {
       setSearchPerformed(true);
     } catch (err) {
       console.error('Search venues error:', err);
-      setError(err.response?.data?.error || 'Failed to search venues');
+      showError(err.response?.data?.error || 'Failed to search venues');
     } finally {
       setLoading(false);
     }
@@ -133,12 +131,11 @@ function VenueBookingPage() {
 
   const handleSubmitBooking = async () => {
     if (selectedVenues.length === 0) {
-      setError('Please select at least one venue');
+      showError('Please select at least one venue');
       return;
     }
 
     setLoading(true);
-    setError('');
 
     try {
       // Create package with multiple venues
@@ -160,7 +157,7 @@ function VenueBookingPage() {
       navigate('/my-events');
     } catch (err) {
       console.error('Submit booking error:', err);
-      setError(err.response?.data?.error || 'Failed to submit venue booking package');
+      showError(err.response?.data?.error || 'Failed to submit venue booking package');
       setLoading(false);
     }
   };
@@ -184,8 +181,6 @@ function VenueBookingPage() {
           Back to My Events
         </button>
       </div>
-
-      {error && <div className="error-message">{error}</div>}
 
       <div className="venue-booking-container">
         {/* Venue Selection Section */}

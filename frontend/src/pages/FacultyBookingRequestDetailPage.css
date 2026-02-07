@@ -218,6 +218,47 @@
   line-height: 1.6;
 }
 
+/* Grouped Venue List */
+.fbrd-venues-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fbrd-venue-item {
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 12px 14px;
+  background: #fafbff;
+}
+
+.fbrd-venue-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.fbrd-venue-name {
+  font-weight: 600;
+  color: #333;
+}
+
+.fbrd-venue-code {
+  font-size: 0.9rem;
+  color: #667eea;
+  font-weight: 600;
+}
+
+.fbrd-venue-meta {
+  margin-top: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  font-size: 0.9rem;
+  color: #666;
+}
+
 /* Success/Error sections for approval info */
 .fbrd-success-section,
 .fbrd-error-section {

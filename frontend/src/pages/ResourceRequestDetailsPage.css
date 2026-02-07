@@ -236,6 +236,18 @@
   white-space: nowrap;
 }
 
+.rrd-resource-qty {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+.rrd-resource-qty strong {
+  font-size: 1rem;
+}
+
 /* Action Section */
 .rrd-action-section {
   background: white;

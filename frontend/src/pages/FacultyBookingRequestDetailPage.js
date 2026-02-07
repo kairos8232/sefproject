@@ -7,10 +7,10 @@ import './FacultyBookingRequestDetailPage.css';
 const FacultyBookingRequestDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const toast = useToast();
+  const { showSuccess, showError } = useToast();
   const [booking, setBooking] = useState(null);
+  const [groupedBookings, setGroupedBookings] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [processing, setProcessing] = useState(false);
   
   // Approval/Rejection forms
@@ -22,7 +22,6 @@ const FacultyBookingRequestDetailPage = () => {
     document.title = 'Booking Request Details - CESMS';
     try {
       setLoading(true);
-      setError(null);
       
       const token = localStorage.getItem('token');
       if (!token) {
@@ -43,13 +42,32 @@ const FacultyBookingRequestDetailPage = () => {
       }
 
       setBooking(data.booking);
+
+      if (data.booking?.package_id || data.booking?.event_id) {
+        try {
+          const allResponse = await authFetch('/venue-bookings/faculty/requests', {
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
+          const allData = await allResponse.json();
+          const allBookings = allData.bookings || [];
+          const grouped = data.booking?.package_id
+            ? allBookings.filter(b => b.package_id === data.booking.package_id)
+            : allBookings.filter(b => b.event_id === data.booking.event_id);
+          setGroupedBookings(grouped.length > 0 ? grouped : [data.booking]);
+        } catch (err) {
+          setGroupedBookings([data.booking]);
+        }
+      } else {
+        setGroupedBookings([data.booking]);
+      }
     } catch (err) {
-      setError(err.message);
-      toast.showError(err.message);
+      showError(err.message);
     } finally {
       setLoading(false);
     }
-  }, [id, navigate, toast]);
+  }, [id, navigate, showError]);
 
   useEffect(() => {
     fetchBookingDetails();
@@ -60,7 +78,6 @@ const FacultyBookingRequestDetailPage = () => {
     
     try {
       setProcessing(true);
-      setError(null);
       const requestBody = {
         approval_notes: approvalNotes || undefined
       };
@@ -79,12 +96,12 @@ const FacultyBookingRequestDetailPage = () => {
         throw new Error(data.error || 'Failed to approve booking');
       }
 
-      toast.showSuccess('Booking request approved successfully!');
+      showSuccess('Booking request approved successfully!');
       setTimeout(() => {
         navigate('/faculty/bookings');
       }, 2000);
     } catch (err) {
-      toast.showError(err.message);
+      showError(err.message);
     } finally {
       setProcessing(false);
     }
@@ -94,13 +111,12 @@ const FacultyBookingRequestDetailPage = () => {
     e.preventDefault();
     
     if (!rejectionReason || rejectionReason.trim().length < 10) {
-      toast.showError('Please provide a detailed rejection reason (at least 10 characters)');
+      showError('Please provide a detailed rejection reason (at least 10 characters)');
       return;
     }
 
     try {
       setProcessing(true);
-      setError(null);
       const response = await authFetch(`/venue-bookings/${id}/reject-request`, {
         method: 'POST',
         headers: {
@@ -115,12 +131,12 @@ const FacultyBookingRequestDetailPage = () => {
         throw new Error(data.error || 'Failed to reject booking');
       }
 
-      toast.showSuccess('Booking request rejected successfully!');
+      showSuccess('Booking request rejected successfully!');
       setTimeout(() => {
         navigate('/faculty/bookings');
       }, 2000);
     } catch (err) {
-      toast.showError(err.message);
+      showError(err.message);
     } finally {
       setProcessing(false);
     }
@@ -163,23 +179,6 @@ const FacultyBookingRequestDetailPage = () => {
     );
   }
 
-  if (error && !booking) {
-    return (
-      <div className="fbrd-container">
-        <div className="fbrd-header">
-          <div>
-            <h1>Booking Request Details</h1>
-            <p>Review and manage venue booking request</p>
-          </div>
-          <button onClick={() => navigate('/faculty/bookings')} className="fbrd-back-button">
-            Back to Requests
-          </button>
-        </div>
-        <div className="fbrd-error-message">{error}</div>
-      </div>
-    );
-  }
-
   if (!booking) {
     return (
       <div className="fbrd-container">
@@ -192,7 +191,6 @@ const FacultyBookingRequestDetailPage = () => {
             Back to Requests
           </button>
         </div>
-        <div className="fbrd-error-message">Booking request not found</div>
       </div>
     );
   }
@@ -208,8 +206,6 @@ const FacultyBookingRequestDetailPage = () => {
           Back to Requests
         </button>
       </div>
-
-      {error && <div className="fbrd-error-message">{error}</div>}
 
       <div className="fbrd-content">
         {/* Booking Header */}
@@ -250,33 +246,55 @@ const FacultyBookingRequestDetailPage = () => {
         {/* Venue Information */}
         <div className="fbrd-details-section">
           <h2>🏢 Venue Information</h2>
-          <div className="fbrd-info-row">
-            <div className="fbrd-info-item">
-              <label>Venue Name</label>
-              <p>{booking.venue?.name || 'N/A'}</p>
+          {groupedBookings.length > 1 ? (
+            <div className="fbrd-venues-list">
+              {groupedBookings.map((item, idx) => (
+                <div key={item.id} className="fbrd-venue-item">
+                  <div className="fbrd-venue-info">
+                    <div className="fbrd-venue-name">
+                      {idx + 1}. {item.venue?.name || 'N/A'}
+                    </div>
+                    <div className="fbrd-venue-code">{item.venue?.code || 'N/A'}</div>
+                  </div>
+                  <div className="fbrd-venue-meta">
+                    <span>{item.venue?.location || 'N/A'}</span>
+                    <span>{item.venue?.faculty?.name || 'N/A'}</span>
+                    <span>{item.venue?.capacity || 'N/A'} people</span>
+                  </div>
+                </div>
+              ))}
             </div>
-            <div className="fbrd-info-item">
-              <label>Venue Code</label>
-              <p>{booking.venue?.code || 'N/A'}</p>
-            </div>
-          </div>
-          <div className="fbrd-info-row">
-            <div className="fbrd-info-item">
-              <label>Location</label>
-              <p>{booking.venue?.location || 'N/A'}</p>
-            </div>
-            <div className="fbrd-info-item">
-              <label>Faculty</label>
-              <p>{booking.venue?.faculty?.name || 'N/A'}</p>
-            </div>
-          </div>
-          <div className="fbrd-info-row">
-            <div className="fbrd-info-item">
-              <label>Capacity</label>
-              <p>{booking.venue?.capacity || 'N/A'} people</p>
-            </div>
-            <div className="fbrd-info-item"></div>
-          </div>
+          ) : (
+            <>
+              <div className="fbrd-info-row">
+                <div className="fbrd-info-item">
+                  <label>Venue Name</label>
+                  <p>{booking.venue?.name || 'N/A'}</p>
+                </div>
+                <div className="fbrd-info-item">
+                  <label>Venue Code</label>
+                  <p>{booking.venue?.code || 'N/A'}</p>
+                </div>
+              </div>
+              <div className="fbrd-info-row">
+                <div className="fbrd-info-item">
+                  <label>Location</label>
+                  <p>{booking.venue?.location || 'N/A'}</p>
+                </div>
+                <div className="fbrd-info-item">
+                  <label>Faculty</label>
+                  <p>{booking.venue?.faculty?.name || 'N/A'}</p>
+                </div>
+              </div>
+              <div className="fbrd-info-row">
+                <div className="fbrd-info-item">
+                  <label>Capacity</label>
+                  <p>{booking.venue?.capacity || 'N/A'} people</p>
+                </div>
+                <div className="fbrd-info-item"></div>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Booking Details */}

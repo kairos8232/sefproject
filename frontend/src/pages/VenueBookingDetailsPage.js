@@ -179,41 +179,21 @@ function VenueBookingDetailsPage() {
         {/* Venue Information */}
         <div className="vbd-details-section">
           <h2>Venue Information</h2>
-          {groupedBookings.length > 1 ? (
-            <div className="vbd-venue-list">
-              {groupedBookings.map((b, idx) => (
-                <div key={idx} className="vbd-venue-row">
-                  <div className="vbd-venue-info">
-                    <div className="vbd-venue-name">{idx + 1}. {b.venue?.name || 'N/A'}</div>
-                    <div className="vbd-venue-code">{b.venue?.code || 'N/A'}</div>
-                  </div>
+          <div className="vbd-venue-list">
+            {(groupedBookings.length > 0 ? groupedBookings : [booking]).map((b, idx) => (
+              <div key={idx} className="vbd-venue-row">
+                <div className="vbd-venue-info">
+                  <div className="vbd-venue-name">{idx + 1}. {b.venue?.name || 'N/A'}</div>
+                  <div className="vbd-venue-code">{b.venue?.code || 'N/A'}</div>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="vbd-details-grid">
-              <div className="vbd-detail-item">
-                <span className="vbd-detail-label">Venue Name:</span>
-                <span className="vbd-detail-value">{booking.venue?.name || 'N/A'}</span>
+                <div className="vbd-venue-meta">
+                  <span>{b.venue?.location || 'N/A'}</span>
+                  <span>{b.venue?.faculty?.name || 'N/A'}</span>
+                  <span>{b.venue?.capacity || 'N/A'} people</span>
+                </div>
               </div>
-              <div className="vbd-detail-item">
-                <span className="vbd-detail-label">Venue Code:</span>
-                <span className="vbd-detail-value">{booking.venue?.code || 'N/A'}</span>
-              </div>
-              <div className="vbd-detail-item">
-                <span className="vbd-detail-label">Location:</span>
-                <span className="vbd-detail-value">{booking.venue?.location || 'N/A'}</span>
-              </div>
-              <div className="vbd-detail-item">
-                <span className="vbd-detail-label">Faculty:</span>
-                <span className="vbd-detail-value">{booking.venue?.faculty?.name || 'N/A'}</span>
-              </div>
-              <div className="vbd-detail-item">
-                <span className="vbd-detail-label">Capacity:</span>
-                <span className="vbd-detail-value">{booking.venue?.capacity || 'N/A'} people</span>
-              </div>
-            </div>
-          )}
+            ))}
+          </div>
         </div>
 
         {/* Booking Details */}

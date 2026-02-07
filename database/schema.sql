@@ -1925,6 +1925,7 @@ VALUES
     4
   );
 
+
 -- ========================================
 -- ADDITIONAL TEST DATA FOR CALENDAR VIEW
 -- Testing venue bookings and resource requests with various statuses
@@ -3071,6 +3072,264 @@ VALUES
     '2026-02-04 09:00:00+08',
     '2026-02-08 17:00:00+08',
     '2026-01-26 10:00:00+08'
+  );
+
+-- ========================================
+-- Custom Registration Fields for Browse Events
+-- ========================================
+
+-- "Game Development Jam" event
+INSERT INTO event_registration_fields (event_id, field_type, label, help_text, is_required, options, order_index)
+VALUES
+  (
+    'eeeeeeee-3333-3333-3333-333333333333',
+    'text',
+    'Team Name',
+    'Enter your team name (or "Solo" if participating alone)',
+    true,
+    null,
+    0
+  ),
+  (
+    'eeeeeeee-3333-3333-3333-333333333333',
+    'dropdown',
+    'Target Platform',
+    'Select the primary platform for your game',
+    true,
+    '["PC", "Mobile", "Web", "Console"]'::jsonb,
+    1
+  ),
+  (
+    'eeeeeeee-3333-3333-3333-333333333333',
+    'dropdown',
+    'Preferred Game Engine',
+    'Select the engine or framework you plan to use',
+    false,
+    '["Unity", "Unreal", "Godot", "Other"]'::jsonb,
+    2
+  );
+
+-- "Cultural Night 2026" event
+INSERT INTO event_registration_fields (event_id, field_type, label, help_text, is_required, options, order_index)
+VALUES
+  (
+    'eaeaeaea-eaea-eaea-eaea-eaeaeaeaeaea',
+    'radio',
+    'Participation Type',
+    'Select how you plan to participate',
+    true,
+    '["Performer", "Volunteer", "Audience"]'::jsonb,
+    0
+  ),
+  (
+    'eaeaeaea-eaea-eaea-eaea-eaeaeaeaeaea',
+    'text',
+    'Dietary Restrictions',
+    'List any dietary restrictions (or "None")',
+    false,
+    null,
+    1
+  ),
+  (
+    'eaeaeaea-eaea-eaea-eaea-eaeaeaeaeaea',
+    'dropdown',
+    'Costume Size',
+    'If performing, select a costume size',
+    false,
+    '["XS", "S", "M", "L", "XL"]'::jsonb,
+    2
+  );
+
+-- "February Open Day 2026" event
+INSERT INTO event_registration_fields (event_id, field_type, label, help_text, is_required, options, validation_rules, order_index)
+VALUES
+  (
+    'f2026000-0000-0000-0000-000000000001',
+    'dropdown',
+    'School / College',
+    'Select your current school or college',
+    true,
+    '["High School", "College", "Polytechnic", "Other"]'::jsonb,
+    null,
+    0
+  ),
+  (
+    'f2026000-0000-0000-0000-000000000001',
+    'number',
+    'Number of Guests',
+    'Enter number of guests accompanying you',
+    true,
+    null,
+    '{"min": 0, "max": 5}'::jsonb,
+    1
+  ),
+  (
+    'f2026000-0000-0000-0000-000000000001',
+    'text',
+    'Areas of Interest',
+    'Programs or topics you are interested in',
+    false,
+    null,
+    null,
+    2
+  );
+
+-- "Mobile App Development Boot camp" event
+INSERT INTO event_registration_fields (event_id, field_type, label, help_text, is_required, options, order_index)
+VALUES
+  (
+    'ecececec-ecec-ecec-ecec-ecececececec',
+    'dropdown',
+    'Experience Level',
+    'Select your mobile development experience level',
+    true,
+    '["Beginner", "Intermediate", "Advanced"]'::jsonb,
+    0
+  ),
+  (
+    'ecececec-ecec-ecec-ecec-ecececececec',
+    'radio',
+    'Laptop OS',
+    'Select your primary laptop operating system',
+    true,
+    '["Windows", "macOS", "Linux"]'::jsonb,
+    1
+  ),
+  (
+    'ecececec-ecec-ecec-ecec-ecececececec',
+    'text',
+    'GitHub Username',
+    'Optional, to join the bootcamp repo',
+    false,
+    null,
+    2
+  );
+
+-- "Environmental Awareness Campaign" event
+INSERT INTO event_registration_fields (event_id, field_type, label, help_text, is_required, options, order_index)
+VALUES
+  (
+    'eeeeeeee-5555-5555-5555-555555555555',
+    'dropdown',
+    'T-Shirt Size',
+    'Select your preferred T-shirt size',
+    true,
+    '["XS", "S", "M", "L", "XL"]'::jsonb,
+    0
+  ),
+  (
+    'eeeeeeee-5555-5555-5555-555555555555',
+    'dropdown',
+    'Cleanup Zone Preference',
+    'Preferred zone for cleanup activity',
+    false,
+    '["North", "South", "East", "West"]'::jsonb,
+    1
+  ),
+  (
+    'eeeeeeee-5555-5555-5555-555555555555',
+    'textarea',
+    'Medical Notes',
+    'List any allergies or medical conditions (or "None")',
+    false,
+    null,
+    2
+  );
+
+-- "Data Science Conference 2026" event
+INSERT INTO event_registration_fields (event_id, field_type, label, help_text, is_required, options, order_index)
+VALUES
+  (
+    'c4444444-4444-4444-4444-444444444444',
+    'checkbox',
+    'Tracks of Interest',
+    'Select all tracks you plan to attend',
+    true,
+    '["AI", "Machine Learning", "Data Engineering", "Analytics"]'::jsonb,
+    0
+  ),
+  (
+    'c4444444-4444-4444-4444-444444444444',
+    'text',
+    'Dietary Restrictions',
+    'List any dietary restrictions (or "None")',
+    false,
+    null,
+    1
+  ),
+  (
+    'c4444444-4444-4444-4444-444444444444',
+    'radio',
+    'Need Certificate',
+    'Do you require a participation certificate?',
+    true,
+    '["Yes", "No"]'::jsonb,
+    2
+  );
+
+-- "Annual Tech Summit 2026" event
+INSERT INTO event_registration_fields (event_id, field_type, label, help_text, is_required, options, order_index)
+VALUES
+  (
+    'ffffffff-eeee-dddd-cccc-bbbbbbbbbb01',
+    'text',
+    'Company / Club',
+    'Organization or club you represent',
+    false,
+    null,
+    0
+  ),
+  (
+    'ffffffff-eeee-dddd-cccc-bbbbbbbbbb01',
+    'dropdown',
+    'Role',
+    'Select your role',
+    true,
+    '["Student", "Faculty", "Industry"]'::jsonb,
+    1
+  ),
+  (
+    'ffffffff-eeee-dddd-cccc-bbbbbbbbbb01',
+    'checkbox',
+    'Topics of Interest',
+    'Select all topics you are interested in',
+    true,
+    '["AI", "Cybersecurity", "Cloud", "Product", "Startups"]'::jsonb,
+    2
+  );
+
+-- "Coding Competition" event
+INSERT INTO event_registration_fields (event_id, field_type, label, help_text, is_required, options, validation_rules, order_index)
+VALUES
+  (
+    'f1111111-0000-0000-0000-000000000004',
+    'dropdown',
+    'Programming Language',
+    'Select your primary language',
+    true,
+    '["Python", "Java", "C++", "JavaScript", "Other"]'::jsonb,
+    null,
+    0
+  ),
+  (
+    'f1111111-0000-0000-0000-000000000004',
+    'number',
+    'Team Size',
+    'Enter team size (1-3)',
+    true,
+    null,
+    '{"min": 1, "max": 3}'::jsonb,
+    1
+  ),
+  (
+    'f1111111-0000-0000-0000-000000000004',
+    'text',
+    'GitHub Username',
+    'Optional, for submitting solutions',
+    false,
+    null,
+    null,
+    2
   );
 
 -- Venue booking for Sarah Organizer February Bootcamp
