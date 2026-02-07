@@ -305,6 +305,9 @@ class ParticipationController {
       // Add participating events (actual event time)
       participations.forEach(part => {
         if (!part.event || part.status === 'cancelled') return;
+
+        // Skip participation entries for events created by the same user
+        if (part.event.organizer?.id === userId) return;
         
         const eventStatus = part.event.status;
         if (status && eventStatus !== status) return;

@@ -22,7 +22,7 @@ const BookingRequestsManagementPage = () => {
   const [venues, setVenues] = useState([]);
   const [resources, setResources] = useState([]);
   const [faculties, setFaculties] = useState([]);
-  const [selectedFaculty, setSelectedFaculty] = useState(null);
+  const [selectedFaculty, setSelectedFaculty] = useState('');
   const [venueBlocks, setVenueBlocks] = useState([]); // Venue availability blocks
   const [selectedVenue, setSelectedVenue] = useState(null);
   const [selectedResource, setSelectedResource] = useState(null);
@@ -114,16 +114,19 @@ const BookingRequestsManagementPage = () => {
         const venuesResponse = await authFetch('/venues');
         const venuesData = await venuesResponse.json();
         setVenues(venuesData.venues || []);
-        if (venuesData.venues && venuesData.venues.length > 0 && !selectedVenue) {
-          // Set first venue as default (will filter by faculty in calendar)
+        if (activeTab === 'venue' && viewMode === 'calendar') {
+          setSelectedFaculty('');
+        }
+        if (venuesData.venues && venuesData.venues.length > 0 && !selectedVenue && !(activeTab === 'venue' && viewMode === 'calendar')) {
+          // Set first venue as default (table view only)
           setSelectedVenue(venuesData.venues[0].id);
         }
 
         const resourcesResponse = await authFetch('/resource-types');
         const resourcesData = await resourcesResponse.json();
         setResources(resourcesData.resourceTypes || []);
-        if (resourcesData.resourceTypes && resourcesData.resourceTypes.length > 0 && !selectedResource) {
-          setSelectedResource(resourcesData.resourceTypes[0].id);
+        if (activeTab === 'resource' && viewMode === 'calendar') {
+          setSelectedResource('');
         }
       } catch (err) {
         console.error('Failed to load venues/resources:', err);
@@ -167,8 +170,6 @@ const BookingRequestsManagementPage = () => {
         setModalData({
           action: 'approve',
           approval_notes: '',
-          approved_start_datetime: toDateTimeLocalInput(item.requested_start_datetime),
-          approved_end_datetime: toDateTimeLocalInput(item.requested_end_datetime),
           setup_time: item.setup_time || 0,
           teardown_time: item.teardown_time || 0,
           expected_attendees: item.expected_attendees || 0
@@ -186,15 +187,10 @@ const BookingRequestsManagementPage = () => {
       });
     } else if (action === 'modify') {
       if (activeTab === 'venue') {
-        const startDateTime = item.approved_start_datetime || item.requested_start_datetime;
-        const endDateTime = item.approved_end_datetime || item.requested_end_datetime;
-        
         setModalData({
           action: 'modify',
           status: item.status,
           approval_notes: item.approval_notes || '',
-          approved_start_datetime: toDateTimeLocalInput(startDateTime),
-          approved_end_datetime: toDateTimeLocalInput(endDateTime),
           setup_time: item.setup_time || 0,
           teardown_time: item.teardown_time || 0,
           expected_attendees: item.expected_attendees || 0
@@ -228,13 +224,6 @@ const BookingRequestsManagementPage = () => {
       const submissionData = { ...modalData };
       
       if (activeTab === 'venue') {
-        if (submissionData.approved_start_datetime) {
-          submissionData.approved_start_datetime = fromDateTimeLocalInput(submissionData.approved_start_datetime);
-        }
-        if (submissionData.approved_end_datetime) {
-          submissionData.approved_end_datetime = fromDateTimeLocalInput(submissionData.approved_end_datetime);
-        }
-        
         // Apply action to all items in the package group
         const itemsToUpdate = selectedPackageGroup.length > 0 ? selectedPackageGroup : [selectedItem];
         for (const item of itemsToUpdate) {
@@ -739,8 +728,8 @@ const BookingRequestsManagementPage = () => {
           {activeTab === 'venue' ? (
             <CalendarView
               type="venue"
-              bookings={venueBookings.filter(b => b.venue_id === selectedVenue)}
-              venueBlocks={venueBlocks.filter(b => b.venue_id === selectedVenue)}
+              bookings={venueBookings}
+              venueBlocks={venueBlocks}
               faculties={faculties}
               selectedFaculty={selectedFaculty}
               setSelectedFaculty={setSelectedFaculty}
@@ -1141,44 +1130,26 @@ const OverrideModal = ({ item, action, type, data, setData, onSubmit, onClose })
 
                 {type === 'venue' && (
                   <>
-                    <div className="brm-form-group">
-                      <label>Approved Start Time</label>
-                      <input
-                        type="datetime-local"
-                        value={data.approved_start_datetime?.slice(0, 16) || ''}
-                        onChange={(e) => setData({ ...data, approved_start_datetime: e.target.value })}
-                        required
-                      />
-                    </div>
+                    <div className="brm-form-row">
+                      <div className="brm-form-group">
+                        <label>Setup Time (minutes)</label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={data.setup_time || 0}
+                          onChange={(e) => setData({ ...data, setup_time: parseInt(e.target.value) || 0 })}
+                        />
+                      </div>
 
-                    <div className="brm-form-group">
-                      <label>Approved End Time</label>
-                      <input
-                        type="datetime-local"
-                        value={data.approved_end_datetime?.slice(0, 16) || ''}
-                        onChange={(e) => setData({ ...data, approved_end_datetime: e.target.value })}
-                        required
-                      />
-                    </div>
-
-                    <div className="brm-form-group">
-                      <label>Setup Time (minutes)</label>
-                      <input
-                        type="number"
-                        min="0"
-                        value={data.setup_time || 0}
-                        onChange={(e) => setData({ ...data, setup_time: parseInt(e.target.value) || 0 })}
-                      />
-                    </div>
-
-                    <div className="brm-form-group">
-                      <label>Teardown Time (minutes)</label>
-                      <input
-                        type="number"
-                        min="0"
-                        value={data.teardown_time || 0}
-                        onChange={(e) => setData({ ...data, teardown_time: parseInt(e.target.value) || 0 })}
-                      />
+                      <div className="brm-form-group">
+                        <label>Teardown Time (minutes)</label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={data.teardown_time || 0}
+                          onChange={(e) => setData({ ...data, teardown_time: parseInt(e.target.value) || 0 })}
+                        />
+                      </div>
                     </div>
 
                     <div className="brm-form-group">

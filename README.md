@@ -138,6 +138,8 @@ All accounts use password: **password123**
 | `olivia.lee@student.edu` | Olivia Lee | Student | Applied Communication | S010 |
 | `kevin.wong@student.edu` | Kevin Wong | Student | Business | S011 |
 | `sarah.organizer@university.edu` | Sarah Organizer | Event Organizer | *(no faculty)* | EO001 |
+| `daniel.organizer@university.edu` | Daniel Organizer | Event Organizer | *(no faculty)* | EO002 |
+| `priya.organizer@university.edu` | Priya Organizer | Event Organizer | *(no faculty)* | EO003 |
 | `alice.wong@fci.edu` | Dr. Alice Wong | Faculty Staff | Computing and Informatics | FM001 |
 | `robert.chen@fom.edu` | Dr. Robert Chen | Faculty Staff | Management | FM003 |
 | `maria.garcia@fob.edu` | Dr. Maria Garcia | Faculty Staff | Business | FM004 |

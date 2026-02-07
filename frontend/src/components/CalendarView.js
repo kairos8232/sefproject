@@ -17,10 +17,13 @@ const CalendarView = ({
 }) => {
   const [statusFilter, setStatusFilter] = React.useState('all'); // 'all', 'pending', 'approved', 'rejected', 'cancelled', 'blocked'
   const [selectedCategory, setSelectedCategory] = React.useState(''); // For resource category filtering
+  const [searchQuery, setSearchQuery] = React.useState('');
+
+  const getResourceCategoryName = (item) => item.category_name || item.category?.name || '';
   
   // Get unique categories from resources
   const resourceCategories = type === 'resource' && Array.isArray(items)
-    ? [...new Set(items.map(item => item.category_name).filter(Boolean))]
+    ? [...new Set(items.map(item => getResourceCategoryName(item)).filter(Boolean))]
     : [];
   
   // Filter items by faculty (for venues) or category (for resources)
@@ -29,51 +32,60 @@ const CalendarView = ({
   if (type === 'venue') {
     // If selectedFaculty is empty string, show all venues; otherwise filter by faculty
     if (selectedFaculty) {
-      filteredItems = filteredItems.filter(item => item.faculty_id === selectedFaculty);
+      filteredItems = filteredItems.filter(item => String(item.faculty_id) === String(selectedFaculty));
     }
   } else if (type === 'resource') {
     // If selectedCategory is empty string, show all resources; otherwise filter by category
     if (selectedCategory) {
-      filteredItems = filteredItems.filter(item => item.category_name === selectedCategory);
+      filteredItems = filteredItems.filter(item => getResourceCategoryName(item) === selectedCategory);
+    }
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filteredItems = filteredItems.filter(item =>
+        item.name?.toLowerCase().includes(query) ||
+        item.code?.toLowerCase().includes(query) ||
+        `${item.code} - ${item.name}`.toLowerCase().includes(query)
+      );
     }
   }
 
-  // Filter bookings by status and resource ID/category (for resource type)
+  // Filter bookings by status and selected filters
   let bookingsToDisplay = bookings;
-  
+  let venueBlocksToDisplay = venueBlocks;
+
+  if (type === 'venue') {
+    let venueIds = [];
+    if (selectedId) {
+      venueIds = [selectedId];
+    } else if (selectedFaculty) {
+      venueIds = filteredItems.map(item => item.id);
+    } else {
+      venueIds = Array.isArray(items) ? items.map(item => item.id) : [];
+    }
+
+    bookingsToDisplay = venueIds.length > 0
+      ? bookings.filter(b => venueIds.includes(b.venue_id))
+      : [];
+
+    venueBlocksToDisplay = venueIds.length > 0
+      ? venueBlocks.filter(b => venueIds.includes(b.venue_id))
+      : [];
+  }
+
   // For resource type, filter by category or selectedId
   if (type === 'resource') {
-    console.log('🔍 RESOURCE FILTER DEBUG:', {
-      type,
-      selectedCategory,
-      selectedId,
-      totalItems: items.length,
-      totalBookings: bookings.length
-    });
-    
-    // Log all unique resource_ids in bookings
-    const bookingResourceIds = [...new Set(bookings.map(b => b.resource_id))];
-    console.log('📚 UNIQUE RESOURCE IDS IN BOOKINGS:', bookingResourceIds);
-    
+    let resourceIds = [];
     if (selectedCategory) {
-      // If category selected, show bookings for ALL resources in that category
-      const categoryResourceIds = items
-        .filter(r => r.category_name === selectedCategory)
-        .map(r => r.id);
-      
-      console.log('📦 CATEGORY FILTER:', {
-        selectedCategory,
-        categoryResourceIds,
-        matchingItems: items.filter(r => r.category_name === selectedCategory)
-      });
-      
-      bookingsToDisplay = bookings.filter(b => categoryResourceIds.includes(b.resource_id));
-      console.log('📊 BOOKINGS AFTER CATEGORY FILTER:', bookingsToDisplay.length);
+      resourceIds = filteredItems.map(item => item.id);
+    } else if (selectedId) {
+      resourceIds = [selectedId];
     } else {
-      // If no category selected, show ALL bookings (from all resources)
-      console.log('✅ NO CATEGORY - SHOWING ALL BOOKINGS:', bookings.length);
-      bookingsToDisplay = bookings;
+      resourceIds = filteredItems.map(item => item.id);
     }
+
+    bookingsToDisplay = resourceIds.length > 0
+      ? bookings.filter(b => resourceIds.includes(b.resource_id))
+      : [];
   }
   
   const filteredBookings = statusFilter === 'all' 
@@ -126,14 +138,14 @@ const CalendarView = ({
   };
 
   const getBlocksForDay = (day) => {
-    if (type !== 'venue' || !venueBlocks || venueBlocks.length === 0) return [];
+    if (type !== 'venue' || !venueBlocksToDisplay || venueBlocksToDisplay.length === 0) return [];
     
     // If status filter is set to something other than 'all' or 'blocked', don't show blocks
     if (statusFilter !== 'all' && statusFilter !== 'blocked') return [];
     
     const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     
-    const dayBlocks = venueBlocks.filter(block => {
+    const dayBlocks = venueBlocksToDisplay.filter(block => {
       const startDate = new Date(block.blocked_start_datetime);
       const endDate = new Date(block.blocked_end_datetime);
       
@@ -242,6 +254,7 @@ const CalendarView = ({
     'July', 'August', 'September', 'October', 'November', 'December'];
 
   const selectedItem = Array.isArray(items) ? items.find(item => item.id === selectedId) : null;
+  const selectedFacultyObj = Array.isArray(faculties) ? faculties.find(f => String(f.id) === String(selectedFaculty)) : null;
 
   return (
     <div className="booking-requests-calendar-view">
@@ -254,12 +267,7 @@ const CalendarView = ({
               onChange={(e) => {
                 const newFacultyId = e.target.value;
                 setSelectedFaculty(newFacultyId);
-                if (Array.isArray(items)) {
-                  const facultyVenues = items.filter(v => v.faculty_id === newFacultyId);
-                  if (facultyVenues.length > 0) {
-                    setSelectedId(facultyVenues[0].id);
-                  }
-                }
+                setSelectedId('');
               }}
             >
               <option value="">All Faculties</option>
@@ -281,6 +289,8 @@ const CalendarView = ({
                 const newCategory = e.target.value;
                 console.log('🏷️ CATEGORY CHANGED:', newCategory);
                 setSelectedCategory(newCategory);
+                setSelectedId('');
+                setSearchQuery('');
               }}
             >
               <option value="">All Categories</option>
@@ -299,8 +309,10 @@ const CalendarView = ({
             type="text"
             list={`${type}-datalist`}
             placeholder={`Search ${type}...`}
+            value={searchQuery}
             onChange={(e) => {
               const searchValue = e.target.value;
+              setSearchQuery(searchValue);
               // Try to find exact match
               const match = filteredItems.find(item => 
                 (item.name === searchValue) || 
@@ -309,6 +321,8 @@ const CalendarView = ({
               );
               if (match) {
                 setSelectedId(match.id);
+              } else if (!searchValue) {
+                setSelectedId('');
               }
             }}
             style={{ width: '250px', padding: '5px 10px', borderRadius: '4px', border: '1px solid #ccc' }}
@@ -372,9 +386,17 @@ const CalendarView = ({
       {selectedItem && type === 'venue' && (
         <div className="venue-info">
           <small>
-            {selectedItem.faculty?.name} | Capacity: {selectedItem.capacity} | 
+            {selectedItem.faculty?.name} | {selectedItem.code} - {selectedItem.name} | Capacity: {selectedItem.capacity} |
             {selectedItem.has_av_equipment ? ' ✓ AV Equipment' : ''} 
             {selectedItem.has_accessibility_features ? ' ✓ Accessible' : ''}
+          </small>
+        </div>
+      )}
+
+      {!selectedItem && type === 'venue' && (
+        <div className="venue-info">
+          <small>
+            {(selectedFacultyObj?.name || 'All Faculties')} | All venues
           </small>
         </div>
       )}
@@ -382,7 +404,17 @@ const CalendarView = ({
       {selectedItem && type === 'resource' && (
         <div className="resource-info">
           <small>
-            {selectedItem.category?.name} | Available: {selectedItem.quantity_available}
+            {(selectedItem.category?.name || selectedItem.category_name || 'All Categories')}
+            {' | '}
+            {selectedItem.code ? `${selectedItem.code} - ${selectedItem.name}` : selectedItem.name}
+          </small>
+        </div>
+      )}
+
+      {!selectedItem && type === 'resource' && (
+        <div className="resource-info">
+          <small>
+            {(selectedCategory || 'All Categories')} | All resources
           </small>
         </div>
       )}

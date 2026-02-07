@@ -31,8 +31,8 @@ function EditEventPage() {
   const user = authService.getCurrentUser();
   const { showSuccess, showError } = useToast();
 
-  // Check if user can change visibility (only event_organizer and administrator)
-  const canChangeVisibility = user.role === 'event_organizer' || user.role === 'administrator';
+  // Check if user can change visibility (event_organizer, faculty_staff, and administrator)
+  const canChangeVisibility = user.role === 'event_organizer' || user.role === 'faculty_staff' || user.role === 'administrator';
   
   // Check if user has a faculty (can only use Faculty Only visibility if they do)
   const userHasFaculty = user.faculty_id != null;
