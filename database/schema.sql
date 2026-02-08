@@ -683,7 +683,9 @@ INSERT INTO users (id, email, name, password, role, status, staff_id) VALUES
   ('ffffffff-ffff-ffff-ffff-ffffffffffff', 'amy.chen@student.edu', 'Amy Chen', '$2a$10$g2ALFzfYf4jpTmp7bCIzd.5cael8S5xBTGOn8FEyda1Bnt/.ebzV2', 'student', 'active', 'S008'),
   ('10101010-1010-1010-1010-101010101010', 'ryan.tan@student.edu', 'Ryan Tan', '$2a$10$g2ALFzfYf4jpTmp7bCIzd.5cael8S5xBTGOn8FEyda1Bnt/.ebzV2', 'student', 'active', 'S009'),
   ('20202020-2020-2020-2020-202020202020', 'olivia.lee@student.edu', 'Olivia Lee', '$2a$10$g2ALFzfYf4jpTmp7bCIzd.5cael8S5xBTGOn8FEyda1Bnt/.ebzV2', 'student', 'active', 'S010'),
-  ('30303030-3030-3030-3030-303030303030', 'kevin.wong@student.edu', 'Kevin Wong', '$2a$10$g2ALFzfYf4jpTmp7bCIzd.5cael8S5xBTGOn8FEyda1Bnt/.ebzV2', 'student', 'active', 'S011');
+  ('30303030-3030-3030-3030-303030303030', 'kevin.wong@student.edu', 'Kevin Wong', '$2a$10$g2ALFzfYf4jpTmp7bCIzd.5cael8S5xBTGOn8FEyda1Bnt/.ebzV2', 'student', 'active', 'S011'),
+  ('12121212-1212-1212-1212-121212121212', 'john.ong@student.edu', 'John Ong', '$2a$10$g2ALFzfYf4jpTmp7bCIzd.5cael8S5xBTGOn8FEyda1Bnt/.ebzV2', 'student', 'active', 'S012'),
+  ('13131313-1313-1313-1313-131313131313', 'rachel.lee@student.edu', 'Rachel Lee', '$2a$10$g2ALFzfYf4jpTmp7bCIzd.5cael8S5xBTGOn8FEyda1Bnt/.ebzV2', 'student', 'active', 'S013');
 
 -- Sample Faculties Data
 INSERT INTO faculties (id, code, name, description, status) VALUES
@@ -703,7 +705,7 @@ ON DELETE SET NULL;
 CREATE INDEX idx_users_faculty_id ON users(faculty_id);
 
 -- Update users with faculty assignments
-UPDATE users SET faculty_id = 'f1f1f1f1-f1f1-f1f1-f1f1-f1f1f1f1f1f1' WHERE id IN ('66666666-6666-6666-6666-666666666666', '77777777-7777-7777-7777-777777777777', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'ffffffff-ffff-ffff-ffff-ffffffffffff');
+UPDATE users SET faculty_id = 'f1f1f1f1-f1f1-f1f1-f1f1-f1f1f1f1f1f1' WHERE id IN ('66666666-6666-6666-6666-666666666666', '77777777-7777-7777-7777-777777777777', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'ffffffff-ffff-ffff-ffff-ffffffffffff', '12121212-1212-1212-1212-121212121212', '13131313-1313-1313-1313-131313131313');
 UPDATE users SET faculty_id = 'f2f2f2f2-f2f2-f2f2-f2f2-f2f2f2f2f2f2' WHERE id IN ('11111111-1111-1111-1111-111111111111', '88888888-8888-8888-8888-888888888888', 'cccccccc-cccc-cccc-cccc-cccccccccccc');
 UPDATE users SET faculty_id = 'f3f3f3f3-f3f3-f3f3-f3f3-f3f3f3f3f3f3' WHERE id IN ('99999999-9999-9999-9999-999999999999', 'dddddddd-dddd-dddd-dddd-dddddddddddd', '10101010-1010-1010-1010-101010101010', '30303030-3030-3030-3030-303030303030');
 UPDATE users SET faculty_id = 'f4f4f4f4-f4f4-f4f4-f4f4-f4f4f4f4f4f4' WHERE id IN ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee', '20202020-2020-2020-2020-202020202020');
@@ -3073,6 +3075,49 @@ VALUES
     '2026-02-08 17:00:00+08',
     '2026-01-26 10:00:00+08'
   );
+
+-- Ongoing event for today with approved venue booking and participants
+INSERT INTO events (id, organizer_id, event_name, description, visibility, event_type, status, registration_status, expected_attendees, registration_limit, start_datetime, end_datetime, created_at)
+VALUES (
+  'f2026000-0000-0000-0000-000000000005',
+  (SELECT id FROM users WHERE email = 'sarah.organizer@university.edu' LIMIT 1),
+  'Python Programming Workshop',
+  'Hands-on Python fundamentals and mini-project session.',
+  'campuswide',
+  'workshop',
+  'ongoing',
+  'open',
+  60,
+  60,
+  '2026-02-08 09:00:00+08',
+  '2026-02-08 17:00:00+08',
+  '2026-02-01 09:00:00+08'
+);
+
+INSERT INTO venue_bookings (id, event_id, venue_id, requester_user_id, requested_start_datetime, requested_end_datetime, approved_start_datetime, approved_end_datetime, setup_time, teardown_time, status, approved_user_id, approved_at, expected_attendees, remarks)
+VALUES (
+  'f2026b00-0000-0000-0000-000000000005',
+  'f2026000-0000-0000-0000-000000000005',
+  (SELECT id FROM venues WHERE code = 'LT-FCI-01' LIMIT 1),
+  (SELECT id FROM users WHERE email = 'sarah.organizer@university.edu' LIMIT 1),
+  '2026-02-08 09:00:00+08',
+  '2026-02-08 17:00:00+08',
+  '2026-02-08 09:00:00+08',
+  '2026-02-08 17:00:00+08',
+  30,
+  15,
+  'approved',
+  (SELECT id FROM users WHERE email = 'alice.wong@fci.edu' LIMIT 1),
+  '2026-02-02 10:00:00+08',
+  60,
+  'Python workshop in lecture theatre'
+);
+
+INSERT INTO event_participation (event_id, user_id, status, registered_at)
+VALUES
+  ('f2026000-0000-0000-0000-000000000005', (SELECT id FROM users WHERE email = 'emily.tan@student.edu' LIMIT 1), 'registered', '2026-02-05 10:00:00+08'),
+  ('f2026000-0000-0000-0000-000000000005', (SELECT id FROM users WHERE email = 'john.ong@student.edu' LIMIT 1), 'registered', '2026-02-05 11:00:00+08'),
+  ('f2026000-0000-0000-0000-000000000005', (SELECT id FROM users WHERE email = 'rachel.lee@student.edu' LIMIT 1), 'registered', '2026-02-06 09:30:00+08');
 
 -- ========================================
 -- Custom Registration Fields for Browse Events
