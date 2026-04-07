@@ -230,12 +230,6 @@ All accounts use the password: `password123`
 
 ---
 
-## 📁 Legacy Docs
-
-The original setup-focused README has been preserved at [`README_legacy.md`](./README_legacy.md) for reference.
-
----
-
 ## 📝 License
 
 This project is open for reference and learning purposes.
