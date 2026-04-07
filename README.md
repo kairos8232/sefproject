@@ -1,8 +1,8 @@
-# 🎓 Campus Event Management System
+# 🎓 Campus Event Scheduling and Space Management System (CESMS)
 
-A full-stack web platform built to streamline how campus events are organised, discovered, and managed — all in one place.
+A full-stack web platform built to streamline how campus events are scheduled, discovered, and managed — all in one place.
 
-Whether you're a student looking for what's happening around campus, an event organiser coordinating a seminar, or a faculty staff reviewing venue bookings and providing feedback — this system handles it all with role-based access, smart visibility rules, and a clean interface.
+Whether you're a student looking for what's happening around campus, an event organiser scheduling a seminar and booking a space, or a faculty staff reviewing venue requests and providing feedback — CESMS handles it all with role-based access, smart visibility rules, and a clean interface.
 
 ---
 
@@ -38,15 +38,15 @@ The platform serves four distinct user roles, each with their own experience:
 
 > Admins can see all events regardless of visibility. Organisers always see their own events.
 
-### Venues & Resources
-- Browse venue availability with time-slot based booking
+### Space & Resource Management
+- Browse space/venue availability with time-slot based scheduling
 - Submit and track venue booking requests through an approval workflow
 - Request equipment and resources (projectors, microphones, etc.) for events
 - Faculty staff can approve, decline, or comment on requests
 
 ### People & Discovery
 - Role-based dashboards tailored to each user type
-- Personal calendar view for registered events
+- Personal calendar view to track scheduled events and registrations
 - Faculty-scoped access control — faculty events are visible only within the right department
 - Profile management for all users
 
@@ -209,8 +209,6 @@ All accounts use the password: `password123`
 | `admin@university.edu` | System Administrator |
 
 </details>
-
----
 
 ---
 
